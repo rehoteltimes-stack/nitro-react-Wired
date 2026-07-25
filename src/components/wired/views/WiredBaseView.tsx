@@ -10,7 +10,7 @@ export interface WiredBaseViewProps
     wiredType: string;
     requiresFurni: number;
     hasSpecialInput: boolean;
-    save: () => void;
+    save: () => boolean | void;
     validate?: () => boolean;
     furniSource?: number;
     onFurniSourceChange?: (source: number) => void;
@@ -80,7 +80,7 @@ export const WiredBaseView: FC<PropsWithChildren<WiredBaseViewProps>> = props =>
     {
         if(!canModify) return;
         if(validate && !validate()) return;
-        if(save) save();
+        if(save && save() === false) return;
         setNeedsSave(true);
     }
 

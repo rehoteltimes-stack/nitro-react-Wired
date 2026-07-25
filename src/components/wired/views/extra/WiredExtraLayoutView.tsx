@@ -1,5 +1,6 @@
 import { WiredExtraLayout } from '../../../../api';
 import { WiredExtraAnimationTimeView } from './WiredExtraAnimationTimeView';
+import { WiredExtraArrayEntryCapturerView } from './WiredExtraArrayEntryCapturerView';
 import { WiredExtraAtLeastOneConditionView } from './WiredExtraAtLeastOneConditionView';
 import { WiredExtraCarryAvatarView } from './WiredExtraCarryAvatarView';
 import { WiredExtraCancelAnimationView } from './WiredExtraCancelAnimationView';
@@ -63,6 +64,8 @@ export const WiredExtraLayoutView = (code: number) =>
             return <WiredExtraLevelUpSystemView />;
         case WiredExtraLayout.CHEST_FURNI_TYPE_SCANNER:
             return <WiredExtraChestFurniTypeScannerView />;
+        case WiredExtraLayout.ARRAY_ENTRY_CAPTURER:
+            return <WiredExtraArrayEntryCapturerView />;
         case WiredExtraLayout.CUSTOM_CONTRACT:
             return <WiredExtraCustomContractView />;
     }

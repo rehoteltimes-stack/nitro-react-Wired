@@ -81095,9 +81095,16 @@ new file mode 100644
 index 0000000000000000000000000000000000000000..7bdda7998ffa8f1365f484845cf5cab648ffa3cc
 --- /dev/null
 +++ b/nitro/communication/messages/parser/roomevents/VariableDefinition.ts
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,121 @@
 +import { IMessageDataWrapper } from '../../../../../api';
 +import { Triggerable } from './Triggerable';
++
++export interface VariableDefinitionField
++{
++    id: number;
++    name: string;
++    order: number;
++}
 +
 +export class VariableDefinition extends Triggerable
 +{
@@ -81105,6 +81112,15 @@ index 0000000000000000000000000000000000000000..7bdda7998ffa8f1365f484845cf5cab6
 +    private _variableName: string;
 +    private _persistence: number;
 +    private _value: string;
++    private _schemaVersion: number;
++    private _valueShape: number;
++    private _arrayFormat: number;
++    private _arrayMode: number;
++    private _maxEntries: number;
++    private _nextFieldId: number;
++    private _serverMaxEntries: number;
++    private _serverMaxPopulatedCells: number;
++    private _fields: VariableDefinitionField[];
 +
 +    constructor(wrapper: IMessageDataWrapper)
 +    {
@@ -81114,6 +81130,25 @@ index 0000000000000000000000000000000000000000..7bdda7998ffa8f1365f484845cf5cab6
 +        this._variableName = wrapper.readString();
 +        this._persistence = wrapper.readInt();
 +        this._value = wrapper.readString();
++        this._schemaVersion = wrapper.readInt();
++        this._valueShape = wrapper.readInt();
++        this._arrayFormat = wrapper.readInt();
++        this._arrayMode = wrapper.readInt();
++        this._maxEntries = wrapper.readInt();
++        this._nextFieldId = wrapper.readInt();
++        this._serverMaxEntries = wrapper.readInt();
++        this._serverMaxPopulatedCells = wrapper.readInt();
++        this._fields = [];
++
++        const fieldCount = wrapper.readInt();
++        for(let index = 0; index < fieldCount; index++)
++        {
++            this._fields.push({
++                id: wrapper.readInt(),
++                name: wrapper.readString(),
++                order: wrapper.readInt()
++            });
++        }
 +        this.readCanModify(wrapper);
 +    }
 +
@@ -81135,6 +81170,51 @@ index 0000000000000000000000000000000000000000..7bdda7998ffa8f1365f484845cf5cab6
 +    public get value(): string
 +    {
 +        return this._value;
++    }
++
++    public get schemaVersion(): number
++    {
++        return this._schemaVersion;
++    }
++
++    public get valueShape(): number
++    {
++        return this._valueShape;
++    }
++
++    public get arrayFormat(): number
++    {
++        return this._arrayFormat;
++    }
++
++    public get arrayMode(): number
++    {
++        return this._arrayMode;
++    }
++
++    public get maxEntries(): number
++    {
++        return this._maxEntries;
++    }
++
++    public get nextFieldId(): number
++    {
++        return this._nextFieldId;
++    }
++
++    public get serverMaxEntries(): number
++    {
++        return this._serverMaxEntries;
++    }
++
++    public get serverMaxPopulatedCells(): number
++    {
++        return this._serverMaxPopulatedCells;
++    }
++
++    public get fields(): VariableDefinitionField[]
++    {
++        return this._fields;
 +    }
 +}
 diff --git a/nitro/communication/messages/parser/roomevents/WiredActionDefinition.ts b/nitro/communication/messages/parser/roomevents/WiredActionDefinition.ts

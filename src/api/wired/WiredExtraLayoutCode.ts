@@ -19,5 +19,6 @@ export class WiredExtraLayout
     public static TIME_UTILITIES: number = 16;
     public static LEVEL_UP_SYSTEM: number = 17;
     public static CHEST_FURNI_TYPE_SCANNER: number = 18;
+    public static ARRAY_ENTRY_CAPTURER: number = 19;
     public static CUSTOM_CONTRACT: number = 20;
 }

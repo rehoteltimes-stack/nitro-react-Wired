@@ -20,7 +20,7 @@ export interface HabboTableRow
     onClick?: () => void;
 }
 
-const HabboTableText: FC<{ value: string | number; format: 'u_bold' | 'u_regular'; }> = ({ value, format }) =>
+export const HabboTableText: FC<{ value: string | number; format: 'u_bold' | 'u_regular'; }> = ({ value, format }) =>
 {
     const containerRef = useRef<HTMLSpanElement>();
     const [ width, setWidth ] = useState(1);

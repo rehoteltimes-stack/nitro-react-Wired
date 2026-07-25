@@ -6,8 +6,8 @@ import { DraggableWindow, LayoutAvatarImageView, LayoutPetImageView } from '../.
 import { HabboBitmapView, HabboLayoutRuntimeProvider, measureHabboText, SkinRegistryView } from '../../common/habbo';
 import { applyHabboXmlTextRendering, TruffleTextView } from '../../truffle';
 import { ObjectLocationView } from '../room/widgets/object-location/ObjectLocationView';
-import { HabboDropMenuOverlay, HabboInputOverlay, HabboLinkText, HabboScrollView, HabboTableRow, HabboTableView } from './HabboCreatorControls';
-import { WiredCreatorToolsChestLogDetailItem, WiredCreatorToolsChestLogEntry, WiredCreatorToolsInspectionValues, WiredCreatorToolsRoomAction, WiredCreatorToolsRoomStats, WiredCreatorToolsVariableHighlight } from './WiredCreatorToolsMessages';
+import { HabboDropMenuOverlay, HabboInputOverlay, HabboLinkText, HabboScrollView, HabboTableRow, HabboTableText, HabboTableView } from './HabboCreatorControls';
+import { WiredCreatorToolsArrayDefinition, WiredCreatorToolsArrayInspection, WiredCreatorToolsChestLogDetailItem, WiredCreatorToolsChestLogEntry, WiredCreatorToolsInspectionValues, WiredCreatorToolsRoomAction, WiredCreatorToolsRoomStats, WiredCreatorToolsVariableHighlight } from './WiredCreatorToolsMessages';
 import { ErrorInfoViewView } from './layouts/ErrorInfoViewView';
 import { LogsOverviewView } from './layouts/LogsOverviewView';
 import { TransactionDetailsView } from './layouts/TransactionDetailsView';
@@ -54,6 +54,7 @@ export interface HabboVariableDefinition
     hasUpdateTime: string;
     isTextConnected: string;
     textValues?: { value: string; text: string; }[];
+    arrayDefinition?: WiredCreatorToolsArrayDefinition;
 }
 
 export type HabboInspectionPreview =
@@ -125,6 +126,13 @@ export interface HabboWiredCreatorToolsViewProps
     inspectionPreview: HabboInspectionPreview;
     inspectionValues: WiredCreatorToolsInspectionValues;
     inspectionRows: HabboInspectionRow[];
+    arrayDefinitions: WiredCreatorToolsArrayDefinition[];
+    selectedArrayDefinition: WiredCreatorToolsArrayDefinition;
+    arrayInspection: WiredCreatorToolsArrayInspection;
+    onOpenArray: (name: string) => void;
+    onCloseArray: () => void;
+    onArrayPage: (page: number) => void;
+    onSetArrayField: (index: number, fieldId: number, value: string) => void;
     pulseKeys: Record<string, number>;
     selectedInspectionVariable: string;
     onSelectInspectionVariable: (key: string) => void;
@@ -235,6 +243,153 @@ const HabboWindow: FC<{ uniqueKey: string; hidden?: boolean; children: ReactNode
         <div className={ `habbo-wired-window ${ hidden ? 'is-hidden' : '' }` }>{ children }</div>
     </DraggableWindow>
 );
+
+const ArrayValueCell: FC<{
+    index: number;
+    fieldId: number;
+    value: string;
+    connectedText?: string;
+    editable: boolean;
+    onSave: (index: number, fieldId: number, value: string) => void;
+}> = ({ index, fieldId, value, connectedText, editable, onSave }) =>
+{
+    const [ editValue, setEditValue ] = useState<string>(null);
+    const commit = () =>
+    {
+        if(editValue !== null && /^-?\d+$/.test(editValue)) onSave(index, fieldId, editValue);
+        setEditValue(null);
+    };
+
+    if(editValue !== null)
+    {
+        return <input
+            autoFocus
+            className="habbo-wired-array-editor"
+            value={ editValue }
+            onChange={ event => setEditValue(event.target.value.replace(/[^0-9-]/g, '')) }
+            onBlur={ commit }
+            onClick={ event => event.stopPropagation() }
+            onKeyDown={ event =>
+            {
+                event.stopPropagation();
+                if(event.key === 'Enter') commit();
+                if(event.key === 'Escape') setEditValue(null);
+            } } />;
+    }
+
+    const displayValue = connectedText === undefined ? value : `${ value } (${ connectedText })`;
+
+    return <button
+        className="habbo-wired-array-value"
+        type="button"
+        title={ editable ? 'Double-click to edit' : undefined }
+        onDoubleClick={ () => editable && setEditValue(value) }>
+        { text(displayValue || '/') }
+    </button>;
+};
+
+const ArrayInspectionWindow: FC<{
+    definition: WiredCreatorToolsArrayDefinition;
+    inspection: WiredCreatorToolsArrayInspection;
+    onPage: (page: number) => void;
+    onSave: (index: number, fieldId: number, value: string) => void;
+    onClose: () => void;
+}> = ({ definition, inspection, onPage, onSave, onClose }) =>
+{
+    const fields = (inspection?.definition?.fields ?? definition.fields)
+        .slice()
+        .sort((first, second) => first.order - second.order);
+    const visibleFields = definition.arrayFormat === 0 ? fields.slice(0, 1) : fields;
+    const columns = [
+        { key: 'index', label: 'Index', width: .14 },
+        ...visibleFields.map(field => ({
+            key: `field-${ field.id }`,
+            label: definition.arrayFormat === 0 ? 'Value' : field.name,
+            width: .86 / Math.max(1, visibleFields.length)
+        }))
+    ];
+    const rows: HabboTableRow[] = (inspection?.entries ?? []).map(entry => ({
+        key: String(entry.index),
+        cells: {
+            index: entry.index,
+            ...Object.fromEntries(visibleFields.map(field =>
+            {
+                const value = entry.values?.[String(field.id)] ?? '';
+                const connectedText = entry.connectedText?.[String(field.id)];
+
+                return [ `field-${ field.id }`, <ArrayValueCell
+                    key={ field.id }
+                    index={ entry.index }
+                    fieldId={ field.id }
+                    value={ value }
+                    connectedText={ connectedText }
+                    editable={ definition.writable }
+                    onSave={ onSave } /> ];
+            }))
+        }
+    }));
+    const currentPage = inspection?.page ?? 0;
+    const pageCount = Math.max(1, inspection?.pageCount ?? 1);
+
+    return (
+        <HabboWindow uniqueKey={ `wired-array-${ definition.variableType }-${ definition.name }` }>
+            <HabboLayoutRuntimeProvider controller={ {
+                appendedSlots: {
+                    pagina_number_input: <HabboInputOverlay
+                        ariaLabel="Array page"
+                        inputMode="numeric"
+                        value={ currentPage + 1 }
+                        onChange={ value => onPage(Math.min(pageCount, Math.max(1, Number(value || 1))) - 1) } />,
+                    header: (
+                        <div className="habbo-wired-array-log-summary">
+                            <div className="habbo-wired-array-log-stat">
+                                { text('Length:', true) }
+                                { text(inspection?.logicalLength ?? '/') }
+                            </div>
+                            <div className="habbo-wired-array-log-stat">
+                                { text('Occupied:', true) }
+                                { text(inspection?.occupiedCount ?? '/') }
+                            </div>
+                            <div className="habbo-wired-array-log-stat">
+                                { text('Capacity:', true) }
+                                { text(definition.maxEntries) }
+                            </div>
+                        </div>
+                    )
+                }
+            } }>
+                <TransactionLogOverviewView
+                    captions={ {
+                        list_type_key: 'Type:',
+                        list_type_value: definition.arrayFormat === 1 ? 'Record array' : 'Simple array',
+                        id_key: 'Name:',
+                        id_value: definition.name,
+                        pagina_number_input: String(currentPage + 1),
+                        pagina_text_start: `${ inspection?.totalIndexes ?? 0 } indexes found. Showing page `,
+                        pagina_text_end: `of ${ pageCount }`
+                    } }
+                    slots={ {
+                        table_view: <HabboTableView
+                            columns={ columns }
+                            rows={ rows }
+                            emptyText={ inspection ? 'This array has no entries.' : 'Loading...' } />
+                    } }
+                    resolveCaption={ value => value.includes('wiredchests.logs.title')
+                        ? `Array: ${ definition.name }`
+                        : resolveWiredCaption(value) }
+                    onAction={ name =>
+                    {
+                        if(name === 'refresh_btn') onPage(currentPage);
+                        if(name === 'first_page_btn') onPage(0);
+                        if(name === 'prev_page_btn') onPage(Math.max(0, currentPage - 1));
+                        if(name === 'next_page_btn') onPage(Math.min(pageCount - 1, currentPage + 1));
+                        if(name === 'last_page_btn') onPage(pageCount - 1);
+                    } }
+                    onClose={ onClose } />
+            </HabboLayoutRuntimeProvider>
+        </HabboWindow>
+    );
+};
 
 const permissionToggle = (value: number, bit: number, normalize: (value: number) => number, onChange: (value: number) => void) =>
 {
@@ -615,6 +770,7 @@ export const HabboWiredCreatorToolsView: FC<HabboWiredCreatorToolsViewProps> = p
     const currentVariableHighlight = props.variableHighlight?.sourceType === props.variableType
         && props.variableHighlight.variableName === props.selectedVariable?.key;
     const canHighlightVariable = props.selectedVariable?.type === 'Created by user'
+        && !props.selectedVariable.arrayDefinition
         && (props.variableType === 'furni' || props.variableType === 'user');
     const hasMonitorAlert = !!props.roomStats && (
         props.roomStats.isHeavy
@@ -622,7 +778,7 @@ export const HabboWiredCreatorToolsView: FC<HabboWiredCreatorToolsViewProps> = p
         || props.roomStats.floorFurni >= props.roomStats.floorFurniLimit
         || props.roomStats.wallFurni >= props.roomStats.wallFurniLimit
         || props.monitorLogs.some(log => log.amount > 0));
-    const variableProperties = props.selectedVariable
+    const variableProperties: Array<[string, string]> = props.selectedVariable
         ? [
             [ getWiredLocalization('wiredmenu.variable_overview.properties.name'), props.selectedVariable.key ],
             [ getWiredLocalization('wiredmenu.variable_overview.properties.type'), props.selectedVariable.type ],
@@ -638,6 +794,24 @@ export const HabboWiredCreatorToolsView: FC<HabboWiredCreatorToolsViewProps> = p
             [ getWiredLocalization('wiredmenu.variable_overview.properties.is_text_connected'), props.selectedVariable.isTextConnected ]
         ]
         : [];
+    const selectedArray = props.selectedVariable?.arrayDefinition;
+
+    if(selectedArray)
+    {
+        variableProperties.splice(4, 0,
+            [ 'Shape', 'Array' ],
+            [ 'Format', selectedArray.arrayFormat === 1 ? 'Record' : 'Simple' ],
+            [ 'Mode', selectedArray.arrayMode === 1 ? 'Slots' : 'List' ],
+            [ 'Capacity', String(selectedArray.maxEntries) ],
+            [ 'Schema version', String(selectedArray.schemaVersion) ],
+            [ 'Referenced', selectedArray.referenced ? 'Yes' : 'No' ],
+            [ 'Inspectable', selectedArray.inspectable ? 'Yes' : 'No' ],
+            [ 'Fields', selectedArray.fields
+                .slice()
+                .sort((first, second) => first.order - second.order)
+                .map(field => field.name)
+                .join(', ') || '/' ]);
+    }
     const roomTotals = useMemo(() => props.chests.reduce((totals, log) =>
     {
         totals.withdrawalFurni += log.withdrawalFurni;
@@ -675,7 +849,7 @@ export const HabboWiredCreatorToolsView: FC<HabboWiredCreatorToolsViewProps> = p
         onClick: () => props.onSelectVariable(props.variableType, variable.key),
         cells: { variable: variable.key }
     }));
-    const inspectionRows = props.inspectionRows.map(row => ({
+    const scalarInspectionRows = props.inspectionRows.map(row => ({
         key: row.key,
         pulseToken: props.pulseKeys[row.key],
         selected: row.key === props.selectedInspectionVariable,
@@ -715,7 +889,31 @@ export const HabboWiredCreatorToolsView: FC<HabboWiredCreatorToolsViewProps> = p
                     { text(row.value) }
                 </button>
         }
-    }));
+        }));
+    const createdInspectionRows = scalarInspectionRows.filter(row => !row.key.startsWith('@'));
+    const internalInspectionRows = scalarInspectionRows.filter(row => row.key.startsWith('@'));
+    const viewArrayTextWidth = Math.ceil(measureHabboText('View Array', 'u_regular')?.textWidth || 48) + 8;
+    const arrayInspectionRows = props.arrayDefinitions
+        .slice()
+        .sort((first, second) => first.name.localeCompare(second.name))
+        .map(definition => ({
+            key: `array:${ definition.name }`,
+            cells: {
+                variable: definition.name,
+                value: <button
+                    className="habbo-wired-table-value-link"
+                    style={ { width: viewArrayTextWidth } }
+                    type="button"
+                    onClick={ event =>
+                    {
+                        event.stopPropagation();
+                        props.onOpenArray(definition.name);
+                    } }>
+                    <HabboTableText value="View Array" format="u_regular" />
+                </button>
+            }
+        }));
+    const inspectionRows = [ ...createdInspectionRows, ...arrayInspectionRows, ...internalInspectionRows ];
     const chestSummaryRows = props.chests.slice(0, 10).map((log, index): HabboTableRow => ({
         key: `${ log.timestamp }-${ log.userId }-${ index }`,
         cells: {
@@ -1011,6 +1209,13 @@ export const HabboWiredCreatorToolsView: FC<HabboWiredCreatorToolsViewProps> = p
                 <ErrorInfoWindow log={ selectedError } onClose={ () => setSelectedError(null) } /> }
             { props.visible && variableManagementOpen && props.selectedVariable &&
                 <VariableManagementWindow variable={ props.selectedVariable } onClose={ () => setVariableManagementOpen(false) } /> }
+            { props.visible && props.selectedArrayDefinition &&
+                <ArrayInspectionWindow
+                    definition={ props.selectedArrayDefinition }
+                    inspection={ props.arrayInspection }
+                    onPage={ props.onArrayPage }
+                    onSave={ props.onSetArrayField }
+                    onClose={ props.onCloseArray } /> }
             <VariableHighlightOverlay
                 highlight={ props.visible && props.activeTab === 'variables' ? props.variableHighlight : null }
                 pulseStamp={ props.variableHighlightPulse } />

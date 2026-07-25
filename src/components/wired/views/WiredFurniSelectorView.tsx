@@ -196,7 +196,12 @@ export const WiredFurniSelectorView: FC<WiredFurniSelectorViewProps> = props =>
                                                             <img alt="" src={ wiredIconUrl(sourcePicker.icon) } />
                                                         </button> }
 
-                                                    { selector.titleAccessory }
+                                                    { (typeof selector.titleAccessory === 'string' ||
+                                                        typeof selector.titleAccessory === 'number')
+                                                        ? <Text bitmapFont="il_regular" className="nw-source-accessory">
+                                                            { selector.titleAccessory }
+                                                        </Text>
+                                                        : selector.titleAccessory }
                                                 </div> }
                                         </div>
 

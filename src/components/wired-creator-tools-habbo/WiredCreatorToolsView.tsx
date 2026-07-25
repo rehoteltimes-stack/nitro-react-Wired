@@ -13,7 +13,7 @@ import { WiredAdjustButton, WiredSelect, WiredTextInput } from '../wired/views/W
 import { WiredIcon, wiredIconUrl } from '../wired/views/WiredIcons';
 import { HabboInspectionRow, HabboWiredCreatorToolsView, HabboWiredTab } from './HabboWiredCreatorToolsView';
 import { WIRED_CREATOR_TOOLS_DEFAULTS } from './WiredCreatorToolsContracts';
-import { WiredCreatorToolCreated, WiredCreatorToolsCancelPlacementComposer, WiredCreatorToolsCatalogComposer, WiredCreatorToolsCatalogEvent, WiredCreatorToolsChestLogDetailItem, WiredCreatorToolsChestLogEntry, WiredCreatorToolsChestLogsComposer, WiredCreatorToolsChestLogsEvent, WiredCreatorToolsCreateItemComposer, WiredCreatorToolsCreateItemEvent, WiredCreatorToolsInspectionValues, WiredCreatorToolsInspectionValuesComposer, WiredCreatorToolsInspectionValuesEvent, WiredCreatorToolsLogEntry, WiredCreatorToolsLogsComposer, WiredCreatorToolsLogsEvent, WiredCreatorToolsMessageConfiguration, WiredCreatorToolsOpenEvent, WiredCreatorToolsRoomAction, WiredCreatorToolsRoomActionComposer, WiredCreatorToolsRoomStats, WiredCreatorToolsRoomStatsComposer, WiredCreatorToolsRoomStatsEvent, WiredCreatorToolsSaveSettingsComposer, WiredCreatorToolsVariableActionComposer, WiredCreatorToolsVariableHighlight, WiredCreatorToolsVariableHighlightComposer, WiredCreatorToolsVariableHighlightEvent, WiredMouseHoldStateEvent, WiredMouseHoldStateUpdate, WiredMouseHoldSubscriptionComposer } from './WiredCreatorToolsMessages';
+import { WiredCreatorToolCreated, WiredCreatorToolsArrayDefinition, WiredCreatorToolsArrayInspection, WiredCreatorToolsCancelPlacementComposer, WiredCreatorToolsCatalogComposer, WiredCreatorToolsCatalogEvent, WiredCreatorToolsChestLogDetailItem, WiredCreatorToolsChestLogEntry, WiredCreatorToolsChestLogsComposer, WiredCreatorToolsChestLogsEvent, WiredCreatorToolsCreateItemComposer, WiredCreatorToolsCreateItemEvent, WiredCreatorToolsInspectionValues, WiredCreatorToolsInspectionValuesComposer, WiredCreatorToolsInspectionValuesEvent, WiredCreatorToolsLogEntry, WiredCreatorToolsLogsComposer, WiredCreatorToolsLogsEvent, WiredCreatorToolsMessageConfiguration, WiredCreatorToolsOpenEvent, WiredCreatorToolsRoomAction, WiredCreatorToolsRoomActionComposer, WiredCreatorToolsRoomStats, WiredCreatorToolsRoomStatsComposer, WiredCreatorToolsRoomStatsEvent, WiredCreatorToolsSaveSettingsComposer, WiredCreatorToolsVariableActionComposer, WiredCreatorToolsVariableHighlight, WiredCreatorToolsVariableHighlightComposer, WiredCreatorToolsVariableHighlightEvent, WiredMouseHoldStateEvent, WiredMouseHoldStateUpdate, WiredMouseHoldSubscriptionComposer } from './WiredCreatorToolsMessages';
 
 type WiredCreatorToolsTab = 'monitor' | 'variables' | 'inspection' | 'chests' | 'tools' | 'settings';
 type VariableType = 'furni' | 'user' | 'global' | 'context';
@@ -77,6 +77,7 @@ interface VariableDefinition
     hasUpdateTime: string;
     isTextConnected: string;
     textValues?: { value: string; text: string; }[];
+    arrayDefinition?: WiredCreatorToolsArrayDefinition;
 }
 
 interface WiredToolItem
@@ -320,6 +321,9 @@ const areStringArraysEqual = (previous: string[] = [], next: string[] = []) =>
     return next.every((value, index) => previous[index] === value);
 };
 
+const areArrayDefinitionsEqual = (previous: WiredCreatorToolsArrayDefinition[] = [], next: WiredCreatorToolsArrayDefinition[] = []) =>
+    JSON.stringify(previous) === JSON.stringify(next);
+
 const areMonitorStatsEqual = (previous: WiredCreatorToolsRoomStats, next: WiredCreatorToolsRoomStats) =>
 {
     if(previous === next) return true;
@@ -334,7 +338,8 @@ const areGlobalInspectionValuesEqual = (previous: WiredCreatorToolsRoomStats, ne
     if(!previous || !next) return false;
 
     return getChangedGlobalInspectionKeys(previous, next).length === 0 &&
-        areStringArraysEqual(previous.globalVariables, next.globalVariables);
+        areStringArraysEqual(previous.globalVariables, next.globalVariables) &&
+        areArrayDefinitionsEqual(previous.arrayDefinitions, next.arrayDefinitions);
 };
 
 const areVariableDefinitionsEqual = (previous: WiredCreatorToolsRoomStats, next: WiredCreatorToolsRoomStats) =>
@@ -344,7 +349,8 @@ const areVariableDefinitionsEqual = (previous: WiredCreatorToolsRoomStats, next:
 
     return areStringArraysEqual(previous.furniVariables, next.furniVariables) &&
         areStringArraysEqual(previous.userVariables, next.userVariables) &&
-        areStringArraysEqual(previous.globalVariables, next.globalVariables);
+        areStringArraysEqual(previous.globalVariables, next.globalVariables) &&
+        areArrayDefinitionsEqual(previous.arrayDefinitions, next.arrayDefinitions);
 };
 
 const areVisibleRoomStatsEqual = (previous: WiredCreatorToolsRoomStats, next: WiredCreatorToolsRoomStats, activeTab: WiredCreatorToolsTab, inspectionType: InspectionType) =>
@@ -372,7 +378,9 @@ const areInspectionValuesEqual = (previous: WiredCreatorToolsInspectionValues, n
     return previous.sourceType === next.sourceType &&
         previous.sourceId === next.sourceId &&
         areStringRecordsEqual(previous.values, next.values) &&
-        areStringArraysEqual(previous.variables, next.variables);
+        areStringArraysEqual(previous.variables, next.variables) &&
+        areArrayDefinitionsEqual(previous.arrayDefinitions, next.arrayDefinitions) &&
+        areStringArraysEqual(previous.arrayVariables, next.arrayVariables);
 };
 
 const MONITOR_LOGS: MonitorLog[] = [
@@ -757,6 +765,24 @@ const VARIABLE_DEFINITIONS: Record<VariableType, VariableDefinition[]> = {
             { value: '2', text: 'Inspection / Creator Tool' },
             { value: '3', text: 'External' }
         ]),
+        createInternalVariable('@array.change_type', 'Context', 'Yes', 'No', [
+            { value: '1', text: 'Entry Appended' },
+            { value: '2', text: 'Entry Inserted' },
+            { value: '6', text: 'Moved' },
+            { value: '7', text: 'Field Value Changed' },
+            { value: '9', text: 'Array Cleared' },
+            { value: '10', text: 'Created' },
+            { value: '11', text: 'Swapped' },
+            { value: '12', text: 'Shuffled' }
+        ]),
+        createInternalVariable('@array.index', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.source_index', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.destination_index', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.field_index', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.old_value', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.new_value', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.old_length', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.new_length', 'Context', 'Yes', 'No'),
         createInternalVariable('@event.transaction_complete.multiplier', 'Context', 'Yes', 'No'),
         createInternalVariable('@event.transaction_complete.deposit.furni_count', 'Context', 'Yes', 'No'),
         createInternalVariable('@event.transaction_complete.deposit.coins_count', 'Context', 'Yes', 'No'),
@@ -1050,10 +1076,34 @@ const createInspectionCreatedVariable = (key: string, target: 'Furni' | 'User' |
     isTextConnected: 'No'
 });
 
+const VARIABLE_TYPE_CODES: Record<VariableType, number> = { furni: 0, global: 1, user: 2, context: 3 };
+
+const createArrayVariableDefinition = (definition: WiredCreatorToolsArrayDefinition): VariableDefinition =>
+{
+    const target = definition.variableType === 0 ? 'Furni'
+        : definition.variableType === 1 ? 'Global'
+            : definition.variableType === 2 ? 'User'
+                : 'Context';
+
+    return {
+        key: definition.name,
+        type: 'Created by user',
+        target,
+        availability: definition.variableType === 3 ? 'Execution only' : 'Room array',
+        hasValue: 'Array',
+        canWriteTo: definition.writable ? 'Yes' : 'No',
+        canCreateDelete: definition.variableType === 1 ? 'Definition-owned' : 'Yes',
+        canIntercept: 'Yes',
+        isAlwaysAvailable: definition.variableType === 1 ? 'Yes' : 'No',
+        hasCreationTime: 'No',
+        hasUpdateTime: 'No',
+        isTextConnected: definition.fields.some(field => field.textConnected) ? 'Yes' : 'No',
+        arrayDefinition: definition
+    };
+};
+
 const getCreatedVariableDefinitions = (variableType: VariableType, roomStats: WiredCreatorToolsRoomStats): VariableDefinition[] =>
 {
-    if(variableType === 'context') return [];
-
     const target = variableType === 'furni' ? 'Furni' : variableType === 'user' ? 'User' : 'Global';
     const variableNames = variableType === 'furni'
         ? (roomStats?.furniVariables ?? [])
@@ -1063,7 +1113,14 @@ const getCreatedVariableDefinitions = (variableType: VariableType, roomStats: Wi
                 ? (roomStats?.globalVariables ?? [])
                 : [];
 
-    return variableNames.map(variableName => createInspectionCreatedVariable(variableName, target));
+    const scalarDefinitions = variableType === 'context'
+        ? []
+        : variableNames.map(variableName => createInspectionCreatedVariable(variableName, target));
+    const arrayDefinitions = (roomStats?.arrayDefinitions ?? [])
+        .filter(definition => definition.variableType === VARIABLE_TYPE_CODES[variableType])
+        .map(createArrayVariableDefinition);
+
+    return [ ...scalarDefinitions, ...arrayDefinitions ].sort((first, second) => first.key.localeCompare(second.key));
 };
 
 const getVariableDefinitions = (variableType: VariableType, roomStats: WiredCreatorToolsRoomStats) => [
@@ -1185,6 +1242,8 @@ export const WiredCreatorToolsView: FC<{}> = () =>
     const [ roomStats, setRoomStats ] = useState<WiredCreatorToolsRoomStats>(null);
     const [ inspectionPreview, setInspectionPreview ] = useState<InspectionPreview>(null);
     const [ inspectionValues, setInspectionValues ] = useState<WiredCreatorToolsInspectionValues>(null);
+    const [ selectedArrayName, setSelectedArrayName ] = useState('');
+    const [ arrayInspection, setArrayInspection ] = useState<WiredCreatorToolsArrayInspection>(null);
     const [ selectedInspectionVariable, setSelectedInspectionVariable ] = useState('');
     const [ giveVariableOpen, setGiveVariableOpen ] = useState(false);
     const [ giveVariableName, setGiveVariableName ] = useState('');
@@ -1196,6 +1255,8 @@ export const WiredCreatorToolsView: FC<{}> = () =>
     const [ wiredToolsRequested, setWiredToolsRequested ] = useState(false);
     const roomStatsRef = useRef<WiredCreatorToolsRoomStats>(null);
     const inspectionValuesRef = useRef<WiredCreatorToolsInspectionValues>(null);
+    const arrayInspectionRef = useRef<WiredCreatorToolsArrayInspection>(null);
+    const selectedArrayNameRef = useRef('');
     const mouseHoldStateRef = useRef<WiredMouseHoldStateUpdate>(null);
     const pendingInspectionRequestRef = useRef<{ key: string; sentAt: number }>(null);
     const variableHighlightRef = useRef<WiredCreatorToolsVariableHighlight>(null);
@@ -1237,6 +1298,10 @@ export const WiredCreatorToolsView: FC<{}> = () =>
 
         roomStatsRef.current = null;
         setRoomStats(null);
+        selectedArrayNameRef.current = '';
+        arrayInspectionRef.current = null;
+        setSelectedArrayName('');
+        setArrayInspection(null);
         setChestLogs([]);
         setChestLogsOpen(false);
         setSelectedChestLog(null);
@@ -1270,6 +1335,22 @@ export const WiredCreatorToolsView: FC<{}> = () =>
             pendingInspectionRequestRef.current = { key: requestKey, sentAt: Date.now() };
             SendMessageComposer(new WiredCreatorToolsInspectionValuesComposer(sourceType, sourceId));
         }, delay);
+    }, []);
+
+    const requestArrayInspection = useCallback((
+        definition: WiredCreatorToolsArrayDefinition,
+        sourceId: number,
+        page: number) =>
+    {
+        if(!definition?.inspectable || sourceId < 0) return;
+
+        SendMessageComposer(new WiredCreatorToolsInspectionValuesComposer(
+            'array',
+            sourceId,
+            definition.variableType,
+            definition.name,
+            page,
+            WIRED_CREATOR_TOOLS_DEFAULTS.arrayInspectionPageSize));
     }, []);
 
     const requestLogs = useCallback((clearLogs = false) =>
@@ -1357,6 +1438,10 @@ export const WiredCreatorToolsView: FC<{}> = () =>
         setGiveVariableOpen(false);
         setGiveVariableName('');
         setGiveVariableValue('0');
+        selectedArrayNameRef.current = '';
+        arrayInspectionRef.current = null;
+        setSelectedArrayName('');
+        setArrayInspection(null);
         inspectionValuesRef.current = inspectionValuesRef.current?.sourceType === type ? inspectionValuesRef.current : null;
         selectedInspectionSourceRef.current = selectedInspectionSourceRef.current?.sourceType === type ? selectedInspectionSourceRef.current : null;
 
@@ -1776,6 +1861,27 @@ export const WiredCreatorToolsView: FC<{}> = () =>
     useMessageEvent<WiredCreatorToolsInspectionValuesEvent>(WiredCreatorToolsInspectionValuesEvent, event =>
     {
         const nextValues = event.getParser().inspectionValues;
+
+        if(nextValues?.sourceType === 'array')
+        {
+            const page = nextValues.arrayInspection;
+
+            if(!page ||
+                page.requestedOwnerType !== inspectionType ||
+                page.definition?.name !== selectedArrayNameRef.current) return;
+
+            const selectedSource = selectedInspectionSourceRef.current;
+
+            if(inspectionType !== 'global' &&
+                (!selectedSource ||
+                    selectedSource.sourceType !== inspectionType ||
+                    selectedSource.sourceId !== page.requestedOwnerId)) return;
+
+            arrayInspectionRef.current = page;
+            setArrayInspection(page);
+            return;
+        }
+
         const pushedHold = mouseHoldStateRef.current;
 
         if(nextValues?.sourceType === 'user' && pushedHold?.sourceId === nextValues.sourceId)
@@ -2016,10 +2122,28 @@ export const WiredCreatorToolsView: FC<{}> = () =>
             {
                 requestInspectionValues(inspectionType, inspectionValuesRef.current.sourceId);
             }
+
+            if(activeTab === 'inspection' && selectedArrayNameRef.current)
+            {
+                const definitions = inspectionType === 'global'
+                    ? (roomStatsRef.current?.arrayDefinitions ?? [])
+                    : (inspectionValuesRef.current?.arrayDefinitions ?? []);
+                const definition = definitions.find(value =>
+                    value.variableType === VARIABLE_TYPE_CODES[inspectionType] &&
+                    value.name === selectedArrayNameRef.current);
+                const sourceId = inspectionType === 'global'
+                    ? 0
+                    : selectedInspectionSourceRef.current?.sourceId;
+
+                if(definition && sourceId !== undefined)
+                {
+                    requestArrayInspection(definition, sourceId, arrayInspectionRef.current?.page ?? 0);
+                }
+            }
         }, 500);
 
         return () => clearInterval(refreshTimer);
-    }, [ activeTab, inspectionType, isVisible, requestInspectionValues, requestRoomStats ]);
+    }, [ activeTab, inspectionType, isVisible, requestArrayInspection, requestInspectionValues, requestRoomStats ]);
 
     const subscribedInspectionUserId = isVisible && activeTab === 'inspection' && inspectionType === 'user'
         ? (inspectionValues?.sourceType === 'user' ? inspectionValues.sourceId : -1)
@@ -2109,6 +2233,85 @@ export const WiredCreatorToolsView: FC<{}> = () =>
         setSelectedVariableKey(previous => ({ ...previous, [type]: variableKey }));
         clearVariableHighlight();
     }, [ clearVariableHighlight ]);
+
+    const inspectionArrayDefinitions = useMemo(() =>
+    {
+        const definitions = inspectionType === 'global'
+            ? ((roomStatsRef.current ?? roomStats)?.arrayDefinitions ?? [])
+            : (inspectionValues?.arrayDefinitions ?? []);
+        const arrayVariables = inspectionValues?.sourceType === inspectionType
+            ? (inspectionValues.arrayVariables ?? [])
+            : [];
+
+        return definitions.filter(definition =>
+            definition.variableType === VARIABLE_TYPE_CODES[inspectionType] &&
+            definition.inspectable &&
+            (inspectionType === 'global' || arrayVariables.includes(definition.name)));
+    }, [ inspectionType, inspectionValues, roomStats ]);
+
+    const selectedInspectionArrayDefinition = useMemo(() =>
+        inspectionArrayDefinitions.find(definition => definition.name === selectedArrayName),
+    [ inspectionArrayDefinitions, selectedArrayName ]);
+
+    const selectInspectionArray = useCallback((name: string) =>
+    {
+        selectedArrayNameRef.current = name;
+        arrayInspectionRef.current = null;
+        setSelectedArrayName(name);
+        setArrayInspection(null);
+        if(!name) return;
+
+        const definition = inspectionArrayDefinitions.find(value => value.name === name);
+        const sourceId = inspectionType === 'global'
+            ? 0
+            : selectedInspectionSourceRef.current?.sourceId;
+
+        if(definition && sourceId !== undefined) requestArrayInspection(definition, sourceId, 0);
+    }, [ inspectionArrayDefinitions, inspectionType, requestArrayInspection ]);
+
+    useEffect(() =>
+    {
+        if(!selectedArrayName || selectedInspectionArrayDefinition) return;
+
+        selectedArrayNameRef.current = '';
+        arrayInspectionRef.current = null;
+        setSelectedArrayName('');
+        setArrayInspection(null);
+    }, [ selectedArrayName, selectedInspectionArrayDefinition ]);
+
+    const changeArrayInspectionPage = useCallback((page: number) =>
+    {
+        const definition = inspectionArrayDefinitions.find(value => value.name === selectedArrayNameRef.current);
+        const sourceId = inspectionType === 'global'
+            ? 0
+            : selectedInspectionSourceRef.current?.sourceId;
+
+        if(!definition || sourceId === undefined) return;
+        requestArrayInspection(definition, sourceId, Math.max(0, page));
+    }, [ inspectionArrayDefinitions, inspectionType, requestArrayInspection ]);
+
+    const setArrayInspectionFieldValue = useCallback((index: number, fieldId: number, value: string) =>
+    {
+        if(!/^-?\d+$/.test(value)) return;
+
+        const definition = inspectionArrayDefinitions.find(item => item.name === selectedArrayNameRef.current);
+        const sourceId = inspectionType === 'global'
+            ? 0
+            : selectedInspectionSourceRef.current?.sourceId;
+
+        if(!definition || sourceId === undefined || !definition.writable) return;
+
+        SendMessageComposer(new WiredCreatorToolsVariableActionComposer(
+            inspectionType,
+            sourceId,
+            'set_array_field',
+            definition.name,
+            value,
+            index,
+            fieldId,
+            arrayInspectionRef.current?.page ?? 0,
+            arrayInspectionRef.current?.pageSize ?? WIRED_CREATOR_TOOLS_DEFAULTS.arrayInspectionPageSize));
+    }, [ inspectionArrayDefinitions, inspectionType ]);
 
     const filteredLogRows = useMemo(() =>
     {
@@ -2206,6 +2409,13 @@ export const WiredCreatorToolsView: FC<{}> = () =>
             inspectionPreview={ inspectionPreview }
             inspectionValues={ inspectionValues }
             inspectionRows={ habboInspectionRows }
+            arrayDefinitions={ inspectionArrayDefinitions }
+            selectedArrayDefinition={ selectedInspectionArrayDefinition }
+            arrayInspection={ arrayInspection }
+            onOpenArray={ selectInspectionArray }
+            onCloseArray={ () => selectInspectionArray('') }
+            onArrayPage={ changeArrayInspectionPage }
+            onSetArrayField={ setArrayInspectionFieldValue }
             pulseKeys={ pulseKeys }
             selectedInspectionVariable={ selectedInspectionVariable }
             onSelectInspectionVariable={ setSelectedInspectionVariable }

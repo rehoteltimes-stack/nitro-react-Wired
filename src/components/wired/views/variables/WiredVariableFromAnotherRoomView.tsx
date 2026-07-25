@@ -11,6 +11,12 @@ interface SharedVariable
 {
     type: number;
     name: string;
+    valueShape?: number;
+    arrayFormat?: number;
+    arrayMode?: number;
+    maxEntries?: number;
+    schemaVersion?: number;
+    fields?: { id: number; name: string; order: number; }[];
 }
 
 interface SharedRoom
@@ -31,7 +37,8 @@ interface ReferenceEditorData
 const sanitizeVariableName = (input: string): string =>
 {
     let result = '';
-    for (const c of input.toLowerCase()) {
+    for (const c of input.toLowerCase())
+    {
         if (/[a-z0-9_]/.test(c)) result += c;
         else if (/\s/.test(c)) result += '_';
     }
@@ -130,7 +137,7 @@ export const WiredVariableFromAnotherRoomView: FC<{}> = props =>
         setReadOnly(variable.persistence === 1);
         setSourceRoomId(nextRoomId);
         setSourceVariableKey(nextVariableName ? `${ nextVariableType }:${ nextVariableName }` : '');
-    }, [ variable ]);
+    }, [ variable, data.sourceRoomId, data.sourceVariableName, data.sourceVariableType ]);
 
     useEffect(() =>
     {
@@ -144,9 +151,7 @@ export const WiredVariableFromAnotherRoomView: FC<{}> = props =>
             <WiredControlSection title={ LocalizeText('wiredfurni.params.variables.variable_name') }>
                 <WiredTextInput type="text" value={ variableName } onChange={ event => setVariableName(sanitizeVariableName(event.target.value)) } maxLength={ 40 } />
             </WiredControlSection>
-
             <WiredDivider />
-
             <WiredControlSection title={ LocalizeText('wiredfurni.params.room_selection') }>
                 <WiredSelect
                     value={ sourceRoomId }
@@ -160,9 +165,7 @@ export const WiredVariableFromAnotherRoomView: FC<{}> = props =>
                         ...rooms.map(room => ({ value: room.id, label: room.name || String(room.id) }))
                     ] } />
             </WiredControlSection>
-
             <WiredDivider />
-
             <WiredControlSection title={ LocalizeText('wiredfurni.params.variables.variable_ref_selection') }>
                 <WiredSelect
                     value={ sourceVariableKey }
@@ -173,9 +176,7 @@ export const WiredVariableFromAnotherRoomView: FC<{}> = props =>
                         ...variableOptions.map(next => ({ value: variableKey(next), label: next.name }))
                     ] } />
             </WiredControlSection>
-
             <WiredDivider />
-
             <WiredControlSection title={ LocalizeText('wiredfurni.params.variables.settings') }>
                 <WiredCheckbox
                     checked={ readOnly }

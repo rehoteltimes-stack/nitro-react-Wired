@@ -2,7 +2,8 @@ import { FC, useEffect, useMemo, useState } from 'react';
 import { LocalizeText, WiredFurniType } from '../../../../api';
 import { useWired } from '../../../../hooks';
 import { WiredBaseView } from '../WiredBaseView';
-import { parseWiredData, WiredParam, WiredTextarea } from '../WiredControls';
+import { WiredVariableDefinitionMetadata, WIRED_ARRAY_FORMAT_RECORD } from '../WiredArrayControls';
+import { parseWiredData, WiredParam, WiredSelect, WiredTextarea } from '../WiredControls';
 
 const MAX_LINES = 30;
 const MAX_CHARACTERS = 1000;
@@ -12,6 +13,8 @@ const FALLBACK_PLACEHOLDER = '0=text0\n1=text1\n2=...';
 interface TextConnectorData
 {
     text?: string;
+    fieldId?: number;
+    variableDefinition?: WiredVariableDefinitionMetadata;
 }
 
 const sanitizeText = (value: string) =>
@@ -34,6 +37,7 @@ const getText = (value: string) =>
 export const WiredExtraTextConnectorView: FC<{}> = props =>
 {
     const [ text, setText ] = useState('');
+    const [ fieldId, setFieldId ] = useState(0);
     const { trigger = null, setIntParams = null, setStringParam = null } = useWired() as any;
     const placeholder = useMemo(() =>
     {
@@ -46,14 +50,23 @@ export const WiredExtraTextConnectorView: FC<{}> = props =>
     {
         if(!trigger) return;
 
-        setText(sanitizeText(getText(trigger.stringData || '')));
+        const data = parseWiredData<TextConnectorData>(trigger.stringData || '');
+        const definition = data.variableDefinition;
+        const fallbackFieldId = definition?.fields?.[0]?.id ?? 0;
+
+        setText(sanitizeText(data.text ?? getText(trigger.stringData || '')));
+        setFieldId(definition?.fields?.some(field => field.id === data.fieldId) ? (data.fieldId ?? fallbackFieldId) : fallbackFieldId);
     }, [ trigger ]);
 
     const save = () =>
     {
         setIntParams([]);
-        setStringParam(JSON.stringify({ text: sanitizeText(text) }));
+        setStringParam(JSON.stringify({ text: sanitizeText(text), fieldId }));
     };
+
+    const data = useMemo(() => parseWiredData<TextConnectorData>(trigger?.stringData || ''), [ trigger ]);
+    const definition = data.variableDefinition;
+    const showField = definition?.valueShape === 1 && definition.arrayFormat === WIRED_ARRAY_FORMAT_RECORD;
 
     return (
         <WiredBaseView
@@ -61,6 +74,13 @@ export const WiredExtraTextConnectorView: FC<{}> = props =>
             requiresFurni={ WiredFurniType.STUFF_SELECTION_OPTION_NONE }
             hasSpecialInput={ true }
             save={ save }>
+            { showField &&
+                <WiredParam title="Field">
+                    <WiredSelect
+                        value={ fieldId }
+                        onChange={ event => setFieldId(Number(event.target.value)) }
+                        options={ (definition?.fields ?? []).map(field => ({ value: field.id, label: field.name })) } />
+                </WiredParam> }
             <WiredParam titleKey="wiredfurni.params.variables.connect_text.title" divider={ false }>
                 <div className="nw-textarea-placeholder-wrap">
                     <WiredTextarea

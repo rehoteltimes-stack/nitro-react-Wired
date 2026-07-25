@@ -1,4 +1,4 @@
-import { FC, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { LocalizeText, WiredFurniType } from '../../../../api';
 import { useWired } from '../../../../hooks';
 import { WiredSourceSelectorConfig } from '../WiredFurniSelectorView';
@@ -15,12 +15,23 @@ import {
     WiredVariableLists,
     WiredVariablePicker,
     wiredVariableExists,
+    wiredSignedLongIsValid,
     wiredVariableSourceOptions,
     WIRED_VARIABLE_CONTEXT,
     WIRED_VARIABLE_FURNI,
     WIRED_VARIABLE_GLOBAL,
     WIRED_VARIABLE_USER
 } from '../WiredControls';
+import {
+    createWiredArrayAddress,
+    normalizeWiredArrayAddress,
+    wiredArrayAddressIsValid,
+    wiredArrayDefinition,
+    WiredArrayAddressData,
+    WiredArrayAddressEditor,
+    wiredScalarVariableLists,
+    WiredVariableDefinitionMetadata
+} from '../WiredArrayControls';
 import { WiredConditionBaseView } from './WiredConditionBaseView';
 import { WIRED_CONDITION_QUANTIFIER_ALL as QUANTIFIER_ALL, WIRED_CONDITION_QUANTIFIER_ANY as QUANTIFIER_ANY, WiredConditionQuantifierSection } from './WiredConditionUtils';
 
@@ -44,7 +55,7 @@ interface VariableConditionData
 {
     targetVariable?: string;
     referenceVariable?: string;
-    referenceValue?: number;
+    referenceValue?: string | number;
     globalVariables?: string[];
     furniVariables?: string[];
     userVariables?: string[];
@@ -60,6 +71,9 @@ interface VariableConditionData
     targetSource?: number;
     referenceSource?: number;
     quantifier?: number;
+    targetAddress?: Partial<WiredArrayAddressData>;
+    referenceAddress?: Partial<WiredArrayAddressData>;
+    variableDefinitions?: WiredVariableDefinitionMetadata[];
 }
 
 const normalizeComparison = (comparison: number) => COMPARISON_OPTIONS.some(option => option.value === comparison) ? comparison : COMPARISON_EQUAL;
@@ -80,23 +94,38 @@ export const WiredConditionVariableValueView: FC<{}> = () =>
     const [ targetSource, setTargetSource ] = useState(WIRED_VARIABLE_GLOBAL);
     const [ referenceSource, setReferenceSource ] = useState(WIRED_VARIABLE_GLOBAL);
     const [ quantifier, setQuantifier ] = useState(QUANTIFIER_ALL);
+    const [ targetAddress, setTargetAddress ] = useState<WiredArrayAddressData>(createWiredArrayAddress);
+    const [ referenceAddress, setReferenceAddress ] = useState<WiredArrayAddressData>(createWiredArrayAddress);
     const { trigger = null, setIntParams = null, setStringParam = null, furniIds = [] } = useWired() as any;
 
     const data = useMemo(() => parseWiredData<VariableConditionData>(trigger?.stringData ?? ''), [ trigger ]);
     const includeClickedAvatarSource = wiredClickedAvatarSourceAvailableForTrigger(trigger);
     const subVariables = useMemo(() => data.subVariables ?? {}, [ data ]);
-    const getSourceOptions = (type: number) => wiredVariableSourceOptions(type, includeClickedAvatarSource);
+    const variableDefinitions = useMemo(() => data.variableDefinitions ?? [], [ data ]);
+    const getSourceOptions = useCallback(
+        (type: number) => wiredVariableSourceOptions(type, includeClickedAvatarSource),
+        [ includeClickedAvatarSource ]);
     const variables = useMemo<WiredVariableLists>(() => ({
         global: data.globalVariables ?? [],
         furni: (data.furniValueVariables ?? []).length ? data.furniValueVariables : (data.furniVariables ?? []),
         user: (data.userValueVariables ?? []).length ? data.userValueVariables : (data.userVariables ?? []),
         context: (data.contextValueVariables ?? []).length ? data.contextValueVariables : (data.contextVariables ?? [])
     }), [ data ]);
+    const scalarIndexVariables = useMemo(
+        () => wiredScalarVariableLists(variables, variableDefinitions),
+        [ variables, variableDefinitions ]);
+    const targetArray = wiredArrayDefinition(variableDefinitions, targetVariableType, targetVariable);
+    const referenceArray = referenceMode === WIRED_REFERENCE_FROM_VARIABLE
+        ? wiredArrayDefinition(variableDefinitions, referenceVariableType, referenceVariable)
+        : undefined;
 
     const selectedCount = Array.isArray(furniIds) ? furniIds.length : 0;
     const selectionLimit = trigger?.maximumItemSelectionCount ?? 20;
     const selectedSourceLabel = `${ LocalizeText('wiredfurni.params.sources.furni.100') } [${ selectedCount }/${ selectionLimit }]`;
-    const needsFurniSelection = targetVariableType === WIRED_VARIABLE_FURNI || (referenceMode === WIRED_REFERENCE_FROM_VARIABLE && referenceVariableType === WIRED_VARIABLE_FURNI);
+    const needsFurniSelection = targetVariableType === WIRED_VARIABLE_FURNI ||
+        (referenceMode === WIRED_REFERENCE_FROM_VARIABLE && referenceVariableType === WIRED_VARIABLE_FURNI) ||
+        (!!targetArray && targetAddress.indexMode === WIRED_REFERENCE_FROM_VARIABLE && targetAddress.indexVariableType === WIRED_VARIABLE_FURNI) ||
+        (!!referenceArray && referenceAddress.indexMode === WIRED_REFERENCE_FROM_VARIABLE && referenceAddress.indexVariableType === WIRED_VARIABLE_FURNI);
     const sourceOptionLabels = {
         [WIRED_SOURCE_SELECTED]: selectedSourceLabel,
         [WIRED_VARIABLE_GLOBAL]: LocalizeText('wiredfurni.params.sources.global'),
@@ -119,7 +148,23 @@ export const WiredConditionVariableValueView: FC<{}> = () =>
             labelPrefix: sourceLabelPrefix(referenceVariableType),
             optionLabels: sourceOptionLabels,
             disabled: referenceMode !== WIRED_REFERENCE_FROM_VARIABLE
-        }
+        },
+        ...(targetArray && targetAddress.indexMode === WIRED_REFERENCE_FROM_VARIABLE ? [ {
+            value: targetAddress.indexVariableSource,
+            onChange: (indexVariableSource: number) => setTargetAddress(value => ({ ...value, indexVariableSource })),
+            options: getSourceOptions(targetAddress.indexVariableType),
+            titleKey: 'wiredfurni.params.sources.merged.title.variables',
+            labelPrefix: sourceLabelPrefix(targetAddress.indexVariableType),
+            optionLabels: sourceOptionLabels
+        } ] : []),
+        ...(referenceArray && referenceAddress.indexMode === WIRED_REFERENCE_FROM_VARIABLE ? [ {
+            value: referenceAddress.indexVariableSource,
+            onChange: (indexVariableSource: number) => setReferenceAddress(value => ({ ...value, indexVariableSource })),
+            options: getSourceOptions(referenceAddress.indexVariableType),
+            titleKey: 'wiredfurni.params.sources.merged.title.variables_reference',
+            labelPrefix: sourceLabelPrefix(referenceAddress.indexVariableType),
+            optionLabels: sourceOptionLabels
+        } ] : [])
     ];
 
     const setNormalizedTargetType = (type: number) =>
@@ -143,7 +188,9 @@ export const WiredConditionVariableValueView: FC<{}> = () =>
         setStringParam(JSON.stringify({
             targetVariable,
             referenceVariable,
-            referenceValue: Number(referenceValue || 0)
+            referenceValue,
+            targetAddress,
+            referenceAddress
         }));
         setIntParams([
             targetVariableType,
@@ -155,6 +202,13 @@ export const WiredConditionVariableValueView: FC<{}> = () =>
             quantifier
         ]);
     };
+
+    const validate = () =>
+        !!targetVariable &&
+        (referenceMode !== WIRED_REFERENCE_FROM_VARIABLE || !!referenceVariable) &&
+        (referenceMode !== WIRED_REFERENCE_SET_VALUE || wiredSignedLongIsValid(referenceValue)) &&
+        wiredArrayAddressIsValid(targetAddress, targetArray) &&
+        wiredArrayAddressIsValid(referenceAddress, referenceArray);
 
     useEffect(() =>
     {
@@ -178,13 +232,18 @@ export const WiredConditionVariableValueView: FC<{}> = () =>
         setTargetSource(normalizeWiredSource(intData[4] ?? data.targetSource ?? WIRED_VARIABLE_GLOBAL, getSourceOptions(savedTargetVariableType)));
         setReferenceSource(normalizeWiredSource(intData[5] ?? data.referenceSource ?? WIRED_VARIABLE_GLOBAL, getSourceOptions(savedReferenceVariableType)));
         setQuantifier((intData[6] ?? data.quantifier ?? QUANTIFIER_ALL) === QUANTIFIER_ANY ? QUANTIFIER_ANY : QUANTIFIER_ALL);
-    }, [ trigger, data, variables, subVariables ]);
+        const savedTargetDefinition = wiredArrayDefinition(variableDefinitions, savedTargetVariableType, savedTargetVariable);
+        const savedReferenceDefinition = wiredArrayDefinition(variableDefinitions, savedReferenceVariableType, savedReferenceVariable);
+        setTargetAddress(normalizeWiredArrayAddress(data.targetAddress, savedTargetDefinition, includeClickedAvatarSource));
+        setReferenceAddress(normalizeWiredArrayAddress(data.referenceAddress, savedReferenceDefinition, includeClickedAvatarSource));
+    }, [ trigger, data, variables, subVariables, variableDefinitions, includeClickedAvatarSource, getSourceOptions ]);
 
     return (
         <WiredConditionBaseView
             requiresFurni={ needsFurniSelection ? WiredFurniType.STUFF_SELECTION_OPTION_BY_ID_BY_TYPE_OR_FROM_CONTEXT : WiredFurniType.STUFF_SELECTION_OPTION_NONE }
             hasSpecialInput={ true }
             save={ save }
+            validate={ validate }
             hideFurniSelector={ needsFurniSelection }
             sourceSelectors={ sourceSelectors }
             advancedSlot={ <WiredConditionQuantifierSection kind="variables" name="variableValueQuantifier" value={ quantifier } onChange={ setQuantifier } /> }
@@ -203,7 +262,15 @@ export const WiredConditionVariableValueView: FC<{}> = () =>
                     onVariableSourceChange={ setTargetSource }
                     includeClickedAvatarSource={ includeClickedAvatarSource } />
             </WiredParam>
-
+            <WiredArrayAddressEditor
+                radioName="conditionTargetArrayIndex"
+                title="Target index"
+                definition={ targetArray }
+                value={ targetAddress }
+                onChange={ setTargetAddress }
+                variables={ scalarIndexVariables }
+                subVariables={ subVariables }
+                includeClickedAvatarSource={ includeClickedAvatarSource } />
             <WiredParam titleKey="wiredfurni.params.choose_type">
                 <WiredRadioGroup
                     inline
@@ -213,7 +280,6 @@ export const WiredConditionVariableValueView: FC<{}> = () =>
                     onChange={ value => setComparison(Number(value)) }
                     options={ COMPARISON_OPTIONS } />
             </WiredParam>
-
             <WiredParam titleKey="wiredfurni.params.variables.reference_value" divider={ false }>
                 <WiredValueOrVariable
                     radioName="variableValueReference"
@@ -221,8 +287,7 @@ export const WiredConditionVariableValueView: FC<{}> = () =>
                     onModeChange={ setReferenceMode }
                     value={ referenceValue }
                     onValueChange={ setReferenceValue }
-                    min={ -999999999 }
-                    max={ 999999999 }
+                    signedLong
                     variableType={ referenceVariableType }
                     onVariableTypeChange={ setNormalizedReferenceType }
                     variableName={ referenceVariable }
@@ -233,6 +298,16 @@ export const WiredConditionVariableValueView: FC<{}> = () =>
                     onVariableSourceChange={ setReferenceSource }
                     includeClickedAvatarSource={ includeClickedAvatarSource } />
             </WiredParam>
+            <WiredArrayAddressEditor
+                radioName="conditionReferenceArrayIndex"
+                title="Reference index"
+                definition={ referenceArray }
+                value={ referenceAddress }
+                onChange={ setReferenceAddress }
+                variables={ scalarIndexVariables }
+                subVariables={ subVariables }
+                includeClickedAvatarSource={ includeClickedAvatarSource }
+                divider={ false } />
         </WiredConditionBaseView>
     );
 }

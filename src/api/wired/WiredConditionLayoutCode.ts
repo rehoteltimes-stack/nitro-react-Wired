@@ -27,6 +27,7 @@ public static AVATAR_COUNT_IN_ROOM: number = 21;
 public static HAS_VARIABLE: number = 30;
 public static VARIABLE_VALUE_MATCHES: number = 31;
 public static VARIABLE_AGE_MATCHES: number = 32;
+public static CHECK_ARRAY: number = 33;
 
 public static CHEST_HAS_ITEMS: number = 45;
 public static CHEST_HAS_FURNI_TYPE: number = 46;

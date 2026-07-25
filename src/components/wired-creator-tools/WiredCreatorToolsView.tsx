@@ -11,7 +11,7 @@ import { ObjectLocationView } from '../room/widgets/object-location/ObjectLocati
 import { WiredAdjustButton, WiredSelect, WiredTextInput } from '../wired/views/WiredControls';
 import { WiredIcon, wiredIconUrl } from '../wired/views/WiredIcons';
 import { WIRED_CREATOR_TOOLS_DEFAULTS } from './WiredCreatorToolsContracts';
-import { WiredCreatorToolCreated, WiredCreatorToolsCancelPlacementComposer, WiredCreatorToolsCatalogComposer, WiredCreatorToolsCatalogEvent, WiredCreatorToolsChestLogDetailItem, WiredCreatorToolsChestLogEntry, WiredCreatorToolsChestLogsComposer, WiredCreatorToolsChestLogsEvent, WiredCreatorToolsCreateItemComposer, WiredCreatorToolsCreateItemEvent, WiredCreatorToolsInspectionValues, WiredCreatorToolsInspectionValuesComposer, WiredCreatorToolsInspectionValuesEvent, WiredCreatorToolsLogEntry, WiredCreatorToolsLogsComposer, WiredCreatorToolsLogsEvent, WiredCreatorToolsMessageConfiguration, WiredCreatorToolsOpenEvent, WiredCreatorToolsRoomAction, WiredCreatorToolsRoomActionComposer, WiredCreatorToolsRoomStats, WiredCreatorToolsRoomStatsComposer, WiredCreatorToolsRoomStatsEvent, WiredCreatorToolsSaveSettingsComposer, WiredCreatorToolsVariableActionComposer, WiredCreatorToolsVariableHighlight, WiredCreatorToolsVariableHighlightComposer, WiredCreatorToolsVariableHighlightEvent, WiredMouseHoldStateEvent, WiredMouseHoldStateUpdate, WiredMouseHoldSubscriptionComposer } from './WiredCreatorToolsMessages';
+import { WiredCreatorToolCreated, WiredCreatorToolsArrayDefinition, WiredCreatorToolsArrayInspection, WiredCreatorToolsCancelPlacementComposer, WiredCreatorToolsCatalogComposer, WiredCreatorToolsCatalogEvent, WiredCreatorToolsChestLogDetailItem, WiredCreatorToolsChestLogEntry, WiredCreatorToolsChestLogsComposer, WiredCreatorToolsChestLogsEvent, WiredCreatorToolsCreateItemComposer, WiredCreatorToolsCreateItemEvent, WiredCreatorToolsInspectionValues, WiredCreatorToolsInspectionValuesComposer, WiredCreatorToolsInspectionValuesEvent, WiredCreatorToolsLogEntry, WiredCreatorToolsLogsComposer, WiredCreatorToolsLogsEvent, WiredCreatorToolsMessageConfiguration, WiredCreatorToolsOpenEvent, WiredCreatorToolsRoomAction, WiredCreatorToolsRoomActionComposer, WiredCreatorToolsRoomStats, WiredCreatorToolsRoomStatsComposer, WiredCreatorToolsRoomStatsEvent, WiredCreatorToolsSaveSettingsComposer, WiredCreatorToolsVariableActionComposer, WiredCreatorToolsVariableHighlight, WiredCreatorToolsVariableHighlightComposer, WiredCreatorToolsVariableHighlightEvent, WiredMouseHoldStateEvent, WiredMouseHoldStateUpdate, WiredMouseHoldSubscriptionComposer } from './WiredCreatorToolsMessages';
 
 type WiredCreatorToolsTab = 'monitor' | 'variables' | 'inspection' | 'chests' | 'tools' | 'settings';
 type VariableType = 'furni' | 'user' | 'global' | 'context';
@@ -75,6 +75,7 @@ interface VariableDefinition
     hasUpdateTime: string;
     isTextConnected: string;
     textValues?: { value: string; text: string; }[];
+    arrayDefinition?: WiredCreatorToolsArrayDefinition;
 }
 
 interface WiredToolItem
@@ -325,6 +326,9 @@ const areStringArraysEqual = (previous: string[] = [], next: string[] = []) =>
     return next.every((value, index) => previous[index] === value);
 };
 
+const areArrayDefinitionsEqual = (previous: WiredCreatorToolsArrayDefinition[] = [], next: WiredCreatorToolsArrayDefinition[] = []) =>
+    JSON.stringify(previous) === JSON.stringify(next);
+
 const areMonitorStatsEqual = (previous: WiredCreatorToolsRoomStats, next: WiredCreatorToolsRoomStats) =>
 {
     if(previous === next) return true;
@@ -339,7 +343,8 @@ const areGlobalInspectionValuesEqual = (previous: WiredCreatorToolsRoomStats, ne
     if(!previous || !next) return false;
 
     return getChangedGlobalInspectionKeys(previous, next).length === 0 &&
-        areStringArraysEqual(previous.globalVariables, next.globalVariables);
+        areStringArraysEqual(previous.globalVariables, next.globalVariables) &&
+        areArrayDefinitionsEqual(previous.arrayDefinitions, next.arrayDefinitions);
 };
 
 const areVariableDefinitionsEqual = (previous: WiredCreatorToolsRoomStats, next: WiredCreatorToolsRoomStats) =>
@@ -349,7 +354,8 @@ const areVariableDefinitionsEqual = (previous: WiredCreatorToolsRoomStats, next:
 
     return areStringArraysEqual(previous.furniVariables, next.furniVariables) &&
         areStringArraysEqual(previous.userVariables, next.userVariables) &&
-        areStringArraysEqual(previous.globalVariables, next.globalVariables);
+        areStringArraysEqual(previous.globalVariables, next.globalVariables) &&
+        areArrayDefinitionsEqual(previous.arrayDefinitions, next.arrayDefinitions);
 };
 
 const areVisibleRoomStatsEqual = (previous: WiredCreatorToolsRoomStats, next: WiredCreatorToolsRoomStats, activeTab: WiredCreatorToolsTab, inspectionType: InspectionType) =>
@@ -377,7 +383,9 @@ const areInspectionValuesEqual = (previous: WiredCreatorToolsInspectionValues, n
     return previous.sourceType === next.sourceType &&
         previous.sourceId === next.sourceId &&
         areStringRecordsEqual(previous.values, next.values) &&
-        areStringArraysEqual(previous.variables, next.variables);
+        areStringArraysEqual(previous.variables, next.variables) &&
+        areArrayDefinitionsEqual(previous.arrayDefinitions, next.arrayDefinitions) &&
+        areStringArraysEqual(previous.arrayVariables, next.arrayVariables);
 };
 
 const MONITOR_LOGS: MonitorLog[] = [
@@ -762,6 +770,27 @@ const VARIABLE_DEFINITIONS: Record<VariableType, VariableDefinition[]> = {
             { value: '2', text: 'Inspection / Creator Tool' },
             { value: '3', text: 'External' }
         ]),
+        createInternalVariable('@array.change_type', 'Context', 'Yes', 'No', [
+            { value: '1', text: 'Entry Appended' },
+            { value: '2', text: 'Entry Inserted' },
+            { value: '3', text: 'Entry Removed' },
+            { value: '4', text: 'Slot Cleared' },
+            { value: '5', text: 'Entry Replaced' },
+            { value: '6', text: 'Moved' },
+            { value: '7', text: 'Field Value Changed' },
+            { value: '9', text: 'Array Cleared' },
+            { value: '10', text: 'Created' },
+            { value: '11', text: 'Swapped' },
+            { value: '12', text: 'Shuffled' }
+        ]),
+        createInternalVariable('@array.index', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.source_index', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.destination_index', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.field_index', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.old_value', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.new_value', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.old_length', 'Context', 'Yes', 'No'),
+        createInternalVariable('@array.new_length', 'Context', 'Yes', 'No'),
         createInternalVariable('@event.transaction_complete.multiplier', 'Context', 'Yes', 'No'),
         createInternalVariable('@event.transaction_complete.deposit.furni_count', 'Context', 'Yes', 'No'),
         createInternalVariable('@event.transaction_complete.deposit.coins_count', 'Context', 'Yes', 'No'),
@@ -847,20 +876,43 @@ function createDynamicTextInternalVariable(
     };
 }
 
-const getVariableProperties = (variable: VariableDefinition) => [
-    { property: 'Name', value: variable.key },
-    { property: 'Type', value: variable.type },
-    { property: 'Target', value: variable.target },
-    { property: 'Availability', value: variable.availability },
-    { property: 'Has Value', value: variable.hasValue },
-    { property: 'Can write to', value: variable.canWriteTo },
-    { property: 'Can create/delete', value: variable.canCreateDelete },
-    { property: 'Can intercept', value: variable.canIntercept },
-    { property: 'Is always available', value: variable.isAlwaysAvailable },
-    { property: 'Has creation time', value: variable.hasCreationTime },
-    { property: 'Has update time', value: variable.hasUpdateTime },
-    { property: 'Is text connected', value: variable.isTextConnected }
-];
+const getVariableProperties = (variable: VariableDefinition) =>
+{
+    const properties = [
+        { property: 'Name', value: variable.key },
+        { property: 'Type', value: variable.type },
+        { property: 'Target', value: variable.target },
+        { property: 'Availability', value: variable.availability },
+        { property: 'Has Value', value: variable.hasValue },
+        { property: 'Can write to', value: variable.canWriteTo },
+        { property: 'Can create/delete', value: variable.canCreateDelete },
+        { property: 'Can intercept', value: variable.canIntercept },
+        { property: 'Is always available', value: variable.isAlwaysAvailable },
+        { property: 'Has creation time', value: variable.hasCreationTime },
+        { property: 'Has update time', value: variable.hasUpdateTime },
+        { property: 'Is text connected', value: variable.isTextConnected }
+    ];
+    const array = variable.arrayDefinition;
+
+    if(array)
+    {
+        properties.splice(4, 0,
+            { property: 'Shape', value: 'Array' },
+            { property: 'Format', value: array.arrayFormat === 1 ? 'Record' : 'Simple' },
+            { property: 'Mode', value: array.arrayMode === 1 ? 'Slots' : 'List' },
+            { property: 'Capacity', value: String(array.maxEntries) },
+            { property: 'Schema version', value: String(array.schemaVersion) },
+            { property: 'Referenced', value: array.referenced ? 'Yes' : 'No' },
+            { property: 'Writable', value: array.writable ? 'Yes' : 'No' },
+            { property: 'Fields', value: array.fields
+                .slice()
+                .sort((first, second) => first.order - second.order)
+                .map(field => `${ field.id }:${ field.name }${ field.textConnected ? ' (Text)' : '' }`)
+                .join(', ') });
+    }
+
+    return properties;
+};
 
 const CONDITIONAL_USER_INSPECTION_VARIABLES = new Set([
     '@is_hc',
@@ -1055,10 +1107,31 @@ const createInspectionCreatedVariable = (key: string, target: 'Furni' | 'User' |
     isTextConnected: 'No'
 });
 
+const VARIABLE_TYPE_CODES: Record<VariableType, number> = { furni: 0, global: 1, user: 2, context: 3 };
+
+const createArrayVariableDefinition = (definition: WiredCreatorToolsArrayDefinition): VariableDefinition =>
+{
+    const target = definition.variableType === 0 ? 'Furni' : definition.variableType === 1 ? 'Global' : definition.variableType === 2 ? 'User' : 'Context';
+
+    return {
+        key: definition.name,
+        type: 'Created by user',
+        target,
+        availability: definition.variableType === 3 ? 'Execution only' : 'Room array',
+        hasValue: 'Array',
+        canWriteTo: definition.writable ? 'Yes' : 'No',
+        canCreateDelete: definition.variableType === 1 ? 'Definition-owned' : 'Yes',
+        canIntercept: 'Yes',
+        isAlwaysAvailable: definition.variableType === 1 ? 'Yes' : 'No',
+        hasCreationTime: 'No',
+        hasUpdateTime: 'No',
+        isTextConnected: definition.fields.some(field => field.textConnected) ? 'Yes' : 'No',
+        arrayDefinition: definition
+    };
+};
+
 const getCreatedVariableDefinitions = (variableType: VariableType, roomStats: WiredCreatorToolsRoomStats): VariableDefinition[] =>
 {
-    if(variableType === 'context') return [];
-
     const target = variableType === 'furni' ? 'Furni' : variableType === 'user' ? 'User' : 'Global';
     const variableNames = variableType === 'furni'
         ? (roomStats?.furniVariables ?? [])
@@ -1068,7 +1141,12 @@ const getCreatedVariableDefinitions = (variableType: VariableType, roomStats: Wi
                 ? (roomStats?.globalVariables ?? [])
                 : [];
 
-    return variableNames.map(variableName => createInspectionCreatedVariable(variableName, target));
+    const scalarDefinitions = variableNames.map(variableName => createInspectionCreatedVariable(variableName, target));
+    const arrayDefinitions = (roomStats?.arrayDefinitions ?? [])
+        .filter(definition => definition.variableType === VARIABLE_TYPE_CODES[variableType])
+        .map(createArrayVariableDefinition);
+
+    return [ ...scalarDefinitions, ...arrayDefinitions ].sort((first, second) => first.key.localeCompare(second.key));
 };
 
 const getVariableDefinitions = (variableType: VariableType, roomStats: WiredCreatorToolsRoomStats) => [
@@ -1190,6 +1268,8 @@ export const WiredCreatorToolsView: FC<{}> = () =>
     const [ roomStats, setRoomStats ] = useState<WiredCreatorToolsRoomStats>(null);
     const [ inspectionPreview, setInspectionPreview ] = useState<InspectionPreview>(null);
     const [ inspectionValues, setInspectionValues ] = useState<WiredCreatorToolsInspectionValues>(null);
+    const [ selectedArrayName, setSelectedArrayName ] = useState('');
+    const [ arrayInspection, setArrayInspection ] = useState<WiredCreatorToolsArrayInspection>(null);
     const [ selectedInspectionVariable, setSelectedInspectionVariable ] = useState('');
     const [ giveVariableOpen, setGiveVariableOpen ] = useState(false);
     const [ giveVariableName, setGiveVariableName ] = useState('');
@@ -1201,6 +1281,8 @@ export const WiredCreatorToolsView: FC<{}> = () =>
     const [ wiredToolsRequested, setWiredToolsRequested ] = useState(false);
     const roomStatsRef = useRef<WiredCreatorToolsRoomStats>(null);
     const inspectionValuesRef = useRef<WiredCreatorToolsInspectionValues>(null);
+    const arrayInspectionRef = useRef<WiredCreatorToolsArrayInspection>(null);
+    const selectedArrayNameRef = useRef('');
     const mouseHoldStateRef = useRef<WiredMouseHoldStateUpdate>(null);
     const pendingInspectionRequestRef = useRef<{ key: string; sentAt: number }>(null);
     const variableHighlightRef = useRef<WiredCreatorToolsVariableHighlight>(null);
@@ -1242,6 +1324,10 @@ export const WiredCreatorToolsView: FC<{}> = () =>
 
         roomStatsRef.current = null;
         setRoomStats(null);
+        selectedArrayNameRef.current = '';
+        arrayInspectionRef.current = null;
+        setSelectedArrayName('');
+        setArrayInspection(null);
         setChestLogs([]);
         setChestLogsOpen(false);
         setSelectedChestLog(null);
@@ -1275,6 +1361,17 @@ export const WiredCreatorToolsView: FC<{}> = () =>
             pendingInspectionRequestRef.current = { key: requestKey, sentAt: Date.now() };
             SendMessageComposer(new WiredCreatorToolsInspectionValuesComposer(sourceType, sourceId));
         }, delay);
+    }, []);
+
+    const requestArrayInspection = useCallback((
+        definition: WiredCreatorToolsArrayDefinition,
+        sourceId: number,
+        page: number) =>
+    {
+        if(!definition?.inspectable || sourceId < 0) return;
+        SendMessageComposer(new WiredCreatorToolsInspectionValuesComposer(
+            'array', sourceId, definition.variableType, definition.name, page,
+            WIRED_CREATOR_TOOLS_DEFAULTS.arrayInspectionPageSize));
     }, []);
 
     const requestLogs = useCallback((clearLogs = false) =>
@@ -1362,6 +1459,10 @@ export const WiredCreatorToolsView: FC<{}> = () =>
         setGiveVariableOpen(false);
         setGiveVariableName('');
         setGiveVariableValue('0');
+        selectedArrayNameRef.current = '';
+        arrayInspectionRef.current = null;
+        setSelectedArrayName('');
+        setArrayInspection(null);
         inspectionValuesRef.current = inspectionValuesRef.current?.sourceType === type ? inspectionValuesRef.current : null;
         selectedInspectionSourceRef.current = selectedInspectionSourceRef.current?.sourceType === type ? selectedInspectionSourceRef.current : null;
 
@@ -1781,6 +1882,20 @@ export const WiredCreatorToolsView: FC<{}> = () =>
     useMessageEvent<WiredCreatorToolsInspectionValuesEvent>(WiredCreatorToolsInspectionValuesEvent, event =>
     {
         const nextValues = event.getParser().inspectionValues;
+        if(nextValues?.sourceType === 'array')
+        {
+            const page = nextValues.arrayInspection;
+            if(!page || page.requestedOwnerType !== inspectionType ||
+                page.definition?.name !== selectedArrayNameRef.current) return;
+            const selectedSource = selectedInspectionSourceRef.current;
+            if(inspectionType !== 'global' &&
+                (!selectedSource || selectedSource.sourceType !== inspectionType ||
+                    selectedSource.sourceId !== page.requestedOwnerId)) return;
+
+            arrayInspectionRef.current = page;
+            setArrayInspection(page);
+            return;
+        }
         const pushedHold = mouseHoldStateRef.current;
 
         if(nextValues?.sourceType === 'user' && pushedHold?.sourceId === nextValues.sourceId)
@@ -2021,10 +2136,27 @@ export const WiredCreatorToolsView: FC<{}> = () =>
             {
                 requestInspectionValues(inspectionType, inspectionValuesRef.current.sourceId);
             }
+
+            if(activeTab === 'inspection' && selectedArrayNameRef.current)
+            {
+                const definitions = inspectionType === 'global'
+                    ? (roomStatsRef.current?.arrayDefinitions ?? [])
+                    : (inspectionValuesRef.current?.arrayDefinitions ?? []);
+                const definition = definitions.find(value =>
+                    value.variableType === VARIABLE_TYPE_CODES[inspectionType] &&
+                    value.name === selectedArrayNameRef.current);
+                const source = inspectionType === 'global'
+                    ? { sourceId: 0 }
+                    : selectedInspectionSourceRef.current;
+                if(definition && source)
+                {
+                    requestArrayInspection(definition, source.sourceId, arrayInspectionRef.current?.page ?? 0);
+                }
+            }
         }, 500);
 
         return () => clearInterval(refreshTimer);
-    }, [ activeTab, inspectionType, isVisible, requestInspectionValues, requestRoomStats ]);
+    }, [ activeTab, inspectionType, isVisible, requestArrayInspection, requestInspectionValues, requestRoomStats ]);
 
     const subscribedInspectionUserId = isVisible && activeTab === 'inspection' && inspectionType === 'user'
         ? (inspectionValues?.sourceType === 'user' ? inspectionValues.sourceId : -1)
@@ -2112,6 +2244,82 @@ export const WiredCreatorToolsView: FC<{}> = () =>
         clearVariableHighlight();
     }, [ clearVariableHighlight ]);
 
+    const inspectionArrayDefinitions = useMemo(() =>
+    {
+        const definitions = inspectionType === 'global'
+            ? ((roomStatsRef.current ?? roomStats)?.arrayDefinitions ?? [])
+            : (inspectionValues?.arrayDefinitions ?? []);
+        const arrayVariables = inspectionValues?.sourceType === inspectionType
+            ? (inspectionValues.arrayVariables ?? [])
+            : [];
+
+        return definitions.filter(definition =>
+            definition.variableType === VARIABLE_TYPE_CODES[inspectionType] &&
+            definition.inspectable &&
+            (inspectionType === 'global' || arrayVariables.includes(definition.name)));
+    }, [ inspectionType, inspectionValues, roomStats ]);
+    const selectedInspectionArrayDefinition = useMemo(() =>
+        inspectionArrayDefinitions.find(definition => definition.name === selectedArrayName),
+    [ inspectionArrayDefinitions, selectedArrayName ]);
+
+    const selectInspectionArray = useCallback((name: string) =>
+    {
+        selectedArrayNameRef.current = name;
+        arrayInspectionRef.current = null;
+        setSelectedArrayName(name);
+        setArrayInspection(null);
+        if(!name) return;
+
+        const definition = inspectionArrayDefinitions.find(value => value.name === name);
+        const source = inspectionType === 'global'
+            ? { sourceId: 0 }
+            : selectedInspectionSourceRef.current;
+        if(definition && source) requestArrayInspection(definition, source.sourceId, 0);
+    }, [ inspectionArrayDefinitions, inspectionType, requestArrayInspection ]);
+
+    useEffect(() =>
+    {
+        if(!selectedArrayName || selectedInspectionArrayDefinition) return;
+
+        selectedArrayNameRef.current = '';
+        setSelectedArrayName('');
+        setArrayInspection(null);
+    }, [ selectedArrayName, selectedInspectionArrayDefinition ]);
+
+    const changeArrayInspectionPage = useCallback((page: number) =>
+    {
+        const definition = inspectionArrayDefinitions.find(value => value.name === selectedArrayNameRef.current);
+        const source = inspectionType === 'global'
+            ? { sourceId: 0 }
+            : selectedInspectionSourceRef.current;
+        if(!definition || !source) return;
+        requestArrayInspection(definition, source.sourceId, Math.max(0, page));
+    }, [ inspectionArrayDefinitions, inspectionType, requestArrayInspection ]);
+
+    const setArrayInspectionFieldValue = useCallback((
+        index: number, fieldId: number, value: string) =>
+    {
+        if(!/^-?\d+$/.test(value)) return;
+
+        const definition = inspectionArrayDefinitions.find(
+            item => item.name === selectedArrayNameRef.current);
+        const source = inspectionType === 'global'
+            ? { sourceId: 0 }
+            : selectedInspectionSourceRef.current;
+        if(!definition || !source) return;
+
+        SendMessageComposer(new WiredCreatorToolsVariableActionComposer(
+            inspectionType,
+            source.sourceId,
+            'set_array_field',
+            definition.name,
+            value,
+            index,
+            fieldId,
+            arrayInspectionRef.current?.page ?? 0,
+            arrayInspectionRef.current?.pageSize ?? WIRED_CREATOR_TOOLS_DEFAULTS.arrayInspectionPageSize));
+    }, [ inspectionArrayDefinitions, inspectionType ]);
+
     const filteredLogRows = useMemo(() =>
     {
         return logRows.filter(log =>
@@ -2191,7 +2399,7 @@ export const WiredCreatorToolsView: FC<{}> = () =>
                             </div> }
                         { activeTab === 'inspection' && mountedTabs.inspection &&
                             <div className={ `wired-tools-tab-panel ${ activeTab === 'inspection' ? 'is-active' : '' }` }>
-                                { renderInspectionTab(inspectionType, changeInspectionType, keepInspectionSelected, setKeepInspectionSelected, roomStats?.globalValues ?? {}, roomStats?.globalVariables ?? [], inspectionValues, pulseKeys, inspectionPreview, !!inspectionValues, selectedInspectionVariable, setSelectedInspectionVariable, removeInspectionVariable, giveVariableOpen, setGiveVariableOpen, giveVariableName, setGiveVariableName, giveVariableValue, setGiveVariableValue, giveInspectionVariable, setInspectionVariableValue) }
+                                { renderInspectionTab(inspectionType, changeInspectionType, keepInspectionSelected, setKeepInspectionSelected, roomStats?.globalValues ?? {}, roomStats?.globalVariables ?? [], inspectionValues, pulseKeys, inspectionPreview, !!inspectionValues, selectedInspectionVariable, setSelectedInspectionVariable, removeInspectionVariable, giveVariableOpen, setGiveVariableOpen, giveVariableName, setGiveVariableName, giveVariableValue, setGiveVariableValue, giveInspectionVariable, setInspectionVariableValue, inspectionArrayDefinitions, selectInspectionArray) }
                             </div> }
                         { activeTab === 'chests' && mountedTabs.chests &&
                             <div className={ `wired-tools-tab-panel ${ activeTab === 'chests' ? 'is-active' : '' }` }>
@@ -2229,6 +2437,27 @@ export const WiredCreatorToolsView: FC<{}> = () =>
                     </div>
                 </NitroCardContentView>
             </NitroCardView>
+            { isVisible && selectedInspectionArrayDefinition &&
+                <NitroCardView
+                    uniqueKey={ `wired-creator-tools-array-${ inspectionType }-${ selectedInspectionArrayDefinition.name }` }
+                    theme="wired-tools"
+                    handleSelector=".wired-tools-drag-area"
+                    classNames={ [
+                        'nitro-wired-array-viewer',
+                        `wired-tools-array-field-count-${ Math.max(1, Math.min(8, selectedInspectionArrayDefinition.fields.length)) }`
+                    ] }>
+                    <div className="wired-tools-window-top wired-tools-drag-area">
+                        <BitmapText className="wired-tools-window-title" font="il_heading_1" text={ `Array: ${ selectedInspectionArrayDefinition.name }` } scale={ 1 } />
+                        <button className="nw-btn nw-btn-close" type="button" onClick={ () => selectInspectionArray('') } />
+                    </div>
+                    <NitroCardContentView classNames={ [ 'wired-tools-content', 'wired-tools-array-viewer-content' ] }>
+                        <ArrayInspectionWindow
+                            definition={ selectedInspectionArrayDefinition }
+                            inspection={ arrayInspection }
+                            onPage={ changeArrayInspectionPage }
+                            onSave={ setArrayInspectionFieldValue } />
+                    </NitroCardContentView>
+                </NitroCardView> }
             { isVisible && logsOpen &&
                 <NitroCardView uniqueKey="wired-creator-tools-logs" theme="wired-tools" handleSelector=".wired-tools-drag-area" classNames={ [ 'nitro-wired-logs' ] }>
                     <div className="wired-tools-window-top wired-tools-drag-area">
@@ -2562,7 +2791,8 @@ const VariablesTab = memo<{
 }) =>
 {
     const variableDefinitions = getVariableDefinitions(variableType, roomStats);
-    const canHighlight = selectedVariable.type === 'Created by user' && (variableType === 'furni' || variableType === 'user');
+    const canHighlight = selectedVariable.type === 'Created by user' && !selectedVariable.arrayDefinition &&
+        (variableType === 'furni' || variableType === 'user');
     const isHighlightActive = !!variableHighlight && variableHighlight.sourceType === variableType && variableHighlight.variableName === selectedVariable.key;
     const toggleHighlight = () =>
     {
@@ -2650,12 +2880,25 @@ const renderInspectionTab = (
     giveVariableValue: string,
     setGiveVariableValue: (value: string) => void,
     giveInspectionVariable: () => void,
-    setInspectionVariableValue: (variableKey: string, value: string) => void
+    setInspectionVariableValue: (variableKey: string, value: string) => void,
+    arrayDefinitions: WiredCreatorToolsArrayDefinition[],
+    openArray: (name: string) => void
 ) =>
 {
     const sourceValues = inspectionValues?.values ?? {};
     const createdVariables = inspectionValues?.variables ?? [];
     const inspectionVariables = getInspectionVariables(inspectionType, inspectionValues, inspectionType === 'global' ? globalValues : sourceValues, hasSelectedSource, globalVariables);
+    const firstInternalVariableIndex = inspectionVariables.findIndex(variable => variable.type === 'Internal');
+    const createdInspectionVariables = firstInternalVariableIndex < 0
+        ? inspectionVariables
+        : inspectionVariables.slice(0, firstInternalVariableIndex);
+    const internalInspectionVariables = firstInternalVariableIndex < 0
+        ? []
+        : inspectionVariables.slice(firstInternalVariableIndex);
+    const createdInspectionRows = [
+        ...createdInspectionVariables.map(variable => ({ kind: 'variable' as const, name: variable.key, variable })),
+        ...arrayDefinitions.map(definition => ({ kind: 'array' as const, name: definition.name, definition }))
+    ].sort((first, second) => first.name.localeCompare(second.name));
     const canGiveVariable = inspectionType !== 'global' && hasSelectedSource && createdVariables.length > 0;
     const canRemoveVariable = inspectionType !== 'global' && hasSelectedSource && isCreatedInspectionVariable(selectedInspectionVariable) && Object.prototype.hasOwnProperty.call(sourceValues, selectedInspectionVariable);
     const canCreateGivenVariable = !!giveVariableName && !Object.prototype.hasOwnProperty.call(sourceValues, giveVariableName);
@@ -2667,6 +2910,19 @@ const renderInspectionTab = (
             disabled: Object.prototype.hasOwnProperty.call(sourceValues, variable)
         }))
     ];
+    const renderInspectionVariableRow = (variable: VariableDefinition) => (
+        <InspectionVariableRow
+            key={ variable.key }
+            variableKey={ variable.key }
+            parentKey={ variable.parentKey }
+            displayValue={ getInspectionValue(variable, inspectionType, globalValues, sourceValues) }
+            rawValue={ getRawInspectionValue(variable.key, inspectionType, globalValues, sourceValues) }
+            isEditable={ canEditInspectionVariable(inspectionType, variable.key, sourceValues, hasSelectedSource, globalValues, inspectionType === 'global' ? globalVariables : createdVariables) }
+            pulseClassName={ getPulseClassName(pulseKeys[variable.key]) }
+            isSelected={ selectedInspectionVariable === variable.key }
+            onSelect={ setSelectedInspectionVariable }
+            onSave={ setInspectionVariableValue } />
+    );
 
     return (
         <div className="wired-tools-grid wired-tools-inspection">
@@ -2679,19 +2935,22 @@ const renderInspectionTab = (
             <section className="wired-tools-panel wired-tools-panel-wide">
                 <PanelTitle title="Variables" />
                 <Table className="wired-tools-inspection-table" headers={ [ 'Variable', 'Value' ] }>
-                    { inspectionVariables.map(variable => (
-                            <InspectionVariableRow
-                                key={ variable.key }
-                                variableKey={ variable.key }
-                                parentKey={ variable.parentKey }
-                            displayValue={ getInspectionValue(variable, inspectionType, globalValues, sourceValues) }
-                            rawValue={ getRawInspectionValue(variable.key, inspectionType, globalValues, sourceValues) }
-                            isEditable={ canEditInspectionVariable(inspectionType, variable.key, sourceValues, hasSelectedSource, globalValues, inspectionType === 'global' ? globalVariables : createdVariables) }
-                            pulseClassName={ getPulseClassName(pulseKeys[variable.key]) }
-                            isSelected={ selectedInspectionVariable === variable.key }
-                            onSelect={ setSelectedInspectionVariable }
-                            onSave={ setInspectionVariableValue } />
-                    )) }
+                    { createdInspectionRows.map(row => row.kind === 'variable'
+                        ? renderInspectionVariableRow(row.variable)
+                        : (
+                            <tr key={ `array:${ row.definition.name }` }>
+                                <td><WiredButtonInfoText>{ row.definition.name }</WiredButtonInfoText></td>
+                                <td>
+                                    <button
+                                        className="wired-tools-link-button wired-tools-view-array-button"
+                                        type="button"
+                                        onClick={ () => openArray(row.definition.name) }>
+                                        <WiredButtonInfoText>View Array</WiredButtonInfoText>
+                                    </button>
+                                </td>
+                            </tr>
+                        )) }
+                    { internalInspectionVariables.map(renderInspectionVariableRow) }
                 </Table>
                 <div className="wired-tools-actions wired-tools-inspection-actions">
                     <Button disabled={ !canRemoveVariable } variant="danger" onClick={ removeInspectionVariable }><ButtonText>Remove Variable</ButtonText></Button>
@@ -2728,6 +2987,166 @@ const renderInspectionTab = (
         </div>
     );
 };
+
+interface ArrayInspectionWindowProps
+{
+    definition: WiredCreatorToolsArrayDefinition;
+    inspection: WiredCreatorToolsArrayInspection;
+    onPage: (page: number) => void;
+    onSave: (index: number, fieldId: number, value: string) => void;
+}
+
+interface ArrayInspectionCellProps
+{
+    index: number;
+    fieldId: number;
+    rawValue: string;
+    displayValue: string;
+    editable: boolean;
+    onSave: (index: number, fieldId: number, value: string) => void;
+}
+
+const ArrayInspectionCell = memo(function ArrayInspectionCell({
+    index,
+    fieldId,
+    rawValue,
+    displayValue,
+    editable,
+    onSave
+}: ArrayInspectionCellProps)
+{
+    const [ isEditing, setIsEditing ] = useState(false);
+    const [ editValue, setEditValue ] = useState(rawValue);
+
+    useEffect(() =>
+    {
+        if(!isEditing) setEditValue(rawValue);
+    }, [ isEditing, rawValue ]);
+
+    const saveValue = useCallback(() =>
+    {
+        if(!/^-?\d+$/.test(editValue)) return;
+        onSave(index, fieldId, editValue);
+        setIsEditing(false);
+    }, [ editValue, fieldId, index, onSave ]);
+
+    return (
+        <td
+            className={ editable ? 'wired-tools-editable-value-cell' : '' }
+            title={ editable ? 'Double-click to edit' : undefined }
+            onDoubleClick={ event =>
+            {
+                if(!editable) return;
+                event.stopPropagation();
+                setIsEditing(true);
+            } }>
+            { isEditing
+                ? <WiredTextInput
+                    autoFocus
+                    bitmapAlign="center"
+                    className="wired-tools-inline-value-input"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="-?[0-9]*"
+                    value={ editValue }
+                    onBlur={ () => setIsEditing(false) }
+                    onChange={ event => setEditValue(event.target.value.replace(/[^0-9-]/g, '')) }
+                    onClick={ stopRoomInputPropagation }
+                    onKeyUp={ stopRoomInputPropagation }
+                    onKeyDown={ event =>
+                    {
+                        stopRoomInputPropagation(event);
+                        if(event.key === 'Enter')
+                        {
+                            event.preventDefault();
+                            saveValue();
+                        }
+                        if(event.key === 'Escape')
+                        {
+                            event.preventDefault();
+                            setIsEditing(false);
+                        }
+                    } } />
+                : <WiredButtonInfoText>{ displayValue }</WiredButtonInfoText> }
+        </td>
+    );
+});
+
+const ArrayInspectionWindow = memo(function ArrayInspectionWindow({
+    definition,
+    inspection,
+    onPage,
+    onSave
+}: ArrayInspectionWindowProps)
+{
+    const fields = (inspection?.definition?.fields ?? definition.fields)
+        .slice()
+        .sort((first, second) => first.order - second.order);
+    const isSimple = definition.arrayFormat === 0;
+    const headers = isSimple ? [ 'Index', 'Value' ] : [ 'Index', ...fields.map(field => field.name) ];
+    const page = (inspection?.page ?? 0) + 1;
+    const pageCount = inspection?.pageCount ?? 1;
+
+    return (
+        <div className="wired-tools-array-viewer-window">
+            <Table className="wired-tools-array-viewer-table" headers={ headers }>
+                { inspection?.entries.map(entry =>
+                    <tr key={ entry.index }>
+                        <td><WiredButtonInfoText>{ entry.index }</WiredButtonInfoText></td>
+                        { fields.map(field =>
+                        {
+                            const key = String(field.id);
+                            const raw = entry.values[key];
+                            const connected = entry.connectedText[key];
+                            const display = !entry.occupied || raw === undefined
+                                ? '/'
+                                : (connected === undefined ? raw : `${ raw } (${ connected })`);
+
+                            return <ArrayInspectionCell
+                                key={ field.id }
+                                index={ entry.index }
+                                fieldId={ field.id }
+                                rawValue={ raw ?? '' }
+                                displayValue={ display }
+                                editable={ definition.writable && entry.occupied && raw !== undefined }
+                                onSave={ onSave } />;
+                        }) }
+                    </tr>) }
+                { inspection && !inspection.entries.length &&
+                    <tr className="wired-tools-empty-array-row">
+                        { headers.map(header =>
+                            <td key={ header }><WiredButtonInfoText>/</WiredButtonInfoText></td>) }
+                    </tr> }
+                { !inspection &&
+                    <tr className="wired-tools-empty-array-row">
+                        <td colSpan={ headers.length }><WiredButtonInfoText>Loading...</WiredButtonInfoText></td>
+                    </tr> }
+            </Table>
+            <div className="wired-tools-pager">
+                <WiredAdjustButton
+                    direction="left"
+                    disabled={ !inspection || page <= 1 }
+                    onClick={ () => onPage(Math.max(0, page - 2)) } />
+                <WiredTextInput
+                    bitmapAlign="center"
+                    className="wired-tools-page-input"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    type="text"
+                    value={ page }
+                    onChange={ event => onPage(Math.min(pageCount - 1, Math.max(0, Number(event.target.value || 1) - 1))) }
+                    onClick={ stopRoomInputPropagation }
+                    onKeyDown={ stopRoomInputPropagation }
+                    onKeyUp={ stopRoomInputPropagation } />
+                <span className="wired-tools-pager-total"><WiredButtonInfoText>{ `/ ${ pageCount } total pages` }</WiredButtonInfoText></span>
+                <WiredAdjustButton
+                    direction="right"
+                    disabled={ !inspection || page >= pageCount }
+                    onClick={ () => onPage(Math.min(pageCount - 1, page)) } />
+            </div>
+        </div>
+    );
+});
 
 const renderInspectionPreview = (inspectionType: InspectionType, inspectionPreview: InspectionPreview) =>
 {

@@ -1,8 +1,18 @@
-import { FC, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { LocalizeText, WiredFurniType } from '../../../../api';
 import { Column, Flex } from '../../../../common';
 import { useWired } from '../../../../hooks';
 import { WiredBaseView } from '../WiredBaseView';
+import {
+    createWiredArrayAddress,
+    normalizeWiredArrayAddress,
+    wiredArrayAddressIsValid,
+    wiredArrayDefinition,
+    wiredScalarVariableLists,
+    WiredArrayAddressData,
+    WiredArrayAddressEditor,
+    WiredVariableDefinitionMetadata
+} from '../WiredArrayControls';
 import {
     normalizeWiredSource,
     parseWiredData,
@@ -17,6 +27,7 @@ import {
     wiredClickedAvatarSourceAvailableForTrigger,
     wiredVariableExists,
     wiredVariableSourceOptions,
+    WIRED_REFERENCE_FROM_VARIABLE,
     WIRED_SOURCE_SELECTED,
     WIRED_SOURCE_TRIGGER,
     WIRED_VARIABLE_CONTEXT,
@@ -49,6 +60,9 @@ interface VariablePlaceholderData
     furniTextConnectorVariables?: string[];
     userTextConnectorVariables?: string[];
     contextTextConnectorVariables?: string[];
+    arrayAddress?: Partial<WiredArrayAddressData>;
+    variableDefinitions?: WiredVariableDefinitionMetadata[];
+    textConnectorFields?: Array<{ variableType: number; variableName: string; fieldId: number; }>;
 }
 
 const sourceLabelPrefix = (variableType: number) => variableType === WIRED_VARIABLE_FURNI
@@ -67,6 +81,12 @@ const normalizeVariableType = (value: number) => VALID_VARIABLE_TYPES.includes(v
 const normalizeDisplayType = (value: number) => value === DISPLAY_TEXTUAL ? DISPLAY_TEXTUAL : DISPLAY_NUMERIC;
 const normalizePlaceholderType = (value: number) => value === TYPE_MULTIPLE ? TYPE_MULTIPLE : TYPE_SINGLE;
 const sanitizeDelimiter = (value: string) => value.replace(/[^\x21-\x7E]/g, '').substring(0, 4);
+const capturedContextAlias = (value: string) =>
+{
+    const match = value.match(/^([a-z0-9_]+)\.[a-z0-9_]+$/i);
+
+    return match?.[1] ?? '';
+};
 
 export const WiredExtraVariablePlaceholderView: FC<{}> = props =>
 {
@@ -77,6 +97,7 @@ export const WiredExtraVariablePlaceholderView: FC<{}> = props =>
     const [ displayType, setDisplayType ] = useState(DISPLAY_NUMERIC);
     const [ placeholderType, setPlaceholderType ] = useState(TYPE_SINGLE);
     const [ delimiter, setDelimiter ] = useState(',');
+    const [ arrayAddress, setArrayAddress ] = useState<WiredArrayAddressData>(createWiredArrayAddress);
     const { trigger = null, setIntParams = null, setStringParam = null, furniIds = [] } = useWired() as any;
 
     const data = useMemo(() => parseWiredData<VariablePlaceholderData>(trigger?.stringData ?? ''), [ trigger ]);
@@ -87,12 +108,19 @@ export const WiredExtraVariablePlaceholderView: FC<{}> = props =>
         context: data.contextVariables ?? []
     }), [ data ]);
     const subVariables = useMemo(() => data.subVariables ?? {}, [ data ]);
+    const variableDefinitions = useMemo(() => data.variableDefinitions ?? [], [ data ]);
+    const selectedArray = wiredArrayDefinition(variableDefinitions, variableType, variableName);
+    const scalarVariables = useMemo(
+        () => wiredScalarVariableLists(variables, variableDefinitions),
+        [ variables, variableDefinitions ]);
     const selectedCount = Array.isArray(furniIds) ? furniIds.length : 0;
     const selectionLimit = trigger?.maximumItemSelectionCount ?? 20;
     const isMultiple = placeholderType === TYPE_MULTIPLE;
     const previewToken = placeholderName ? `$(${ placeholderName })` : '$()';
     const includeClickedAvatarSource = wiredClickedAvatarSourceAvailableForTrigger(trigger);
-    const getSourceOptions = (type: number) => wiredVariableSourceOptions(type, includeClickedAvatarSource);
+    const getSourceOptions = useCallback(
+        (type: number) => wiredVariableSourceOptions(type, includeClickedAvatarSource),
+        [ includeClickedAvatarSource ]);
     const sourceOptions = getSourceOptions(variableType);
     const sourceSelectors = [ {
         value: source,
@@ -106,12 +134,29 @@ export const WiredExtraVariablePlaceholderView: FC<{}> = props =>
             [WIRED_VARIABLE_CONTEXT]: LocalizeText('wiredfurni.params.sources.context')
         }
     } as any ];
+    if(selectedArray && arrayAddress.indexMode === WIRED_REFERENCE_FROM_VARIABLE)
+    {
+        sourceSelectors.push({
+            value: arrayAddress.indexVariableSource,
+            onChange: (indexVariableSource: number) => setArrayAddress(value => ({ ...value, indexVariableSource })),
+            options: wiredVariableSourceOptions(arrayAddress.indexVariableType, includeClickedAvatarSource),
+            titleKey: 'wiredfurni.params.sources.merged.title.variables_reference',
+            labelPrefix: sourceLabelPrefix(arrayAddress.indexVariableType),
+            optionLabels: sourceSelectors[0].optionLabels
+        } as any);
+    }
     const textConnectorVariables = variableType === WIRED_VARIABLE_FURNI
         ? (data.furniTextConnectorVariables ?? [])
         : (variableType === WIRED_VARIABLE_USER
             ? (data.userTextConnectorVariables ?? [])
             : (variableType === WIRED_VARIABLE_CONTEXT ? (data.contextTextConnectorVariables ?? []) : (data.globalTextConnectorVariables ?? [])));
-    const textualDisplayEnabled = !!variableName && textConnectorVariables.includes(variableName);
+    const textualDisplayEnabled = !!variableName && (selectedArray
+        ? (data.textConnectorFields ?? []).some(connector =>
+            connector.variableType === variableType && connector.variableName === variableName &&
+            connector.fieldId === arrayAddress.fieldId)
+        : textConnectorVariables.includes(variableName) ||
+            (variableType === WIRED_VARIABLE_CONTEXT &&
+                textConnectorVariables.includes(capturedContextAlias(variableName))));
 
     useEffect(() =>
     {
@@ -131,7 +176,11 @@ export const WiredExtraVariablePlaceholderView: FC<{}> = props =>
         setPlaceholderType(normalizePlaceholderType(intData[3] ?? data.placeholderType ?? TYPE_SINGLE));
         setVariableName(wiredVariableExists(savedVariable, savedVariables ?? [], subVariables) ? savedVariable : '');
         setDelimiter(savedDelimiter);
-    }, [ trigger, data, variables, subVariables ]);
+        setArrayAddress(normalizeWiredArrayAddress(
+            data.arrayAddress,
+            wiredArrayDefinition(variableDefinitions, savedType, savedVariable),
+            includeClickedAvatarSource));
+    }, [ trigger, data, variables, subVariables, variableDefinitions, includeClickedAvatarSource, getSourceOptions ]);
 
     useEffect(() =>
     {
@@ -146,7 +195,9 @@ export const WiredExtraVariablePlaceholderView: FC<{}> = props =>
         setStringParam(JSON.stringify({
             placeholderName: normalizedName,
             variableName,
-            delimiter: normalizedDelimiter
+            delimiter: normalizedDelimiter,
+            arrayAddress,
+            metadataVersion: 3
         }));
         setIntParams([
             normalizeVariableType(variableType),
@@ -156,15 +207,22 @@ export const WiredExtraVariablePlaceholderView: FC<{}> = props =>
         ]);
     };
 
+    const validate = () => !!placeholderName && !!variableName &&
+        wiredArrayAddressIsValid(arrayAddress, selectedArray);
+    const needsFurniSelection = variableType === WIRED_VARIABLE_FURNI ||
+        (selectedArray && arrayAddress.indexMode === WIRED_REFERENCE_FROM_VARIABLE &&
+            arrayAddress.indexVariableType === WIRED_VARIABLE_FURNI);
+
     return (
         <WiredBaseView
             wiredType="extra"
-            requiresFurni={ variableType === WIRED_VARIABLE_FURNI ? WiredFurniType.STUFF_SELECTION_OPTION_BY_ID_BY_TYPE_OR_FROM_CONTEXT : WiredFurniType.STUFF_SELECTION_OPTION_NONE }
+            requiresFurni={ needsFurniSelection ? WiredFurniType.STUFF_SELECTION_OPTION_BY_ID_BY_TYPE_OR_FROM_CONTEXT : WiredFurniType.STUFF_SELECTION_OPTION_NONE }
             hasSpecialInput={ true }
             save={ save }
             hideFurniSelector={ variableType === WIRED_VARIABLE_FURNI }
             sourceSelectors={ sourceSelectors }
-            alwaysExpandedSources={ true }>
+            alwaysExpandedSources={ true }
+            validate={ validate }>
             <WiredParam titleKey="wiredfurni.params.texts.placeholder_name">
                 <Column gap={ 1 }>
                     <WiredTextInput
@@ -175,7 +233,6 @@ export const WiredExtraVariablePlaceholderView: FC<{}> = props =>
                     <WiredPlaceholderPreview placeholder={ previewToken } />
                 </Column>
             </WiredParam>
-
             <WiredParam>
                 <WiredVariablePicker
                     titleKey="wiredfurni.params.variables.variable_selection"
@@ -186,17 +243,32 @@ export const WiredExtraVariablePlaceholderView: FC<{}> = props =>
 
                         setVariableType(nextType);
                         setVariableName('');
+                        setArrayAddress(createWiredArrayAddress());
                         setSource(current => normalizeWiredSource(current, getSourceOptions(nextType)));
                     } }
                     variableName={ variableName }
-                    onVariableNameChange={ setVariableName }
+                    onVariableNameChange={ name =>
+                    {
+                        setVariableName(name);
+                        setArrayAddress(normalizeWiredArrayAddress(
+                            createWiredArrayAddress(),
+                            wiredArrayDefinition(variableDefinitions, variableType, name),
+                            includeClickedAvatarSource));
+                    } }
                     variables={ variables }
                     subVariables={ subVariables }
                     variableSource={ source }
                     onVariableSourceChange={ setSource }
                     includeClickedAvatarSource={ includeClickedAvatarSource } />
             </WiredParam>
-
+            <WiredArrayAddressEditor
+                radioName="variablePlaceholderIndex"
+                definition={ selectedArray }
+                value={ arrayAddress }
+                onChange={ setArrayAddress }
+                variables={ scalarVariables }
+                subVariables={ subVariables }
+                includeClickedAvatarSource={ includeClickedAvatarSource } />
             <WiredParam titleKey="wiredfurni.params.texts.variable_display_type">
                 <Column gap={ 1 }>
                     <WiredRadio name="variableDisplayType" checked={ displayType === DISPLAY_NUMERIC } onChange={ () => setDisplayType(DISPLAY_NUMERIC) } label={ LocalizeText('wiredfurni.params.texts.variable_display_type.1') } />
@@ -208,7 +280,6 @@ export const WiredExtraVariablePlaceholderView: FC<{}> = props =>
                     </WiredDisabled>
                 </Column>
             </WiredParam>
-
             <WiredParam titleKey="wiredfurni.params.texts.placeholder_type" divider={ false }>
                 <Column gap={ 1 }>
                     <WiredRadio

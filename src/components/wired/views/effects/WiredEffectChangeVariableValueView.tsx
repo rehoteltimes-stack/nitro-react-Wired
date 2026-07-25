@@ -1,4 +1,4 @@
-import { FC, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { LocalizeText, WiredFurniType } from '../../../../api';
 import { useWired } from '../../../../hooks';
 import { WiredSourceSelectorConfig } from '../WiredFurniSelectorView';
@@ -7,6 +7,7 @@ import {
     parseWiredData,
     wiredClickedAvatarSourceAvailableForTrigger,
     wiredVariableIsSelectable,
+    wiredSignedLongIsValid,
     WIRED_REFERENCE_FROM_VARIABLE,
     WIRED_REFERENCE_SET_VALUE,
     WIRED_SOURCE_SELECTED,
@@ -21,6 +22,16 @@ import {
     WIRED_VARIABLE_GLOBAL,
     WIRED_VARIABLE_USER
 } from '../WiredControls';
+import {
+    createWiredArrayAddress,
+    normalizeWiredArrayAddress,
+    wiredArrayAddressIsValid,
+    wiredArrayDefinition,
+    WiredArrayAddressData,
+    WiredArrayAddressEditor,
+    wiredScalarVariableLists,
+    WiredVariableDefinitionMetadata
+} from '../WiredArrayControls';
 import { WiredEffectBaseView } from './WiredEffectBaseView';
 
 const BASIC_OPERATION_OPTIONS = [ 0, 1, 2, 3, 4, 5, 6 ];
@@ -33,7 +44,7 @@ interface VariableEffectData
 {
     targetVariable?: string;
     referenceVariable?: string;
-    referenceValue?: number;
+    referenceValue?: string | number;
     globalVariables?: string[];
     globalValueVariables?: string[];
     furniVariables?: string[];
@@ -43,12 +54,16 @@ interface VariableEffectData
     contextVariables?: string[];
     contextValueVariables?: string[];
     subVariables?: Record<string, string[]>;
+    destinationSubVariables?: Record<string, string[]>;
     targetVariableType?: number;
     operation?: number;
     referenceMode?: number;
     referenceVariableType?: number;
     destinationSource?: number;
     referenceSource?: number;
+    targetAddress?: Partial<WiredArrayAddressData>;
+    referenceAddress?: Partial<WiredArrayAddressData>;
+    variableDefinitions?: WiredVariableDefinitionMetadata[];
 }
 
 const normalizeOperation = (operation: number) => OPERATION_OPTIONS.includes(operation) ? operation : OPERATION_OPTIONS[0];
@@ -69,6 +84,8 @@ export const WiredEffectChangeVariableValueView: FC<{}> = props =>
     const [ referenceVariable, setReferenceVariable ] = useState('');
     const [ destinationSource, setDestinationSource ] = useState(WIRED_VARIABLE_GLOBAL);
     const [ referenceSource, setReferenceSource ] = useState(WIRED_VARIABLE_GLOBAL);
+    const [ targetAddress, setTargetAddress ] = useState<WiredArrayAddressData>(createWiredArrayAddress);
+    const [ referenceAddress, setReferenceAddress ] = useState<WiredArrayAddressData>(createWiredArrayAddress);
     const { trigger = null, setIntParams = null, setStringParam = null, furniIds = [] } = useWired() as any;
 
     const data = useMemo(() => parseWiredData<VariableEffectData>(trigger?.stringData ?? ''), [ trigger ]);
@@ -81,8 +98,14 @@ export const WiredEffectChangeVariableValueView: FC<{}> = props =>
     const userValueVariables = useMemo(() => data.userValueVariables ?? [], [ data ]);
     const contextValueVariables = useMemo(() => data.contextValueVariables ?? [], [ data ]);
     const subVariables = useMemo(() => data.subVariables ?? {}, [ data ]);
+    const destinationSubVariables = useMemo(
+        () => data.destinationSubVariables ?? subVariables,
+        [ data, subVariables ]);
+    const variableDefinitions = useMemo(() => data.variableDefinitions ?? [], [ data ]);
     const includeClickedAvatarSource = wiredClickedAvatarSourceAvailableForTrigger(trigger);
-    const getSourceOptions = (type: number) => wiredVariableSourceOptions(type, includeClickedAvatarSource);
+    const getSourceOptions = useCallback(
+        (type: number) => wiredVariableSourceOptions(type, includeClickedAvatarSource),
+        [ includeClickedAvatarSource ]);
 
     const targetVariables = useMemo<WiredVariableLists>(() => ({
         global: globalVariables,
@@ -96,11 +119,21 @@ export const WiredEffectChangeVariableValueView: FC<{}> = props =>
         user: userValueVariables.length ? userValueVariables : userVariables,
         context: contextValueVariables.length ? contextValueVariables : contextVariables
     }), [ globalVariables, globalValueVariables, furniVariables, userVariables, contextVariables, furniValueVariables, userValueVariables, contextValueVariables ]);
+    const scalarIndexVariables = useMemo(
+        () => wiredScalarVariableLists(referenceVariables, variableDefinitions),
+        [ referenceVariables, variableDefinitions ]);
+    const targetArray = wiredArrayDefinition(variableDefinitions, targetVariableType, targetVariable);
+    const referenceArray = referenceMode === WIRED_REFERENCE_FROM_VARIABLE
+        ? wiredArrayDefinition(variableDefinitions, referenceVariableType, referenceVariable)
+        : undefined;
 
     const selectedCount = Array.isArray(furniIds) ? furniIds.length : 0;
     const selectionLimit = trigger?.maximumItemSelectionCount ?? 20;
     const selectedSourceLabel = `${ LocalizeText('wiredfurni.params.sources.furni.100') } [${ selectedCount }/${ selectionLimit }]`;
-    const needsFurniSelection = targetVariableType === WIRED_VARIABLE_FURNI || (referenceMode === WIRED_REFERENCE_FROM_VARIABLE && referenceVariableType === WIRED_VARIABLE_FURNI);
+    const needsFurniSelection = targetVariableType === WIRED_VARIABLE_FURNI ||
+        (referenceMode === WIRED_REFERENCE_FROM_VARIABLE && referenceVariableType === WIRED_VARIABLE_FURNI) ||
+        (!!targetArray && targetAddress.indexMode === WIRED_REFERENCE_FROM_VARIABLE && targetAddress.indexVariableType === WIRED_VARIABLE_FURNI) ||
+        (!!referenceArray && referenceAddress.indexMode === WIRED_REFERENCE_FROM_VARIABLE && referenceAddress.indexVariableType === WIRED_VARIABLE_FURNI);
     const commonOptionLabels = {
         [WIRED_SOURCE_SELECTED]: selectedSourceLabel,
         [WIRED_VARIABLE_GLOBAL]: LocalizeText('wiredfurni.params.sources.global'),
@@ -123,7 +156,23 @@ export const WiredEffectChangeVariableValueView: FC<{}> = props =>
             labelPrefix: sourceLabelPrefix(referenceVariableType),
             optionLabels: commonOptionLabels,
             disabled: referenceMode !== WIRED_REFERENCE_FROM_VARIABLE
-        }
+        },
+        ...(targetArray && targetAddress.indexMode === WIRED_REFERENCE_FROM_VARIABLE ? [ {
+            value: targetAddress.indexVariableSource,
+            onChange: (indexVariableSource: number) => setTargetAddress(value => ({ ...value, indexVariableSource })),
+            options: getSourceOptions(targetAddress.indexVariableType),
+            titleKey: 'wiredfurni.params.sources.merged.title.variables_destination',
+            labelPrefix: sourceLabelPrefix(targetAddress.indexVariableType),
+            optionLabels: commonOptionLabels
+        } ] : []),
+        ...(referenceArray && referenceAddress.indexMode === WIRED_REFERENCE_FROM_VARIABLE ? [ {
+            value: referenceAddress.indexVariableSource,
+            onChange: (indexVariableSource: number) => setReferenceAddress(value => ({ ...value, indexVariableSource })),
+            options: getSourceOptions(referenceAddress.indexVariableType),
+            titleKey: 'wiredfurni.params.sources.merged.title.variables_reference',
+            labelPrefix: sourceLabelPrefix(referenceAddress.indexVariableType),
+            optionLabels: commonOptionLabels
+        } ] : [])
     ];
 
     const setNormalizedTargetType = (type: number) =>
@@ -147,7 +196,9 @@ export const WiredEffectChangeVariableValueView: FC<{}> = props =>
         setStringParam(JSON.stringify({
             targetVariable,
             referenceVariable,
-            referenceValue: Number(referenceValue || 0)
+            referenceValue,
+            targetAddress,
+            referenceAddress
         }));
         setIntParams([
             targetVariableType,
@@ -158,6 +209,13 @@ export const WiredEffectChangeVariableValueView: FC<{}> = props =>
             referenceSource
         ]);
     };
+
+    const validate = () =>
+        !!targetVariable &&
+        (referenceMode !== WIRED_REFERENCE_FROM_VARIABLE || !!referenceVariable) &&
+        (referenceMode !== WIRED_REFERENCE_SET_VALUE || wiredSignedLongIsValid(referenceValue)) &&
+        wiredArrayAddressIsValid(targetAddress, targetArray) &&
+        wiredArrayAddressIsValid(referenceAddress, referenceArray);
 
     useEffect(() =>
     {
@@ -172,7 +230,7 @@ export const WiredEffectChangeVariableValueView: FC<{}> = props =>
         const savedReferenceVariable = data.referenceVariable ?? '';
 
         setTargetVariableType(savedTargetVariableType);
-        setTargetVariable(wiredVariableIsSelectable(savedTargetVariable, savedTargetVariables ?? [], subVariables) ? savedTargetVariable : '');
+        setTargetVariable(wiredVariableIsSelectable(savedTargetVariable, savedTargetVariables ?? [], destinationSubVariables) ? savedTargetVariable : '');
         setOperation(normalizeOperation(intData[1] ?? data.operation ?? OPERATION_OPTIONS[0]));
         setShowAdvancedOperations(ADVANCED_OPERATION_OPTIONS.includes(normalizeOperation(intData[1] ?? data.operation ?? OPERATION_OPTIONS[0])));
         setReferenceMode(intData[2] ?? data.referenceMode ?? WIRED_REFERENCE_SET_VALUE);
@@ -181,7 +239,11 @@ export const WiredEffectChangeVariableValueView: FC<{}> = props =>
         setReferenceValue(String(data.referenceValue ?? 0));
         setDestinationSource(normalizeWiredSource(intData[4] ?? data.destinationSource ?? WIRED_VARIABLE_GLOBAL, getSourceOptions(savedTargetVariableType)));
         setReferenceSource(normalizeWiredSource(intData[5] ?? data.referenceSource ?? WIRED_VARIABLE_GLOBAL, getSourceOptions(savedReferenceVariableType)));
-    }, [ trigger, data, targetVariables, referenceVariables, subVariables ]);
+        const savedTargetDefinition = wiredArrayDefinition(variableDefinitions, savedTargetVariableType, savedTargetVariable);
+        const savedReferenceDefinition = wiredArrayDefinition(variableDefinitions, savedReferenceVariableType, savedReferenceVariable);
+        setTargetAddress(normalizeWiredArrayAddress(data.targetAddress, savedTargetDefinition, includeClickedAvatarSource));
+        setReferenceAddress(normalizeWiredArrayAddress(data.referenceAddress, savedReferenceDefinition, includeClickedAvatarSource));
+    }, [ trigger, data, targetVariables, referenceVariables, subVariables, destinationSubVariables, variableDefinitions, includeClickedAvatarSource, getSourceOptions ]);
 
     const operationSelectOptions = showAdvancedOperations
         ? OPERATION_OPTIONS
@@ -203,6 +265,7 @@ export const WiredEffectChangeVariableValueView: FC<{}> = props =>
             requiresFurni={ needsFurniSelection ? WiredFurniType.STUFF_SELECTION_OPTION_BY_ID_BY_TYPE_OR_FROM_CONTEXT : WiredFurniType.STUFF_SELECTION_OPTION_NONE }
             hasSpecialInput={ true }
             save={ save }
+            validate={ validate }
             hideFurniSelector={ needsFurniSelection }
             sourceSelectors={ sourceSelectors }
             alwaysExpandedSources={ true }>
@@ -214,9 +277,17 @@ export const WiredEffectChangeVariableValueView: FC<{}> = props =>
                     variableName={ targetVariable }
                     onVariableNameChange={ setTargetVariable }
                     variables={ targetVariables }
-                    subVariables={ subVariables } />
+                    subVariables={ destinationSubVariables } />
             </WiredParam>
-
+            <WiredArrayAddressEditor
+                radioName="targetArrayIndex"
+                title="Target index"
+                definition={ targetArray }
+                value={ targetAddress }
+                onChange={ setTargetAddress }
+                variables={ scalarIndexVariables }
+                subVariables={ subVariables }
+                includeClickedAvatarSource={ includeClickedAvatarSource } />
             <WiredParam titleKey="wiredfurni.params.variables.operation">
                 <WiredSelect
                     value={ operation }
@@ -226,7 +297,6 @@ export const WiredEffectChangeVariableValueView: FC<{}> = props =>
                         label: LocalizeText(value === ADVANCED_OPTION ? 'wiredfurni.params.variables.operation.advanced' : `wiredfurni.params.variables.operation.${ value }`)
                     })) } />
             </WiredParam>
-
             <WiredParam titleKey="wiredfurni.params.variables.reference_value" divider={ false }>
                 <WiredValueOrVariable
                     radioName="variableReferenceValue"
@@ -234,8 +304,7 @@ export const WiredEffectChangeVariableValueView: FC<{}> = props =>
                     onModeChange={ setReferenceMode }
                     value={ referenceValue }
                     onValueChange={ setReferenceValue }
-                    min={ -999999999 }
-                    max={ 999999999 }
+                    signedLong
                     variableType={ referenceVariableType }
                     onVariableTypeChange={ setNormalizedReferenceType }
                     variableName={ referenceVariable }
@@ -245,6 +314,16 @@ export const WiredEffectChangeVariableValueView: FC<{}> = props =>
                     onVariableSourceChange={ setReferenceSource }
                     subVariables={ subVariables } />
             </WiredParam>
+            <WiredArrayAddressEditor
+                radioName="referenceArrayIndex"
+                title="Reference index"
+                definition={ referenceArray }
+                value={ referenceAddress }
+                onChange={ setReferenceAddress }
+                variables={ scalarIndexVariables }
+                subVariables={ subVariables }
+                includeClickedAvatarSource={ includeClickedAvatarSource }
+                divider={ false } />
         </WiredEffectBaseView>
     );
 }

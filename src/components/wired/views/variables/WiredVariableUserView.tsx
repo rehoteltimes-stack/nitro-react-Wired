@@ -4,11 +4,13 @@ import { LocalizeText } from '../../../../api';
 import { useWired } from '../../../../hooks';
 import { WiredCheckbox, WiredControlSection, WiredDivider, WiredRadio, WiredTextInput } from '../WiredControls';
 import { WiredVariableBaseView } from './WiredVariableBaseView';
+import { useWiredVariableArrayConfig, WiredVariableArrayConfigView } from './WiredVariableArrayConfigView';
 
 const sanitizeVariableName = (input: string): string =>
 {
     let result = '';
-    for (const c of input.toLowerCase()) {
+    for (const c of input.toLowerCase())
+    {
         if (/[a-z0-9_]/.test(c)) result += c;
         else if (/\s/.test(c)) result += '_';
     }
@@ -25,11 +27,15 @@ export const WiredVariableUserView: FC<{}> = props =>
     const { trigger = null, setStringParam = null, setIntParams = null } = useWired();
 
     const variable = trigger as VariableDefinition;
+    const arrayEditor = useWiredVariableArrayConfig(variable);
 
     const save = () =>
     {
-        setStringParam(variableName);
-        setIntParams([ availability, hasValue ? 1 : 0 ]);
+        const savedDefinition = arrayEditor.buildSaveValue(variableName);
+        if(savedDefinition === null) return false;
+        setStringParam(savedDefinition);
+        setIntParams([ availability, (hasValue || arrayEditor.enabled) ? 1 : 0 ]);
+        return true;
     }
 
     useEffect(() =>
@@ -46,18 +52,16 @@ export const WiredVariableUserView: FC<{}> = props =>
             <WiredControlSection title={ LocalizeText('wiredfurni.params.variables.variable_name') }>
                 <WiredTextInput type="text" value={ variableName } onChange={ event => setVariableName(sanitizeVariableName(event.target.value)) } maxLength={ 40 } />
             </WiredControlSection>
-
             <WiredDivider />
-
             <WiredControlSection title={ LocalizeText('wiredfurni.params.variables.settings') }>
                 <WiredCheckbox
-                    checked={ hasValue }
+                    checked={ hasValue || arrayEditor.enabled }
+                    disabled={ arrayEditor.enabled }
                     onChange={ setHasValue }
                     label={ LocalizeText('wiredfurni.params.variables.settings.has_value') } />
             </WiredControlSection>
-
+            <WiredVariableArrayConfigView editor={ arrayEditor } />
             <WiredDivider />
-
             <WiredControlSection title={ LocalizeText('wiredfurni.params.variables.availability') }>
                 { AVAILABILITY_OPTIONS.map(option =>
                     <WiredRadio

@@ -26,6 +26,57 @@ export interface WiredCreatorToolsRoomStats
     showInspectButton: boolean;
     playtestingMode: boolean;
     handitemPassingBlocked: boolean;
+    arrayDefinitions: WiredCreatorToolsArrayDefinition[];
+}
+
+export interface WiredCreatorToolsArrayField
+{
+    id: number;
+    name: string;
+    order: number;
+    textConnected: boolean;
+}
+
+export interface WiredCreatorToolsArrayDefinition
+{
+    variableType: number;
+    name: string;
+    valueShape: number;
+    arrayFormat: number;
+    arrayMode: number;
+    maxEntries: number;
+    schemaVersion: number;
+    referenced: boolean;
+    writable: boolean;
+    inspectable: boolean;
+    fields: WiredCreatorToolsArrayField[];
+}
+
+export interface WiredCreatorToolsArrayEntry
+{
+    index: number;
+    occupied: boolean;
+    values: Record<string, string>;
+    connectedText: Record<string, string>;
+}
+
+export interface WiredCreatorToolsArrayInspection
+{
+    protocolVersion: number;
+    requestedOwnerType: 'furni' | 'user' | 'global';
+    requestedOwnerId: number;
+    ownerId: number;
+    hasArray: boolean;
+    definition: WiredCreatorToolsArrayDefinition;
+    logicalLength: number;
+    occupiedCount: number;
+    page: number;
+    pageSize: number;
+    pageCount: number;
+    startIndex: number;
+    endIndex: number;
+    totalIndexes: number;
+    entries: WiredCreatorToolsArrayEntry[];
 }
 
 export interface WiredCreatorToolsInspectionValues
@@ -34,7 +85,22 @@ export interface WiredCreatorToolsInspectionValues
     sourceId: number;
     values: Record<string, string>;
     variables: string[];
+    arrayDefinitions: WiredCreatorToolsArrayDefinition[];
+    arrayVariables: string[];
 }
+
+export interface WiredCreatorToolsArrayInspectionResponse
+{
+    sourceType: 'array';
+    sourceId: number;
+    values: Record<string, string>;
+    variables: string[];
+    arrayDefinitions: WiredCreatorToolsArrayDefinition[];
+    arrayVariables: string[];
+    arrayInspection: WiredCreatorToolsArrayInspection | null;
+}
+
+export type WiredCreatorToolsInspectionResponse = WiredCreatorToolsInspectionValues | WiredCreatorToolsArrayInspectionResponse;
 
 export interface WiredMouseHoldStateUpdate
 {
@@ -124,6 +190,20 @@ export interface WiredCreatorToolCreated
     extraData: string;
 }
 
+const parseJson = <T,>(value: string, fallback: T): T =>
+{
+    if(!value) return fallback;
+
+    try
+    {
+        return JSON.parse(value) as T;
+    }
+    catch
+    {
+        return fallback;
+    }
+};
+
 export class WiredCreatorToolsRoomStatsParser implements IMessageParser
 {
     private _stats: WiredCreatorToolsRoomStats = null;
@@ -160,7 +240,8 @@ export class WiredCreatorToolsRoomStatsParser implements IMessageParser
             showToolbar: wrapper.readBoolean(),
             showInspectButton: wrapper.readBoolean(),
             playtestingMode: wrapper.readBoolean(),
-            handitemPassingBlocked: wrapper.readBoolean()
+            handitemPassingBlocked: wrapper.readBoolean(),
+            arrayDefinitions: []
         };
 
         const globalValueCount = wrapper.readInt();
@@ -190,6 +271,8 @@ export class WiredCreatorToolsRoomStatsParser implements IMessageParser
         {
             stats.globalVariables.push(wrapper.readString());
         }
+
+        stats.arrayDefinitions = parseJson<WiredCreatorToolsArrayDefinition[]>(wrapper.readString(), []);
 
         this._stats = stats;
         return true;
@@ -396,7 +479,7 @@ export class WiredCreatorToolsOpenEvent extends MessageEvent implements IMessage
 
 export class WiredCreatorToolsInspectionValuesParser implements IMessageParser
 {
-    private _inspectionValues: WiredCreatorToolsInspectionValues = null;
+    private _inspectionValues: WiredCreatorToolsInspectionResponse = null;
 
     public flush(): boolean
     {
@@ -406,11 +489,14 @@ export class WiredCreatorToolsInspectionValuesParser implements IMessageParser
 
     public parse(wrapper: IMessageDataWrapper): boolean
     {
-        const inspectionValues: WiredCreatorToolsInspectionValues = {
-            sourceType: wrapper.readString() as 'furni' | 'user',
+        const sourceType = wrapper.readString() as 'furni' | 'user' | 'array';
+        const inspectionValues = {
+            sourceType,
             sourceId: wrapper.readInt(),
-            values: {},
-            variables: []
+            values: {} as Record<string, string>,
+            variables: [] as string[],
+            arrayDefinitions: [],
+            arrayVariables: [] as string[]
         };
 
         const valueCount = wrapper.readInt();
@@ -427,11 +513,17 @@ export class WiredCreatorToolsInspectionValuesParser implements IMessageParser
             inspectionValues.variables.push(wrapper.readString());
         }
 
-        this._inspectionValues = inspectionValues;
+        inspectionValues.arrayDefinitions = parseJson<WiredCreatorToolsArrayDefinition[]>(wrapper.readString(), []);
+        const arrayInspection = parseJson<WiredCreatorToolsArrayInspection | null>(wrapper.readString(), null);
+        inspectionValues.arrayVariables = parseJson<string[]>(wrapper.readString(), []);
+
+        this._inspectionValues = sourceType === 'array'
+            ? { ...inspectionValues, sourceType: 'array', arrayInspection }
+            : { ...inspectionValues, sourceType };
         return true;
     }
 
-    public get inspectionValues(): WiredCreatorToolsInspectionValues
+    public get inspectionValues(): WiredCreatorToolsInspectionResponse
     {
         return this._inspectionValues;
     }
@@ -679,11 +771,21 @@ export class WiredCreatorToolsRoomStatsComposer implements IMessageComposer<unkn
 
 export class WiredCreatorToolsInspectionValuesComposer implements IMessageComposer<unknown[]>
 {
-    public constructor(private readonly sourceType: 'furni' | 'user', private readonly sourceId: number)
+    public constructor(
+        private readonly sourceType: 'furni' | 'user' | 'array',
+        private readonly sourceId: number,
+        private readonly variableType = 0,
+        private readonly variableName = '',
+        private readonly page = 0,
+        private readonly pageSize = 25)
     {}
 
     public getMessageArray(): unknown[]
     {
+        if(this.sourceType === 'array')
+        {
+            return [ this.sourceType, this.sourceId, this.variableType, this.variableName, this.page, this.pageSize ];
+        }
         return [ this.sourceType, this.sourceId ];
     }
 
@@ -736,13 +838,32 @@ export class WiredCreatorToolsVariableActionComposer implements IMessageComposer
     public constructor(
         private readonly sourceType: 'furni' | 'user' | 'global',
         private readonly sourceId: number,
-        private readonly action: 'give' | 'remove' | 'set',
+        private readonly action: 'give' | 'remove' | 'set' | 'set_array_field',
         private readonly variableName: string,
-        private readonly value: number = 0)
+        private readonly value: number | string = 0,
+        private readonly index: number = -1,
+        private readonly fieldId: number = 0,
+        private readonly page: number = 0,
+        private readonly pageSize: number = 25)
     {}
 
     public getMessageArray(): unknown[]
     {
+        if(this.action === 'set_array_field')
+        {
+            return [
+                this.sourceType,
+                this.sourceId,
+                this.action,
+                this.variableName,
+                String(this.value),
+                this.index,
+                this.fieldId,
+                this.page,
+                this.pageSize
+            ];
+        }
+
         return [ this.sourceType, this.sourceId, this.action, this.variableName, this.value ];
     }
 

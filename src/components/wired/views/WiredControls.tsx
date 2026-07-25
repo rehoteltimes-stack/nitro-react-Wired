@@ -121,6 +121,29 @@ export const clampWiredText = (value: string, min: number, max: number) =>
     return String(clampWiredValue(Number(value.replace(/[^0-9-]/g, '')) || 0, min, max));
 }
 
+export const WIRED_SIGNED_LONG_MIN = '-9223372036854775808';
+export const WIRED_SIGNED_LONG_MAX = '9223372036854775807';
+
+export const sanitizeWiredSignedLongText = (value: string) =>
+{
+    const cleaned = String(value ?? '').replace(/[^0-9-]/g, '');
+    const negative = cleaned.startsWith('-');
+    const digits = cleaned.replace(/-/g, '');
+
+    return `${ negative ? '-' : '' }${ digits }`;
+}
+
+export const wiredSignedLongIsValid = (value: string) =>
+{
+    if(!/^-?[0-9]+$/.test(value)) return false;
+
+    const negative = value.startsWith('-');
+    const digits = (negative ? value.slice(1) : value).replace(/^0+(?=[0-9])/, '');
+    const maximum = negative ? WIRED_SIGNED_LONG_MIN.slice(1) : WIRED_SIGNED_LONG_MAX;
+
+    return digits.length < maximum.length || (digits.length === maximum.length && digits <= maximum);
+}
+
 /** Parse the JSON blob wired boxes store in stringData. */
 export const parseWiredData = <T,>(value: string): T =>
 {
@@ -1122,26 +1145,53 @@ export interface WiredValueOrVariableProps extends WiredVariablePickerProps
     onModeChange: (mode: number) => void;
     value: string;
     onValueChange: (value: string) => void;
-    min: number;
-    max: number;
+    min?: number;
+    max?: number;
+    signedLong?: boolean;
+    /** The type callback also clears the nested variable name and normalizes its source. */
+    atomicVariableTypeChange?: boolean;
 }
 
 export const WiredValueOrVariable: FC<WiredValueOrVariableProps> = props =>
 {
-    const { radioName, mode, onModeChange, value, onValueChange, min, max, ...pickerProps } = props;
+    const {
+        radioName,
+        mode,
+        onModeChange,
+        value,
+        onValueChange,
+        min = 0,
+        max = 100,
+        signedLong = false,
+        atomicVariableTypeChange = false,
+        ...pickerProps
+    } = props;
     const { variableType, variableName, onVariableNameChange, variables } = pickerProps;
     const variableDisabled = mode !== WIRED_REFERENCE_FROM_VARIABLE;
+    const changeVariableType = atomicVariableTypeChange
+        ? pickerProps.onVariableTypeChange
+        : wiredVariableTypeChange(pickerProps);
 
     return (
         <>
             <Flex alignItems="center" gap={ 1 }>
                 <WiredRadio name={ radioName } checked={ mode === WIRED_REFERENCE_SET_VALUE } onChange={ () => onModeChange(WIRED_REFERENCE_SET_VALUE) } label={ LocalizeText('wiredfurni.params.variables.reference_value.set_value') } />
-                <WiredTextInput compact type="number" min={ min } max={ max } value={ value } onChange={ event => onValueChange(clampWiredText(event.target.value, min, max)) } />
+                <WiredTextInput
+                    compact
+                    type={ signedLong ? 'text' : 'number' }
+                    inputMode="numeric"
+                    pattern={ signedLong ? '-?[0-9]*' : undefined }
+                    min={ signedLong ? undefined : min }
+                    max={ signedLong ? undefined : max }
+                    value={ value }
+                    onChange={ event => onValueChange(signedLong
+                        ? sanitizeWiredSignedLongText(event.target.value)
+                        : clampWiredText(event.target.value, min, max)) } />
             </Flex>
             <Flex alignItems="center" justifyContent="between" gap={ 1 }>
                 <WiredRadio name={ radioName } checked={ mode === WIRED_REFERENCE_FROM_VARIABLE } onChange={ () => onModeChange(WIRED_REFERENCE_FROM_VARIABLE) } label={ LocalizeText('wiredfurni.params.variables.reference_value.from_variable') } />
                 <WiredDisabled disabled={ variableDisabled }>
-                    <WiredVariableTypeSelector value={ variableType } onChange={ wiredVariableTypeChange(pickerProps) } disabledTypes={ pickerProps.disabledTypes } hiddenTypes={ pickerProps.hiddenTypes } />
+                    <WiredVariableTypeSelector value={ variableType } onChange={ changeVariableType } disabledTypes={ pickerProps.disabledTypes } hiddenTypes={ pickerProps.hiddenTypes } />
                 </WiredDisabled>
             </Flex>
             <WiredDisabled disabled={ variableDisabled } className="nw-indent-1 nw-variable-name-gap">

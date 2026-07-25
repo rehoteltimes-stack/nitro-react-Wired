@@ -14,6 +14,8 @@ import {
     WiredVariableLists,
     WiredVariablePicker,
     wiredVariableSourceOptions,
+    sanitizeWiredSignedLongText,
+    wiredSignedLongIsValid,
     WIRED_SOURCE_SELECTED,
     WIRED_SOURCE_TRIGGER,
     WIRED_VARIABLE_CONTEXT,
@@ -23,17 +25,19 @@ import {
 } from '../WiredControls';
 import { WiredSourceSelectorConfig } from '../WiredFurniSelectorView';
 import { WiredEffectBaseView } from './WiredEffectBaseView';
+import { wiredArrayDefinition, WiredVariableDefinitionMetadata } from '../WiredArrayControls';
 
 interface VariableData
 {
     variableName?: string;
-    initialValue?: number;
+    initialValue?: string | number;
     variableType?: number;
     source?: number;
     overrideExisting?: boolean;
     furniVariables?: string[];
     userVariables?: string[];
     contextVariables?: string[];
+    variableDefinitions?: WiredVariableDefinitionMetadata[];
 }
 
 const VALID_VARIABLE_TYPES = [ WIRED_VARIABLE_FURNI, WIRED_VARIABLE_USER, WIRED_VARIABLE_CONTEXT ];
@@ -55,6 +59,8 @@ export const WiredEffectGiveVariableView: FC<{}> = props =>
         user: data.userVariables ?? [],
         context: data.contextVariables ?? []
     }), [ data ]);
+    const variableDefinitions = useMemo(() => data.variableDefinitions ?? [], [ data ]);
+    const selectedArray = wiredArrayDefinition(variableDefinitions, variableType, variableName);
 
     const selectedCount = Array.isArray(furniIds) ? furniIds.length : 0;
     const selectionLimit = trigger?.maximumItemSelectionCount ?? 20;
@@ -88,7 +94,7 @@ export const WiredEffectGiveVariableView: FC<{}> = props =>
     {
         setStringParam(JSON.stringify({
             variableName,
-            initialValue: Number(initialValue || 0)
+            initialValue
         }));
         setIntParams([
             variableType,
@@ -96,6 +102,8 @@ export const WiredEffectGiveVariableView: FC<{}> = props =>
             overrideExisting ? 1 : 0
         ]);
     };
+
+    const validate = () => !!variableName && (!!selectedArray || wiredSignedLongIsValid(initialValue));
 
     useEffect(() =>
     {
@@ -121,6 +129,7 @@ export const WiredEffectGiveVariableView: FC<{}> = props =>
             requiresFurni={ variableType === WIRED_VARIABLE_FURNI ? WiredFurniType.STUFF_SELECTION_OPTION_BY_ID_BY_TYPE_OR_FROM_CONTEXT : WiredFurniType.STUFF_SELECTION_OPTION_NONE }
             hasSpecialInput={ true }
             save={ save }
+            validate={ validate }
             hideFurniSelector={ variableType === WIRED_VARIABLE_FURNI }
             sourceSelectors={ sourceSelectors }
             alwaysExpandedSources={ true }>
@@ -141,21 +150,21 @@ export const WiredEffectGiveVariableView: FC<{}> = props =>
                     onChange={ setOverrideExisting }
                     label={ LocalizeText('wiredfurni.params.variables.value_settings.override_existing') } />
             </WiredParam>
-
-            <WiredParam titleKey="wiredfurni.params.variables.value_settings" divider={ false }>
-                <WiredDisabled disabled={ !overrideExisting }>
-                    <Flex className="nw-inline-input-row" alignItems="center" gap={ 1 }>
-                        <WiredControlText>{ LocalizeText('wiredfurni.params.variables.value_settings.initial_value') }</WiredControlText>
-                        <WiredTextInput
-                            compact
-                            type="text"
-                            inputMode="numeric"
-                            pattern="-?[0-9]*"
-                            value={ initialValue }
-                            onChange={ event => setInitialValue(event.target.value.replace(/[^0-9-]/g, '')) } />
-                    </Flex>
-                </WiredDisabled>
-            </WiredParam>
+            { !selectedArray &&
+                <WiredParam titleKey="wiredfurni.params.variables.value_settings" divider={ false }>
+                    <WiredDisabled disabled={ !overrideExisting }>
+                        <Flex className="nw-inline-input-row" alignItems="center" gap={ 1 }>
+                            <WiredControlText>{ LocalizeText('wiredfurni.params.variables.value_settings.initial_value') }</WiredControlText>
+                            <WiredTextInput
+                                compact
+                                type="text"
+                                inputMode="numeric"
+                                pattern="-?[0-9]*"
+                                value={ initialValue }
+                                onChange={ event => setInitialValue(sanitizeWiredSignedLongText(event.target.value)) } />
+                        </Flex>
+                    </WiredDisabled>
+                </WiredParam> }
         </WiredEffectBaseView>
     );
 }

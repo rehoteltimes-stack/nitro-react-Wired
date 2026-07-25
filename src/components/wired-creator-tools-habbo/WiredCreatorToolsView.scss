@@ -432,6 +432,62 @@ button.habbo-wired-native-overlay {
     text-align: left;
 }
 
+.habbo-wired-table-value-link {
+    position: relative;
+    display: flex;
+    height: 16px;
+    align-items: flex-start;
+    padding: 0 4px 1px 0;
+    border: 0;
+    border-bottom: 1px solid #0000ee;
+    background: transparent;
+    box-sizing: border-box;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.habbo-wired-array-log-summary {
+    position: absolute;
+    left: 390px;
+    top: 7px;
+    display: grid;
+    width: 390px;
+    height: 38px;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+}
+
+.habbo-wired-array-log-stat {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+}
+
+.habbo-wired-array-value {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    overflow: hidden;
+}
+
+.habbo-wired-array-editor {
+    width: 100%;
+    height: 18px;
+    padding: 0 2px;
+    border: 1px solid #777;
+    outline: 0;
+    background: #fff;
+    color: #000;
+    font: 11px Arial, sans-serif;
+}
+
 .habbo-wired-meta-pair {
     display: flex;
     width: 100%;

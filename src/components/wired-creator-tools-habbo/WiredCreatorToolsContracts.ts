@@ -19,5 +19,7 @@ export const WIRED_CREATOR_TOOLS_BACKEND_TODO = {
 
 export const WIRED_CREATOR_TOOLS_DEFAULTS = {
     maxUsage: 8750,
-    heavyUsageFallbackPercent: 50
+    heavyUsageFallbackPercent: 50,
+    arrayInspectionPageSize: 25,
+    arrayInspectionMaximumPageSize: 50
 } as const;

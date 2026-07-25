@@ -26,6 +26,7 @@ import { WiredConditionMovementValidationView } from './WiredConditionMovementVa
 import { WiredConditionHasVariableView } from './WiredConditionHasVariableView';
 import { WiredConditionVariableValueView } from './WiredConditionVariableValueView';
 import { WiredConditionVariableAgeView } from './WiredConditionVariableAgeView';
+import { WiredConditionCheckArrayView } from './WiredConditionCheckArrayView';
 
 export const WiredConditionLayoutView = (code: number) =>
 {
@@ -136,6 +137,9 @@ export const WiredConditionLayoutView = (code: number) =>
 
         case WiredConditionlayout.VARIABLE_AGE_MATCHES:
             return <WiredConditionVariableAgeView />;
+
+        case WiredConditionlayout.CHECK_ARRAY:
+            return <WiredConditionCheckArrayView />;
 
         case WiredConditionlayout.NOT_HAS_VARIABLE:
             return <WiredConditionHasVariableView isNegative={ true } />;

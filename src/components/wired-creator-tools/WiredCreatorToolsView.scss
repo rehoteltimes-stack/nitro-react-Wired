@@ -102,7 +102,8 @@
 
 .nitro-wired-logs,
 .nitro-wired-chest-logs,
-.nitro-wired-chest-log-detail {
+.nitro-wired-chest-log-detail,
+.nitro-wired-array-viewer {
     width: 690px;
     height: 425px;
     min-height: 425px;
@@ -133,6 +134,20 @@
     height: 420px;
     min-height: 420px;
     max-height: 420px;
+}
+
+.nitro-wired-array-viewer {
+    min-width: 420px;
+    max-width: calc(100vw - 40px);
+    height: 460px;
+    min-height: 460px;
+    max-height: 460px;
+
+    @for $field-count from 1 through 8 {
+        &.wired-tools-array-field-count-#{$field-count} {
+            width: min(#{420 + ($field-count * 115)}px, calc(100vw - 40px));
+        }
+    }
 }
 
 .wired-tools-tabbar {
@@ -306,7 +321,8 @@
 .nitro-wired-creator-tools,
 .nitro-wired-logs,
 .nitro-wired-chest-logs,
-.nitro-wired-chest-log-detail {
+.nitro-wired-chest-log-detail,
+.nitro-wired-array-viewer {
     .nw-btn {
         width: 24px;
         height: 20px;
@@ -620,6 +636,7 @@
 .nitro-wired-logs,
 .nitro-wired-chest-logs,
 .nitro-wired-chest-log-detail,
+.nitro-wired-array-viewer,
 .wired-tools-highlight-overlay,
 .wired-tools-item-bubble {
     .wired-tools-ui-text {
@@ -1529,7 +1546,8 @@
 
 .nitro-wired-logs .wired-tools-content,
 .nitro-wired-chest-logs .wired-tools-content,
-.nitro-wired-chest-log-detail .wired-tools-content {
+.nitro-wired-chest-log-detail .wired-tools-content,
+.nitro-wired-array-viewer .wired-tools-content {
     height: calc(100% - 31px);
     min-height: 0;
     max-height: none;
@@ -1573,6 +1591,44 @@
     text-decoration-thickness: 1px;
     text-underline-offset: 2px;
     cursor: pointer;
+}
+
+.wired-tools-view-array-button {
+    justify-content: center;
+}
+
+.wired-tools-array-viewer-content {
+    min-height: 395px;
+}
+
+.wired-tools-array-viewer-window {
+    .wired-tools-table-wrap {
+        height: 350px;
+        min-height: 350px;
+        max-height: 350px;
+        overflow: auto;
+    }
+
+    .wired-tools-table {
+        min-width: 100%;
+
+        th,
+        td {
+            min-width: 115px;
+            white-space: nowrap;
+        }
+
+        th:first-child,
+        td:first-child {
+            width: 72px;
+            min-width: 72px;
+            text-align: center;
+        }
+    }
+
+    .wired-tools-empty-array-row td {
+        text-align: center;
+    }
 }
 
 .wired-tools-chest-summary-table {

@@ -24,6 +24,7 @@ import { WiredEffectJoinTeamView } from './WiredEffectJoinTeamView';
 import { WiredEffectKickAvatarView } from './WiredEffectKickAvatarView';
 import { WiredEffectLeaveTeamView } from './WiredEffectLeaveTeamView';
 import { WiredEffectMatchFurniPositionStateView } from './WiredEffectMatchFurniPositionStateView';
+import { WiredEffectModifyArrayView } from './WiredEffectModifyArrayView';
 import { WiredEffectMoveAvatarToFurniView } from './WiredEffectMoveAvatarToFurniView';
 import { WiredEffectMoveFurniAwayAvatarView } from './WiredEffectMoveFurniAwayAvatarView';
 import { WiredEffectMoveFurniAsGroupView } from './WiredEffectMoveFurniAsGroupView';
@@ -154,6 +155,8 @@ export const WiredEffectLayoutView = (code: number) =>
             return<WiredEffectInitiateTransactionView />;
         case WiredEffectLayout.CANCEL_TRANSACTION:
             return<WiredEffectCancelTransactionView />;
+        case WiredEffectLayout.MODIFY_ARRAY:
+            return<WiredEffectModifyArrayView />;
     }
 
     return null;

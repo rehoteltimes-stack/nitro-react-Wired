@@ -4,15 +4,16 @@ import { WiredBaseView } from '../WiredBaseView';
 
 export interface WiredVariableBaseViewProps
 {
-    save: () => void;
+    save: () => boolean | void;
+    validate?: () => boolean;
 }
 
 export const WiredVariableBaseView: FC<PropsWithChildren<WiredVariableBaseViewProps>> = props =>
 {
-    const { save = null, children = null } = props;
+    const { save = null, validate = null, children = null } = props;
 
     return (
-        <WiredBaseView wiredType="variable" requiresFurni={ WiredFurniType.STUFF_SELECTION_OPTION_NONE } hasSpecialInput={ true } save={ save }>
+        <WiredBaseView wiredType="variable" requiresFurni={ WiredFurniType.STUFF_SELECTION_OPTION_NONE } hasSpecialInput={ true } save={ save } validate={ validate }>
             { children }
         </WiredBaseView>
     );
