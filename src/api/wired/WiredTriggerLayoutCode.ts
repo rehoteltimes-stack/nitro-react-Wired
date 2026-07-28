@@ -27,4 +27,5 @@ export class WiredTriggerLayout
     public static USER_RELEASES: number = 24;
     public static TRANSACTION_COMPLETED: number = 25;
     public static TRANSACTION_FAILED: number = 26;
+    public static BROADCAST_RECEIVER: number = 27;
 }

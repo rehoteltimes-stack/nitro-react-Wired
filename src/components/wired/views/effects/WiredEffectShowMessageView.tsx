@@ -6,7 +6,7 @@ import { WiredEffectBaseView } from './WiredEffectBaseView';
 import { createUserSourceSelector, useWiredEffectSource, USER_SOURCE_OPTIONS } from './WiredEffectSourceSelector';
 import { limitWiredMessage, normalizeWiredMessageWidth, WIRED_MESSAGE_ALIGN_LEFT, WIRED_MESSAGE_WIDTH_DEFAULT } from '../message-editor/WiredMessageFormatting';
 import { WiredMessageEditor } from '../message-editor/WiredMessageEditor';
-import { WIRED_SOURCE_TRIGGER, WiredInfoDesc, WiredParam, WiredRadio, WiredSelect } from '../WiredControls';
+import { wiredBroadcastReceiverAvailableForTrigger, WIRED_SOURCE_TRIGGER, WiredCheckbox, WiredInfoDesc, WiredParam, WiredRadio, WiredSelect } from '../WiredControls';
 
 const VISIBILITY_SOURCE_USER = 0;
 const VISIBILITY_EVERYONE = 1;
@@ -23,16 +23,18 @@ export const WiredEffectShowMessageView: FC<{}> = props =>
     const [ notificationStyle, setNotificationStyle ] = useState(DEFAULT_NOTIFICATION_STYLE);
     const [ bubbleWidth, setBubbleWidth ] = useState(WIRED_MESSAGE_WIDTH_DEFAULT);
     const [ textAlignment, setTextAlignment ] = useState(WIRED_MESSAGE_ALIGN_LEFT);
+    const [ overrideBroadcastFormat, setOverrideBroadcastFormat ] = useState(false);
     const [ generalExpanded, setGeneralExpanded ] = useState(false);
     const [ visibilityExpanded, setVisibilityExpanded ] = useState(false);
     const [ styleExpanded, setStyleExpanded ] = useState(false);
     const { trigger = null, setStringParam = null, setIntParams = null } = useWired();
     const [ userSource, setUserSource, expanded, setExpanded ] = useWiredEffectSource(trigger, 2, WIRED_SOURCE_TRIGGER, USER_SOURCE_OPTIONS);
+    const hasBroadcastReceiver = wiredBroadcastReceiverAvailableForTrigger(trigger);
 
     const save = () =>
     {
         setStringParam(message);
-        setIntParams([ visibility, notificationStyle, userSource, bubbleWidth, WIRED_MESSAGE_ALIGN_LEFT ]);
+        setIntParams([ visibility, notificationStyle, userSource, bubbleWidth, WIRED_MESSAGE_ALIGN_LEFT, overrideBroadcastFormat ? 1 : 0 ]);
     }
 
     useEffect(() =>
@@ -44,6 +46,7 @@ export const WiredEffectShowMessageView: FC<{}> = props =>
         setNotificationStyle(normalizeNotificationStyle((trigger.intData.length > 1) ? trigger.intData[1] : DEFAULT_NOTIFICATION_STYLE));
         setBubbleWidth(normalizeWiredMessageWidth((trigger.intData.length > 3) ? trigger.intData[3] : WIRED_MESSAGE_WIDTH_DEFAULT));
         setTextAlignment(WIRED_MESSAGE_ALIGN_LEFT);
+        setOverrideBroadcastFormat((trigger.intData.length > 5) && trigger.intData[5] === 1);
     }, [ trigger ]);
 
     return (
@@ -63,7 +66,23 @@ export const WiredEffectShowMessageView: FC<{}> = props =>
                     <WiredInfoDesc textKey="wiredfurni.params.show_message.usage_info" />
                 </WiredParam>
                 <WiredParam titleKey="wiredfurni.params.message">
-                    <WiredMessageEditor value={ message } onChange={ value => setMessage(limitWiredMessage(value)) } previewStyle={ notificationStyle } bubbleWidth={ bubbleWidth } onBubbleWidthChange={ setBubbleWidth } textAlignment={ textAlignment } onTextAlignmentChange={ setTextAlignment } />
+                    <WiredMessageEditor
+                        value={ message }
+                        onChange={ value => setMessage(limitWiredMessage(value)) }
+                        previewStyle={ notificationStyle }
+                        bubbleWidth={ bubbleWidth }
+                        onBubbleWidthChange={ setBubbleWidth }
+                        showBubbleWidth={ !hasBroadcastReceiver || overrideBroadcastFormat }
+                        formattingEnabled={ !hasBroadcastReceiver || overrideBroadcastFormat }
+                        textAlignment={ textAlignment }
+                        onTextAlignmentChange={ setTextAlignment } />
+                    { hasBroadcastReceiver &&
+                        <WiredCheckbox
+                            checked={ overrideBroadcastFormat }
+                            onChange={ setOverrideBroadcastFormat }
+                            label="Override Broadcast Format" /> }
+                    { hasBroadcastReceiver && !overrideBroadcastFormat &&
+                        <WiredInfoDesc text="Broadcast text formatting and bubble width will be used." /> }
                 </WiredParam>
                 <WiredParam
                     titleKey="wiredfurni.params.show_message.visibility_selection.title"

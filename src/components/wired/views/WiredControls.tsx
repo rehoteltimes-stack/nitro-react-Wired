@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes, CSSProperties, FC, forwardRef, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ReactSlider from 'react-slider';
-import { LocalizeText } from '../../../api';
+import { LocalizeText, WiredTriggerLayout } from '../../../api';
 import { BitmapFontName, Flex, Text } from '../../../common';
 import { WiredIcon, wiredIconUrl } from './WiredIcons';
 
@@ -95,6 +95,18 @@ export const wiredClickedAvatarSourceAvailableForTrigger = (trigger: any = null)
     const data = parseWiredData<Record<string, any>>(trigger?.stringData ?? '');
 
     return wiredClickedAvatarSourceAvailable(data);
+}
+
+export const wiredBroadcastReceiverAvailableForTrigger = (trigger: any = null) =>
+{
+    if(!trigger) return false;
+
+    const hasBroadcastReceiver = (data: Record<string, any>) =>
+        CLICKED_AVATAR_TRIGGER_ARRAY_KEYS.some(key => Array.isArray(data[key]) && data[key].includes(WiredTriggerLayout.BROADCAST_RECEIVER));
+
+    if(hasBroadcastReceiver(trigger as Record<string, any>)) return true;
+
+    return hasBroadcastReceiver(parseWiredData<Record<string, any>>(trigger?.stringData ?? ''));
 }
 
 export const wiredUserSourceOptionsForData = (data: Record<string, any> = {}) => wiredUserSourceOptions(wiredClickedAvatarSourceAvailable(data));

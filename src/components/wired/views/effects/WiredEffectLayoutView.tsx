@@ -48,6 +48,7 @@ import { WiredEffectToggleFurniStateView } from './WiredEffectToggleFurniStateVi
 import { WiredEffectToggleRandomStateView } from './WiredEffectToggleRandomStateView';
 import { WiredEffectUnfreezeAvatarView } from './WiredEffectUnfreezeAvatarView';
 import { WiredEffectWriteLogView } from './WiredEffectWriteLogView';
+import { WiredEffectBroadcastView } from './WiredEffectBroadcastView';
 
 
 export const WiredEffectLayoutView = (code: number) =>
@@ -154,6 +155,8 @@ export const WiredEffectLayoutView = (code: number) =>
             return<WiredEffectInitiateTransactionView />;
         case WiredEffectLayout.CANCEL_TRANSACTION:
             return<WiredEffectCancelTransactionView />;
+        case WiredEffectLayout.BROADCAST:
+            return <WiredEffectBroadcastView />;
     }
 
     return null;

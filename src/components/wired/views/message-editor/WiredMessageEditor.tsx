@@ -12,13 +12,15 @@ interface WiredMessageEditorProps
     previewStyle?: number;
     bubbleWidth?: number;
     onBubbleWidthChange?: (value: number) => void;
+    showBubbleWidth?: boolean;
+    formattingEnabled?: boolean;
     textAlignment?: number;
     onTextAlignmentChange?: (value: number) => void;
 }
 
 export const WiredMessageEditor: FC<WiredMessageEditorProps> = props =>
 {
-    const { value = '', onChange, previewStyle = 34, bubbleWidth = WIRED_MESSAGE_WIDTH_DEFAULT, onBubbleWidthChange = null, textAlignment = WIRED_MESSAGE_ALIGN_LEFT } = props;
+    const { value = '', onChange, previewStyle = 34, bubbleWidth = WIRED_MESSAGE_WIDTH_DEFAULT, onBubbleWidthChange = null, showBubbleWidth = true, formattingEnabled = true, textAlignment = WIRED_MESSAGE_ALIGN_LEFT } = props;
     const [ expanded, setExpanded ] = useState(false);
     const [ widthInput, setWidthInput ] = useState(String(normalizeWiredMessageWidth(bubbleWidth)));
     const [ position, setPosition ] = useState(() => ({
@@ -171,7 +173,7 @@ export const WiredMessageEditor: FC<WiredMessageEditorProps> = props =>
                         </div>
                         <div className="nw-body">
                             <div className="nw-message-editor-toolbar">
-                                <div className="nw-message-editor-tools">
+                                { formattingEnabled && <div className="nw-message-editor-tools">
                                     <span className="nw-variable-type-pill nw-message-format-pill">
                                         { renderToolbarButton('B', 'Bold', false, () => insertMarkup('[b]', '[/b]'), 'nw-message-format-bold') }
                                         { renderToolbarButton('I', 'Italic', false, () => insertMarkup('[i]', '[/i]'), 'nw-message-format-italic') }
@@ -184,17 +186,19 @@ export const WiredMessageEditor: FC<WiredMessageEditorProps> = props =>
                                         { renderToolbarButton(renderAlignIcon('center'), 'Insert center align', false, () => insertMarkup('[center]', '[/center]')) }
                                         { renderToolbarButton(renderAlignIcon('right'), 'Insert right align', false, () => insertMarkup('[right]', '[/right]')) }
                                     </span>
-                                    <span className="nw-message-toolbar-pipe" />
-                                    <span className="nw-message-tool-label"><WiredControlText>Bubble Width</WiredControlText></span>
-                                    <WiredTextInput
-                                        className="nw-message-width-input"
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={ widthInput }
-                                        onChange={ event => changeBubbleWidth(event.target.value) }
-                                        onBlur={ commitBubbleWidth }
-                                        onKeyDown={ submitBubbleWidth } />
-                                    <span className="nw-message-width-suffix">px</span>
+                                    { showBubbleWidth && <>
+                                        <span className="nw-message-toolbar-pipe" />
+                                        <span className="nw-message-tool-label"><WiredControlText>Bubble Width</WiredControlText></span>
+                                        <WiredTextInput
+                                            className="nw-message-width-input"
+                                            type="text"
+                                            inputMode="numeric"
+                                            value={ widthInput }
+                                            onChange={ event => changeBubbleWidth(event.target.value) }
+                                            onBlur={ commitBubbleWidth }
+                                            onKeyDown={ submitBubbleWidth } />
+                                        <span className="nw-message-width-suffix">px</span>
+                                    </> }
                                     <span className="nw-message-toolbar-pipe" />
                                     <span className="nw-message-special-wrap">
                                         <button type="button" className="nw-message-preview-link">
@@ -208,7 +212,7 @@ export const WiredMessageEditor: FC<WiredMessageEditorProps> = props =>
                                                 </div>) }
                                         </div>
                                     </span>
-                                </div>
+                                </div> }
                                 <span className="nw-message-count">{ visibleLength }/{ WIRED_MESSAGE_VISIBLE_MAX_LENGTH }</span>
                             </div>
                             <WiredTextarea

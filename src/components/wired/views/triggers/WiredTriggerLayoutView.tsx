@@ -25,6 +25,7 @@ import { WiredTriggerScoreAchievedView } from './WiredTriggerScoreAchievedView';
 import { WiredTriggerTransactionView } from './WiredTriggerTransactionView';
 import { WiredTriggerUserReleasesView } from './WiredTriggerUserReleasesView';
 import { WiredTriggerVariableChangedView } from './WiredTriggerVariableChangedView';
+import { WiredTriggerBroadcastReceiverView } from './WiredTriggerBroadcastReceiverView';
 
 
 export const WiredTriggerLayoutView = (code: number) =>
@@ -84,6 +85,8 @@ export const WiredTriggerLayoutView = (code: number) =>
         case WiredTriggerLayout.TRANSACTION_COMPLETED:
         case WiredTriggerLayout.TRANSACTION_FAILED:
             return <WiredTriggerTransactionView />;
+        case WiredTriggerLayout.BROADCAST_RECEIVER:
+            return <WiredTriggerBroadcastReceiverView />;
     }
 
     return null;
