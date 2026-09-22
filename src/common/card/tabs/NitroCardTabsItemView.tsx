@@ -10,11 +10,11 @@ interface NitroCardTabsItemViewProps extends FlexProps
 
 export const NitroCardTabsItemView: FC<NitroCardTabsItemViewProps> = props =>
 {
-    const { isActive = false, count = 0, overflow = 'hidden', position = 'relative', pointer = true, classNames = [], children = null, ...rest } = props;
+    const { gap = null, isActive = false, count = 0, overflow = 'hidden', position = 'relative', pointer = true, classNames = [], children = null, ...rest } = props;
 
     const getClassNames = useMemo(() =>
     {
-        const newClassNames: string[] = [ 'nav-item', 'rounded-top', 'border' ];
+        const newClassNames: string[] = [ 'nav-item' ];
 
         if(isActive) newClassNames.push('active');
 
@@ -25,7 +25,7 @@ export const NitroCardTabsItemView: FC<NitroCardTabsItemViewProps> = props =>
 
     return (
         <Flex overflow={ overflow } pointer={ pointer } position={ position } classNames={ getClassNames } { ...rest }>
-            <Flex shrink center>
+            <Flex shrink center gap={ gap }>
                 { children }
             </Flex>
             { (count > 0) &&

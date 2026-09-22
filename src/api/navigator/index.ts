@@ -11,3 +11,4 @@ export * from './RoomInfoData';
 export * from './RoomSettingsUtils';
 export * from './SearchFilterOptions';
 export * from './TryVisitRoom';
+export * from './VisitNavigatorRoom';
