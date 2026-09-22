@@ -33,7 +33,8 @@ export const InventoryFurnitureView: FC<InventoryFurnitureViewProps> = props =>
     const { groupItems: allGroupItems = [], selectedItem = null, activate = null, deactivate = null } = useInventoryFurni();
     const { resetItems = null } = useInventoryUnseenTracker();
 
-    // First filter: remove clothing + specific hidden items
+    // Real reference has one unified Furniture tab - no separate Rares/Clothing category to route these into, so
+    // they're no longer filtered out here (previously excluded for this project's own now-removed Rares/Clothing tabs).
     const groupItems = useMemo(() => allGroupItems.filter(group =>
 {
     const item = group.getLastItem();
@@ -41,14 +42,6 @@ export const InventoryFurnitureView: FC<InventoryFurnitureViewProps> = props =>
 
     const furniData = GetSessionDataManager().getFloorItemData(item.type);
     if(!furniData) return false;
-
-    const className = furniData.className?.toLowerCase() || '';
-
-    // Exclude rares
-    if(furniData.furniLine === 'rare') return false;
-
-    // Exclude clothing
-    if(className.startsWith('clothing_')) return false;
 
     return true;
 }), [ allGroupItems ]);

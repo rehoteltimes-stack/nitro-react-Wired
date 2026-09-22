@@ -52,22 +52,9 @@ const useInventoryFurniState = () =>
         return null;
     }
 
-    const getUnseenCategoryForItem = (item: FurnitureItem): number =>
-{
-    const furniData = GetSessionDataManager().getFloorItemData(item.type);
-
-    if(!furniData) return UnseenItemCategory.FURNI;
-
-    const className = furniData.className?.toLowerCase() || '';
-
-    if(furniData.furniLine === 'rare')
-        return UnseenItemCategory.RARES;
-
-    if(className.startsWith('clothing_'))
-        return UnseenItemCategory.CLOTHING;
-
-    return UnseenItemCategory.FURNI;
-};
+    // Rares/clothing no longer have their own tab (the real reference has one unified Furniture tab - see
+    // InventoryView.tsx) so every furni item now counts toward the same UnseenItemCategory.FURNI badge.
+    const getUnseenCategoryForItem = (item: FurnitureItem): number => UnseenItemCategory.FURNI;
 
     useMessageEvent<FurnitureListAddOrUpdateEvent>(FurnitureListAddOrUpdateEvent, event =>
 {
