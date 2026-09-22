@@ -1,0 +1,87 @@
+// Reference stylesheet segment 40 - mainly "nitro-group". Original cascade order, do not reorder.
+// Contains (owner: rules): nitro-group:15
+
+.nitro-group-manager {
+  height: 424px;
+  width: 394px;
+}
+
+.nitro-group-manager input,
+.nitro-group-manager textarea {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.nitro-group-manager .fill-remaining-height {
+  flex: 1;
+}
+
+.nitro-group-manager .badge-image {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
+  max-width: 42px;
+  max-height: 42px;
+}
+
+.nitro-group-manager .badge-select {
+  background-color: var(--holo-tertiary);
+}
+
+.nitro-group-creator {
+  height: 424px;
+  width: 394px;
+}
+
+.nitro-group-creator input,
+.nitro-group-creator textarea {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.nitro-group-creator .creator-tabs .tab {
+  position: relative;
+  margin-left: -6px;
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIUAAAClCAYAAABydj4KAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAEcUlEQVR42u3dMW7UQBQG4L1CWnrEEdJSouQGCAlxABoaWqQUCImTpIFIFJyAlpuQhn7JrJhkbI/HdjaE9b5vpX+TaN1s/Mkee+b5bZ6+er+Vdm5em0jZPHnxevvy8qc0Eg3GDsXzz1+kkWgwoAADCjCgAAMKMKAAAwowoAADCjCgAAOKCEn/SyjkNienZ04fcpwgoAACCiCgAAIKIKAAAgogoAACCiAODkX60jKecEv8b15baSckCqeIdqLB2KFQBdZONBhQgAEFGFCAAQUYUIABBRhQgAEFGFCAAQUUUIQDkWZToZAOiJPTcyikCwIKGYCAAoijBQEFEFAAAQUQUABh4e4j131EAXGLItV+SD139R8xQECxEEWohbt2/jSKcEv87fw2ipDFQKJssIPCJaf+YXqI6R82jSK9eUaFbkADFGCAUUUBBhhVFGCAUUUBBhijH4ARuLFc60MwgjaWm9oAjICN5eZsBEawxnJzNwQjUGO5uRumL52+PATH3T9sNgoggrWLAgKIRSiACNouCgggZqEAIni7KCCAaKIAAogOCiCA6KAAAojBam4ggOig0CNM/zDFQAqBPIpA/7A9UKgG0yZqUGAMBhjVqnMwwKg+igAMMKrPpwAjeGO5vzLAAGM49wEGGNVZUjDAqK6nAAOMsdEnGJEbyzUuS3pPiTsHIzqKEgYQcfqHzar7MDcSq3/YrCMFELH6h02OKYAI2i4KCCBm3acAIni7KCCAaM59AAFEZ5YUCCAs3NU/TBMY/cOg0D8MCv3DoNA/TNmgssFHRvHtYrMVKbP59OYGx/WFyC7Jw+5wkX75/V1ks313trk7j4AhAxRgSBUFGOvN1FXUXijAWCeG7XU7c3GMogBjPSDyTr96206J494owFgHiLzTr6+6KY8S6e8SRwvGJAowDh9ERpB3+ttndyjS7zkljhaMWSjAWA+K8mf+POMoTzMPggKMwwbRR5GPDhlAOaaYOlosQgHGOlDUxhUliqmjxWIUYKzjSNG/6mihuPzwACjSLFqaOLGD/h+KcswwNaYoTxcliPTzQVAAcdgoysvT/r2Lf4ICiMM6ffR3fOs+RbldvhrZGwUQh3u0WHpHM1+dZBD3QgHEYd/e7o8ZxpIxZCT3RgHEOk4jGUV/fFG7f/Hr6ziISRRAHHbSDu3PjrZQJAx9EItQALEuGLUxRpmMYQrEKAog1gejxDGWEsMYiCoKINYNY25mr6cA4vhxLFqOB4R0UAAhAxTpTaSMAmOpRS2p3KWDwvlUOih+fARDKijAkCoKMKCoogAjboHxLYr8xF0wFBh3UIChwLiKAgwFxlUUYMQuMB5FAUbcAuMmCjBiFhhPogAjXoHxLBQ1GPlhrHbQ8RUYz0ZRwgDiuAuMF6HIMIA47gLjxUcKII6/wHjRmAKIGAXGs68+gIhTYDzrPgUQsQqMJ+9oAhGvwLg59wFEzALj0VlSIOIWGFfXUwARu8B4sPIKCAXG6j5kGoVIczW3xA0UAoVAIfugECnzB9Ju3YWXb1IlAAAAAElFTkSuQmCC);
+  background-repeat: no-repeat;
+}
+
+.nitro-group-creator .creator-tabs .tab:first-child {
+  margin-left: 0;
+}
+
+.nitro-group-creator .creator-tabs .tab.tab-blue-flat {
+  width: 84px;
+  height: 24px;
+  background-position: 0px 0px;
+}
+
+.nitro-group-creator .creator-tabs .tab.tab-blue-flat.active {
+  height: 28px;
+  background-position: 0px -24px;
+}
+
+.nitro-group-creator .creator-tabs .tab.tab-blue-arrow {
+  width: 83px;
+  height: 24px;
+  background-position: 0px -52px;
+}
+
+.nitro-group-creator .creator-tabs .tab.tab-blue-arrow.active {
+  height: 28px;
+  background-position: 0px -76px;
+}
+
+.nitro-group-creator .creator-tabs .tab.tab-yellow {
+  width: 133px;
+  height: 28px;
+  background-position: 0px -104px;
+}
+
+.nitro-group-creator .creator-tabs .tab.tab-yellow.active {
+  height: 33px;
+  background-position: 0px -132px;
+}

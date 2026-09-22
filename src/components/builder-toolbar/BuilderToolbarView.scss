@@ -1,0 +1,284 @@
+// Builder Mode toolbar - original hCMS stylesheet.
+//
+// Class names (`bm-*`, `builder-mode-toolbar`) are kept as-is because BuilderToolbarView.tsx uses them as DOM
+// hooks - that's a functional interface, not visual design. Every value below (palette, spacing, radii, shadows)
+// is designed fresh for this project; nothing here is copied from any third-party client bundle.
+//
+// Palette: a cool slate panel (not the warm grey/black look some Nitro forks ship), with a single amber accent
+// used consistently for "this is armed / selected / chosen" state across the whole toolbar.
+$bm-panel: #232a33;
+$bm-panel-edge: #101519;
+$bm-surface: #2f3a46;
+$bm-surface-hover: #3c4b5a;
+$bm-surface-active: #1c232b;
+$bm-text: #eef2f5;
+$bm-text-muted: #a7b3bd;
+$bm-accent: #e0a020;
+$bm-accent-soft: rgba(224, 160, 32, 0.35);
+$bm-danger: #b23a3a;
+$bm-danger-hover: #cc4747;
+$bm-radius: 10px;
+$bm-radius-sm: 6px;
+$bm-gap: 6px;
+
+@mixin bm-raised-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid $bm-panel-edge;
+    border-radius: $bm-radius-sm;
+    background: $bm-surface;
+    color: $bm-text;
+    cursor: pointer;
+    transition: background-color 0.12s ease, box-shadow 0.12s ease;
+
+    &:hover { background: $bm-surface-hover; }
+
+    &.active {
+        background: $bm-surface-active;
+        box-shadow: inset 0 0 0 2px $bm-accent;
+    }
+
+    &.disabled, &:disabled {
+        opacity: 0.45;
+        cursor: default;
+
+        &:hover { background: $bm-surface; }
+    }
+}
+
+.builder-mode-toolbar {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    gap: $bm-gap;
+    padding: 6px;
+    background: $bm-panel;
+    border: 1px solid $bm-panel-edge;
+    border-radius: $bm-radius;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    pointer-events: all;
+
+    @media (max-width: 991.98px) {
+        left: max(8px, var(--safe-left, 0px));
+    }
+
+    .bm-btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+
+        &:not(:first-child) {
+            padding-top: $bm-gap;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    }
+
+    .bm-btn {
+        @include bm-raised-button;
+        width: 38px;
+        height: 38px;
+
+        @media (max-width: 991.98px) {
+            width: 40px;
+            height: 40px;
+        }
+    }
+
+    .bm-btn-small {
+        @include bm-raised-button;
+        width: 22px;
+        height: 22px;
+        background: $bm-text-muted;
+        color: $bm-panel-edge;
+        border-color: rgba(0, 0, 0, 0.35);
+
+        &:hover { background: darken($bm-text-muted, 10%); }
+    }
+
+    .bm-btn-exit {
+        background: $bm-danger;
+
+        &:hover { background: $bm-danger-hover; }
+    }
+
+    .bm-brush-icon {
+        max-width: 28px;
+        max-height: 28px;
+        image-rendering: pixelated;
+    }
+
+    .bm-flyout {
+        position: absolute;
+        left: 100%;
+        top: 0;
+        margin-left: 8px;
+        z-index: 61;
+        padding: 8px;
+        background: #f4f5f6;
+        border: 1px solid $bm-panel-edge;
+        border-radius: $bm-radius-sm;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+        color: #222;
+    }
+
+    .bm-flyout-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .bm-flyout-brush {
+        width: 224px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        .bm-brush-status {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding: 6px;
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            border-radius: $bm-radius-sm;
+        }
+
+        .bm-brush-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .bm-brush-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            max-height: 260px;
+            overflow-y: auto;
+            --nitro-grid-column-min-height: 44px;
+
+            .layout-grid-item {
+                background-size: contain;
+                background-origin: content-box;
+                padding: 3px;
+                border-radius: $bm-radius-sm;
+
+                // Chosen brush furni: amber, matching the toolbar's own accent everywhere else.
+                &.active, &.active-item {
+                    background-color: $bm-accent;
+                    border-color: darken($bm-accent, 15%) !important;
+                    box-shadow: 0 0 0 2px $bm-accent-soft;
+                }
+            }
+        }
+    }
+
+    .bm-flyout-height {
+        width: 172px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        .bm-height-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        .bm-height-btn {
+            flex: 1;
+            height: 27px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 0 4px;
+            border: 1px solid $bm-panel-edge;
+            border-radius: $bm-radius-sm;
+            background: $bm-surface;
+            color: $bm-text;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+
+            &:hover { background: $bm-surface-hover; }
+        }
+    }
+
+    .bm-flyout-move {
+        width: 182px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        .bm-move-pad {
+            display: grid;
+            grid-template-columns: repeat(2, 38px);
+            gap: 4px;
+            justify-content: center;
+        }
+
+        .bm-move-btn {
+            @include bm-raised-button;
+            width: 38px;
+            height: 38px;
+
+            svg { display: block; }
+        }
+    }
+
+    .bm-flyout-furni {
+        width: 182px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        .bm-furni-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+    }
+
+    .bm-flyout-clipboard {
+        width: 232px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        .bm-clipboard-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .bm-clipboard-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 3px 5px;
+            background: #fff;
+            border-radius: $bm-radius-sm;
+
+            &.short {
+                background: rgba(220, 60, 60, 0.16);
+                box-shadow: inset 0 0 0 1px rgba(178, 58, 58, 0.55);
+            }
+        }
+    }
+}

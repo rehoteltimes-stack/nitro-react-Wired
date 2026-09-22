@@ -1,0 +1,61 @@
+// Reference stylesheet segment 11 - mainly "buttons". Original cascade order, do not reorder.
+// Contains (owner: rules): buttons:11
+
+.btn-sm+.dropdown-toggle-split,
+.btn-group-sm>.btn+.dropdown-toggle-split {
+  padding-right: .375rem;
+  padding-left: .375rem;
+}
+
+.btn-lg+.dropdown-toggle-split,
+.btn-group-lg>.btn+.dropdown-toggle-split {
+  padding-right: .75rem;
+  padding-left: .75rem;
+}
+
+.btn-group.show .dropdown-toggle {
+  box-shadow: inset 0 3px 5px #00000020;
+}
+
+.btn-group.show .dropdown-toggle.btn-link {
+  box-shadow: none;
+}
+
+.btn-group-vertical {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-group-vertical>.btn,
+.btn-group-vertical>.btn-group {
+  width: 99%;
+}
+
+.btn-group-vertical>.btn:not(:first-child),
+.btn-group-vertical>.btn-group:not(:first-child) {
+  margin-top: -1px;
+  box-shadow: inset 0 -2px #0000001a,0 1px #0000001a;
+}
+
+.btn-group-vertical>.btn:not(:first-child):not(:last-child),
+.btn-group-vertical>.btn-group:not(:first-child):not(:last-child) {
+  box-shadow: none;
+}
+
+.btn-group-vertical>.btn:not(:last-child),
+.btn-group-vertical>.btn-group:not(:last-child) {
+  box-shadow: inset 0 2px #ffffff26;
+}
+
+.btn-group-vertical>.btn:not(:last-child):not(.dropdown-toggle),
+.btn-group-vertical>.btn-group:not(:last-child)>.btn {
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.btn-group-vertical>.btn~.btn,
+.btn-group-vertical>.btn-group:not(:first-child)>.btn {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}

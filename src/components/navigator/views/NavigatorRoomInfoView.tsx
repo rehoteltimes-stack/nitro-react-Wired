@@ -77,6 +77,9 @@ export const NavigatorRoomInfoView: FC<NavigatorRoomInfoViewProps> = props =>
             case 'open_floorplan_editor':
                 CreateLinkEvent('floor-editor/toggle');
                 return;
+            case 'open_builder_toolbar':
+                CreateLinkEvent('builder-toolbar/toggle');
+                return;
             case 'report_room':
                 report(ReportType.ROOM, { roomId: navigatorData.enteredGuestRoom.roomId, roomName: navigatorData.enteredGuestRoom.roomName });
                 return;
@@ -169,6 +172,9 @@ export const NavigatorRoomInfoView: FC<NavigatorRoomInfoViewProps> = props =>
                                 </Button>
                                 <Button onClick={ () => processAction('open_floorplan_editor') }>
                                     { LocalizeText('open.floor.plan.editor') }
+                                </Button>
+                                <Button onClick={ () => processAction('open_builder_toolbar') }>
+                                    Furni brush
                                 </Button>
                             </> }
                         </Column>

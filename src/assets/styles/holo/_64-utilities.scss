@@ -1,0 +1,73 @@
+// Reference stylesheet segment 64 - mainly "utilities". Original cascade order, do not reorder.
+// Contains (owner: rules): utilities:15, base:1
+
+.text-element.text-transform-uppercase {
+  text-transform: uppercase !important;
+}
+
+.text-element.text-transform-lowercase {
+  text-transform: lowercase !important;
+}
+
+.text-element.text-transform-capitalize {
+  text-transform: capitalize !important;
+}
+
+.text-element.text-transform-none {
+  text-transform: none !important;
+}
+
+.text-element.whitespace-normal {
+  white-space: normal !important;
+}
+
+.text-element.whitespace-pre {
+  white-space: pre !important;
+}
+
+.text-element.whitespace-nowrap {
+  white-space: nowrap !important;
+}
+
+.text-element.whitespace-pre-wrap {
+  white-space: pre-wrap !important;
+}
+
+.text-element.whitespace-pre-line {
+  white-space: pre-line !important;
+}
+
+.text-element.xsmall {
+  font-size: 10px !important;
+}
+
+.rounded {
+  border-radius: var(--holo-border-radius) !important;
+}
+
+.text-muted {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+  opacity: .5;
+}
+
+.bg-muted {
+  background-color: var(--holo-tertiary) !important;
+}
+
+.bg-light {
+  background-color: var(--holo-primary) !important;
+}
+
+svg,
+svg * {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.overflow-vertical-scroll {
+  overflow-y: auto !important;
+  overflow-x: visible !important;
+}

@@ -8,6 +8,7 @@
     "start": "vite",
     "build": "vite build",
     "build:prod": "npx browserslist@latest --update-db && yarn build",
+    "deploy": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy.ps1",
     "eslint": "eslint src --ext .ts,.tsx",
     "truffle:setup": "truffle-setup --out public/assets/truffle"
   },

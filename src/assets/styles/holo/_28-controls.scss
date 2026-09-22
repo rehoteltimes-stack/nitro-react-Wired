@@ -1,0 +1,125 @@
+// Reference stylesheet segment 28 - mainly "controls". Original cascade order, do not reorder.
+// Contains (owner: rules): controls:12, horizontal:8
+
+.controls-input-number {
+  background-color: var(--holo-primary);
+  border-radius: var(--holo-border-radius);
+  box-shadow: var(--holo-box-shadow);
+  border: var(--holo-border-size) solid var(--holo-border-color-primary);
+  padding: calc(var(--holo-paddings) * 2 / 3) var(--holo-paddings);
+  border: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+  display: flex;
+  flex: 1;
+  height: var(--holo-input-height);
+  overflow: hidden;
+}
+
+.controls-input-number .btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px !important;
+  flex: 0 0 18px;
+}
+
+.controls-input-number input {
+  background-color: transparent !important;
+  border: 0px solid transparent !important;
+  box-shadow: none !important;
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 100%;
+  max-width: none;
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.controls-slider-parent {
+  justify-content: space-between;
+  flex: 1;
+}
+
+.controls-slider-parent .controls-slider-element {
+  margin: auto;
+}
+
+.controls-slider-parent.horizontal {
+  inline-size: 100%;
+}
+
+.controls-slider-parent.vertical {
+  block-size: 100%;
+}
+
+.controls-slider-parent .controls-slider-button.button-left.horizontal {
+  margin-right: 8px;
+}
+
+.controls-slider-parent .controls-slider-button.button-left.vertical {
+  margin-top: 8px;
+}
+
+.controls-slider-parent .controls-slider-button.button-right.horizontal {
+  margin-left: 8px;
+}
+
+.controls-slider-parent .controls-slider-button.button-right.vertical {
+  margin-bottom: 8px;
+}
+
+.controls-slider-parent .controls-slider-button.button-disabled {
+  background-color: gray;
+  border-color: #a9a9a9;
+}
+
+.horizontal-scroll {
+  position: relative;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.horizontal-scroll-container {
+  min-width: 0;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-y;
+}
+
+.horizontal-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.horizontal-scroll-dragging .horizontal-scroll-container {
+  cursor: grabbing;
+}
+
+.horizontal-scroll-content {
+  width: max-content;
+  min-width: 100%;
+  flex-wrap: nowrap;
+}
+
+.horizontal-scroll-button {
+  flex: 0 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 1;
+  transition: opacity .15s ease,cursor .15s ease;
+}
+
+.horizontal-scroll-button svg {
+  width: 10px;
+  height: 10px;
+}
+
+.horizontal-scroll-button-disabled {
+  opacity: .25;
+  cursor: default;
+}

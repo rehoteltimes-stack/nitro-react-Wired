@@ -1,0 +1,146 @@
+// Reference stylesheet segment 61 - mainly "user-profile". Original cascade order, do not reorder.
+// Contains (owner: rules): user-profile:19, base:1, content:1, nitro-card:1
+
+.user-settings-window {
+  --crop-width: 452px;
+  --crop-height: 115px;
+  --border-size: 4px;
+  --profile-top: -65px;
+  --profile-top-adjusted: calc(var(--crop-height) + var(--profile-top));
+  height: 350px;
+}
+
+.user-settings-window.cropping {
+  width: 488px !important;
+}
+
+.user-settings-window:not(.cropping) {
+  width: 280px;
+}
+
+.user-settings-window.cropping {
+  height: 400px;
+}
+
+.user-settings-window.cropping .cropping-fake-profile-data {
+  width: var(--crop-width);
+  height: var(--crop-height);
+  background: var(--holo-primary);
+  position: absolute;
+  top: var(--crop-height);
+  border-top: var(--border-size) solid var(--holo-primary);
+}
+
+.user-settings-window.cropping .cropping-fake-profile-data * {
+  pointer-events: none !important;
+}
+
+.user-settings-window.cropping .cropping-fake-profile-button-group div {
+  flex: 1;
+}
+
+.user-settings-window.cropping .cropping-fake-profile-infostand {
+  width: calc(175px + var(--border-size) * 2);
+  height: calc(190px + var(--border-size) * 2);
+  position: relative;
+  top: calc(var(--profile-top) - var(--border-size) - 1px);
+  margin: calc(0px - var(--border-size));
+  margin-left: 0;
+  padding: 10px;
+  background: var(--holo-infostand);
+  border-left: 0;
+  border-bottom: 0;
+  border: var(--border-size) solid var(--holo-primary);
+  border-radius: 0 var(--holo-border-radius) var(--holo-border-radius) var(--holo-border-radius);
+  pointer-events: auto;
+}
+
+.user-settings-window.cropping .body-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #343a40;
+  width: 100%;
+  height: 170px;
+  max-width: 67px;
+  border-radius: .6rem;
+}
+
+.user-settings-window.cropping .body-image .avatar-image {
+  background-position: 0px -8px;
+}
+
+.user-settings-window.cropping .cropping-result {
+  width: var(--crop-width);
+  height: var(--crop-height);
+  background: #DFDFDF;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--holo-border-radius);
+}
+
+.user-settings-window.cropping .cropping-result .cropping-fake-profile-infostand {
+  top: calc(var(--profile-top) - var(--border-size));
+}
+
+.user-settings-window.cropping .cover-result {
+  width: 100%;
+  height: var(--crop-height);
+  border-radius: .25rem;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  image-rendering: auto;
+  overflow: hidden;
+}
+
+.user-settings-window .user-settings-input-range {
+  padding: 0 8px;
+}
+
+.user-settings-window .user-settings-pdb {
+  padding-bottom: 10px;
+}
+
+.user-settings-window .user-settings-tab-container,
+.user-settings-window .user-settings-crop-container,
+.user-settings-window .user-settings-button-group>div {
+  flex: 1;
+}
+
+.user-settings-window .user-settings-upload-infos {
+  width: 24px;
+  height: 23px;
+}
+
+.user-settings-window .content-area .btn svg,
+.user-settings-window .content-area .btn svg * {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: #fff !important;
+}
+
+.user-settings-window input {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: #fff !important;
+}
+
+* {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+}
+
+.content-area {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.nitro-card-header-button,
+.nitro-card-header-button * {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+  color: var(--holo-text-primary-invert);
+}

@@ -1,0 +1,96 @@
+// Reference stylesheet segment 62 - mainly "base". Original cascade order, do not reorder.
+// Contains (owner: rules): base:14
+
+input,
+textarea,
+select {
+  background-color: var(--holo-primary) !important;
+  border-radius: var(--holo-border-radius) !important;
+  box-shadow: var(--holo-box-shadow) !important;
+  border: var(--holo-input-border-size) solid var(--holo-border-color-primary) !important;
+  outline: none !important;
+  padding: calc(var(--holo-paddings) * 2 / 3) var(--holo-paddings);
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button,
+textarea::-webkit-outer-spin-button,
+textarea::-webkit-inner-spin-button,
+select::-webkit-outer-spin-button,
+select::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+input::-ms-clear,
+input::-ms-reveal,
+textarea::-ms-clear,
+textarea::-ms-reveal,
+select::-ms-clear,
+select::-ms-reveal {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+input::-ms-expand,
+textarea::-ms-expand,
+select::-ms-expand {
+  display: none !important;
+}
+
+input::-webkit-scrollbar,
+textarea::-webkit-scrollbar,
+select::-webkit-scrollbar {
+  display: none;
+}
+
+input[type=number] {
+  -webkit-appearance: textfield !important;
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+
+input[type=checkbox],
+input[type=radio] {
+  width: 25px !important;
+  height: 25px !important;
+  box-sizing: border-box;
+  background-color: var(--holo-primary) !important;
+  padding: calc(var(--holo-paddings) * 2 / 3);
+}
+
+input[type=checkbox] {
+  border-radius: calc(var(--holo-border-radius) / 2) !important;
+}
+
+input[type=radio] {
+  border-radius: 50%;
+}
+
+input:checked[type=checkbox],
+input:checked[type=radio] {
+  background-size: 27px 27px !important;
+}
+
+input:checked[type=checkbox] {
+  background-image: url('@/assets/holo/checked-alt.svg') !important;
+}
+
+input:checked[type=radio] {
+  background-image: url('@/assets/holo/radio-alt.svg') !important;
+}
+
+input:disabled {
+  opacity: var(--holo-disabled-input-opacity) !important;
+}
+
+input,
+select {
+  height: var(--holo-input-height) !important;
+}

@@ -1,0 +1,60 @@
+// Reference stylesheet segment 57 - mainly "nitro-help". Original cascade order, do not reorder.
+// Contains (owner: rules): nitro-help:12
+
+.nitro-help-menu {
+  width: 425px;
+}
+
+.nitro-help-menu:not(.help-menu-base) {
+  height: 520px;
+}
+
+.nitro-help-menu .nitro-help-avatar-entry {
+  width: 120px;
+}
+
+.nitro-help-menu .room-preview-image {
+  width: 120px !important;
+  height: 150px !important;
+  border-radius: 5px 5px 0 0;
+  background-color: var(--holo-secondary);
+}
+
+.nitro-help-menu .nitro-help-entry-name {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% - 10px);
+  margin: 0 5px;
+}
+
+.nitro-help-menu .nitro-help-entry-button {
+  border-radius: 0 0 5px 5px;
+  margin-bottom: 10px;
+}
+
+.nitro-help-menu .nitro-help-entry-control {
+  width: 130px;
+}
+
+.nitro-help-menu .help-clickable {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.nitro-help-menu .help-command-entry .help-command-entry-command {
+  font-weight: 700;
+  color: color-mix(in srgb,#0066cc calc((1 - var(--dark-mode)) * 100%),#4fc3f7 calc(var(--dark-mode) * 100%));
+}
+
+.nitro-help-menu .help-command-entry .help-command-entry-chevron {
+  color: color-mix(in srgb,#757575 calc((1 - var(--dark-mode)) * 100%),#9e9e9e calc(var(--dark-mode) * 100%));
+}
+
+.nitro-help-menu .help-command-entry .help-command-entry-description {
+  --never-gonna-give-you-up: none;
+}
+
+.nitro-help-menu .help-command-entry .help-command-entry-param {
+  color: color-mix(in srgb,#b36b00 calc((1 - var(--dark-mode)) * 100%),#ffd54f calc(var(--dark-mode) * 100%));
+}

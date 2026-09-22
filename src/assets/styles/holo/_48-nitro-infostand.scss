@@ -1,0 +1,168 @@
+// Reference stylesheet segment 48 - mainly "nitro-infostand". Original cascade order, do not reorder.
+// Contains (owner: rules): nitro-infostand:22, nitro-chat:1
+
+.nitro-infostand-container {
+  position: absolute;
+  right: var(--holo-paddings);
+  bottom: 90px;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.nitro-infostand-container .btn {
+  background-color: var(--holo-infostand);
+  box-shadow: var(--holo-box-shadow);
+}
+
+.nitro-infostand-container .btn,
+.nitro-infostand-container .btn * {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-infostand) !important;
+}
+
+.nitro-infostand-container .nitro-infostand {
+  position: relative;
+  min-width: 185px;
+  max-width: 185px;
+  z-index: 30;
+  pointer-events: auto;
+  background: var(--holo-infostand);
+  box-shadow: var(--holo-box-shadow);
+}
+
+.nitro-infostand-container .nitro-infostand,
+.nitro-infostand-container .nitro-infostand * {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-infostand) !important;
+}
+
+.nitro-infostand-container .nitro-infostand .nitro-infostand-close {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.nitro-infostand-container .nitro-infostand .content-area {
+  background-color: transparent;
+  border-radius: var(--holo-border-radius);
+}
+
+.nitro-infostand-container .nitro-infostand .form-control {
+  --holo-input-height: 20px;
+  padding: .1rem .25rem;
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.nitro-infostand-container .nitro-infostand .body-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #343a40;
+  width: 100%;
+  height: 170px;
+  max-width: 68px;
+  border-radius: 8px;
+}
+
+.nitro-infostand-container .nitro-infostand .body-image.pet {
+  max-width: 75px;
+}
+
+.nitro-infostand-container .nitro-infostand .body-image.bot {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEMAAACqCAMAAADBXwILAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAGUExURXZ2dgAAAEDavTwAAAACdFJOU/8A5bcwSgAAAAlwSFlzAAAOwwAADsMBx2+oZAAABNFJREFUaEPtkIluZUkIQzv//9NTYAOmlru815FGozlSLsa4nHT/+fme/zs60fFn0MWRSGSSedvdSXEkEjGlAz8lHORIev1nfN0voy6+NMLsP+PrPtMqoCGc2DwwZMyh3IfTRT4K5kTM7BjOUQRhLBNDXqwiWN7GxJAXqwiWtzExxl4XiHJIGpXk5HBST45TRgU5OcbMF0irY5QRdk6ODBifduBVsThlHDo8QUkWJ41TRxoX1FsX+Ts+6bDXTqycrzpYwmXfIYGWbUo2TrH8HVeR7dVQsnGKxQSRi7ziCYhNAYnUQC4iQKycFYjILCtCJw9xL2fQ3pWfb+aJMdCSPfcd9yUPOm5LnnTclTzquCl51nFd8rDjsuRpx0XJuOB023EssQqc7jsY3hCvHnQcS/gK0oWPbccer/EezE864vejB4Z9X3WQv9PBP2jpCP8Wb0B06pDLNZpaOqJnAyJO29501DPVm46WbdShR3KT86GiwoeK7LgE8VPFsw5/kI+GkG0Qyg8NdUxrhYHNaAdooI7qsbjBzchUJAu4dYXui9NSnYp2zWPRLtBAHdGQLXnzf6olIXw2NpYwP9lW3HRMj5YNa5hpgLqLvUZg0C3DkbXsUnmHQxuGEHe3Q2BmMiy58wLi7jeoyfCYW/TLcPpKmQZFRsqvN4O+YkmnJQfTesBLvuzwktuO/sev2D0Shw6N7JHEsSNSZ/JxjhD+fdthM8yh7KPGCU1Aj6V1uE15QBOm1w6uL4iebzq8BMK/g/cd+eSXOvJvHIhWG5w7LJvX0iKDqw65uiaSAZnCkLuGoYlkQKYw5B4PJi0y2HSE1KxotcHS0Uuorlk73pdsOp6VjFOlODHAgxKryLe7jl5yQN5uO56U3HZIyZ7ogebEKJ6UpOTEkNNdSTF1WMXbknrAMWY+1ZKqnqkDZ+vQs8OlITbFlMXq2EJX8QsJhXhiK4gOaMd9SevDDRlPsVbcdFTcvtgGWJO5AxFimiseEqyJ6kFkYsm0HEQC1QN5ZVk63CI7VUwdfmSAwR7f0hL2Cwxqej42RLJ1mBeHuJ87LMms704+G5T25B47esSDhptEtKf3LB3uka4pZrxm7qDoFecOL4Hw7yB2xyU4dyRTx1LxUcf8Kvy1K728RJaqArFxT8rLA1ceYtIvS+Fx+3/KjYFaZzJiHwNr2hWwb7xRystDROJlBnK3qaSXl8iEn4FMHDl1LPOCLzpu/y33HVaBYybOHUcixOTubcwjEWJy97bPhegZyvfB6w4vgfDv4H1H8hsd+W+c5oY8ZaCemJrnhjrlPTp2PwdwHl/7GFx56D8HcB5f+xhc89jnhjrlncn0p7khTxmYo7EfKySC8W/q6OFPOuaSjzp6Sf2nb11n06FxC68l4hq7DmaARIRyB9sOjUuajiFuyXIIDvGiM7k3HR530ejuXccTfqMj/8qpo//1jbzEcKDcIOUvlJ8d8XrusJ8DzHzTwcgIcKQ7d4R/QdwzOr14UJEd8TbebN92M7f06qmpmI1u1iZWfPWn0c3amlWHCgjdrK1Z9sUfGLPRzdrE4qDPKZhl6Abp38H8ZFexDifVXUc+GsLBZkhHf7Ssmuzh0t2fOvRo8tBhuQsYGlx1XJYwYqwG5xumio86Zv47HT8//wAlDSEegikZDgAAAABJRU5ErkJggg==);
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.nitro-infostand-container .nitro-infostand .body-image.furni {
+  background-color: transparent;
+  margin-right: 0;
+}
+
+.nitro-infostand-container .nitro-infostand .body-image .avatar-image {
+  background-position: -4px -8px;
+}
+
+.nitro-infostand-container .nitro-infostand .body-image-plant {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 68px;
+  height: 85px;
+  max-height: 90px;
+  border-radius: .25rem;
+}
+
+.nitro-infostand-container .nitro-infostand .motto-content {
+  min-height: 18px;
+}
+
+.nitro-infostand-container .nitro-infostand .motto-input {
+  width: 100%;
+  height: 100%;
+  font-size: 12px;
+  padding: 0;
+  outline: 0;
+  border: 0;
+  color: #fff;
+  position: relative;
+  background: transparent !important;
+  border-radius: 0 !important;
+  border: none !important;
+  padding: 0 !important;
+  resize: none;
+  box-shadow: none !important;
+  --holo-input-height: 14px;
+}
+
+.nitro-infostand-container .nitro-infostand .motto-input:focus {
+  font-style: italic;
+}
+
+.nitro-infostand-container .nitro-infostand .flex-tags {
+  flex-wrap: wrap;
+  margin-bottom: -10px;
+}
+
+.nitro-infostand-container .nitro-infostand .flex-tags .text-tags {
+  padding: 2px;
+  border-radius: 3px;
+  background: #333;
+  margin-right: 5px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.nitro-infostand-container .nitro-infostand .badge-information * {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.nitro-infostand-container .button-container {
+  pointer-events: auto;
+}
+
+.nitro-infostand-container .pet-stats {
+  height: 18px;
+}
+
+.nitro-chat-widget {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 10000%;
+  top: 0;
+  min-height: 1px;
+  z-index: 20;
+  background-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  pointer-events: none;
+}

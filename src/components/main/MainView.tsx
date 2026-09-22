@@ -5,10 +5,12 @@ import { Base, TransitionAnimation, TransitionAnimationTypes } from '../../commo
 import { useMessageEvent, useRoomSessionManagerEvent } from '../../hooks';
 import { AchievementsView } from '../achievements/AchievementsView';
 import { AvatarEditorView } from '../avatar-editor/AvatarEditorView';
+import { BuilderToolbarView } from '../builder-toolbar/BuilderToolbarView';
 import { CameraWidgetView } from '../camera/CameraWidgetView';
 import { CampaignView } from '../campaign/CampaignView';
 import { CatalogView } from '../catalog/CatalogView';
 import { ChatHistoryView } from '../chat-history/ChatHistoryView';
+import { ClothesShopView } from '../clothes-shop/ClothesShopView';
 import { FloorplanEditorView } from '../floorplan-editor/FloorplanEditorView';
 import { FriendsView } from '../friends/FriendsView';
 import { GameCenterView } from '../game-center/GameCenterView';
@@ -125,6 +127,8 @@ export const MainView: FC<{}> = props =>
             <CampaignView />
             <GameCenterView />
             <FloorplanEditorView />
+            <BuilderToolbarView />
+            <ClothesShopView />
         </Base>
     );
 }

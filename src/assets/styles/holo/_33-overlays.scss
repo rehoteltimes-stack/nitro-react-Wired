@@ -1,0 +1,70 @@
+// Reference stylesheet segment 33 - mainly "overlays". Original cascade order, do not reorder.
+// Contains (owner: rules): overlays:11
+
+.alert-item {
+  width: 540px;
+  min-height: 0;
+  background-color: var(--holo-primary);
+  border-radius: var(--holo-border-radius);
+  box-shadow: var(--holo-box-shadow);
+  border: var(--holo-border-size) solid var(--holo-border-color-primary);
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+  padding: var(--holo-paddings);
+}
+
+.alert-item .nitro-card-header-button {
+  margin-right: 0;
+}
+
+.alert-item .fa-icon.exclamation {
+  width: 20px;
+  height: 20px;
+  --holo-text-primary: var(--holo-mentions-color-theme-primary);
+}
+
+.alert-item .alert-time-ago {
+  font-size: 12px;
+  opacity: .5;
+}
+
+.alert-item .alert-image {
+  width: 200px;
+  height: 200px;
+  min-width: 200px;
+  min-height: 200px;
+  max-width: 200px;
+  max-height: 200px;
+}
+
+.alert-item .alert-content {
+  min-width: 200px;
+  min-height: 200px;
+}
+
+.alert-item .alert-text {
+  word-break: break-all;
+}
+
+.alert-item .alert-sender-section {
+  background-color: var(--holo-secondary);
+  border-radius: var(--holo-border-radius);
+  width: 100%;
+  height: var(--holo-input-height);
+}
+
+.alert-item .alert-sender-section .avatar-image {
+  position: relative;
+  top: 16px;
+  left: -15px;
+}
+
+.alert-item .alert-sender-section .alert-sender-name {
+  position: relative;
+  left: -25px;
+}
+
+.alert-item .alert-button {
+  z-index: 1;
+}

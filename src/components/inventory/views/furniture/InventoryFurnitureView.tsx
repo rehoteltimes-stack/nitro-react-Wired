@@ -1,5 +1,5 @@
 import { IRoomSession, RoomObjectVariable, RoomPreviewer, Vector3d } from '@nitrots/nitro-renderer';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { attemptItemPlacement, DispatchUiEvent, FurniCategory, GetRoomEngine, GetSessionDataManager, GroupItem, LocalizeText, UnseenItemCategory } from '../../../../api';
 import { AutoGrid, Button, Column, Grid, LayoutLimitedEditionCompactPlateView, LayoutRarityLevelView, LayoutRoomPreviewerView, Text } from '../../../../common';
 import { CatalogPostMarketplaceOfferEvent } from '../../../../events';
@@ -34,7 +34,7 @@ export const InventoryFurnitureView: FC<InventoryFurnitureViewProps> = props =>
     const { resetItems = null } = useInventoryUnseenTracker();
 
     // First filter: remove clothing + specific hidden items
-    const groupItems = allGroupItems.filter(group =>
+    const groupItems = useMemo(() => allGroupItems.filter(group =>
 {
     const item = group.getLastItem();
     if(!item) return false;
@@ -51,7 +51,7 @@ export const InventoryFurnitureView: FC<InventoryFurnitureViewProps> = props =>
     if(className.startsWith('clothing_')) return false;
 
     return true;
-});
+}), [ allGroupItems ]);
 
 
     // Sync filteredGroupItems whenever groupItems changes

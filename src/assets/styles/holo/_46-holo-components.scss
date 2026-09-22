@@ -1,0 +1,230 @@
+// Reference stylesheet segment 46 - mainly "holo-components". Original cascade order, do not reorder.
+// Contains (owner: rules): holo-components:11, nitropedia:9, nitro-alert:7, nitro-notification:5, bootstrap-components:5
+
+.holo-room-creator input,
+.holo-room-creator textarea,
+.holo-room-creator svg,
+.holo-room-creator svg * {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.holo-room-creator .room-creator-model-background {
+  background-color: hsl(var(--holo-primary-H),var(--holo-primary-S),calc(var(--holo-primary-L) - 5%));
+  box-shadow: var(--holo-box-shadow);
+}
+
+.holo-room-creator .holo-room-creator-carousel-container {
+  width: 100% !important;
+  height: 166px !important;
+  min-height: 166px !important;
+  overflow: hidden;
+  border-radius: var(--holo-border-radius) !important;
+  padding: var(--holo-paddings) 0;
+}
+
+.holo-room-creator .holo-room-creator-carousel-container .holo-room-creator-carousel {
+  position: relative;
+  transform: translate(-50%);
+  left: 50%;
+  width: 110%;
+}
+
+.holo-room-creator .holo-room-creator-carousel-container .holo-room-creator-carousel .holo-room-creator-carousel-item {
+  border-width: 0 !important;
+  background-color: transparent !important;
+  width: 108px !important;
+  height: 108px !important;
+}
+
+.holo-room-creator .holo-room-creator-carousel-container .holo-room-creator-carousel .peek-carousel-item {
+  border-radius: var(--holo-border-radius) !important;
+  width: 108px !important;
+  height: 108px !important;
+}
+
+.holo-room-creator .holo-room-creator-carousel-container .holo-room-creator-carousel .peek-carousel-prev,
+.holo-room-creator .holo-room-creator-carousel-container .holo-room-creator-carousel .peek-carousel-next {
+  background-color: #a3a3a380;
+}
+
+.holo-room-creator .holo-room-creator-carousel-container .holo-room-creator-carousel .peek-carousel-current {
+  background-color: var(--holo-navigator-color-theme-primary);
+}
+
+.holo-room-creator .holo-room-creator-carousel-container .holo-room-creator-carousel .peek-carousel-arrow {
+  border-radius: var(--holo-border-radius) !important;
+  background-color: var(--holo-navigator-color-theme-primary);
+  width: calc(var(--holo-paddings) * 2);
+  height: calc(var(--holo-paddings) * 3);
+}
+
+.holo-room-creator .holo-room-creator-carousel-container .holo-room-creator-carousel .peek-carousel-arrow,
+.holo-room-creator .holo-room-creator-carousel-container .holo-room-creator-carousel .peek-carousel-arrow * {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: #fff !important;
+}
+
+.holo-room-creator .holo-room-creator-carousel-container .holo-room-creator-carousel .peek-carousel-legend {
+  border-radius: var(--holo-border-radius) !important;
+  background-color: var(--holo-navigator-color-theme-primary);
+  padding: calc(var(--holo-paddings) * 1 / 3) var(--holo-paddings);
+  font-weight: 700;
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: #fff !important;
+}
+
+.nitropedia {
+  width: 400px;
+  height: 400px;
+}
+
+.nitropedia h1,
+.nitropedia .h1 {
+  font-weight: 700;
+  font-size: 23px;
+  color: #fc6204;
+}
+
+.nitropedia h2,
+.nitropedia .h2 {
+  font-weight: 700;
+  font-size: 19px;
+  color: #fc6204;
+}
+
+.nitropedia h3,
+.nitropedia .h3 {
+  font-weight: 700;
+  font-size: 15px;
+  color: #fc6204;
+}
+
+.nitropedia p {
+  font-size: 12px;
+}
+
+.nitropedia a {
+  font-weight: 700;
+  color: #fc6204;
+  text-decoration: underline;
+}
+
+.nitropedia .bullet-item {
+  margin-left: 7px;
+  text-indent: -7px;
+}
+
+.nitropedia .padding-top {
+  font-size: 1px;
+  line-height: 10px;
+}
+
+.nitropedia .padding-bottom {
+  font-size: 1px;
+  line-height: 5px;
+}
+
+.nitro-notification-center-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: calc(100% - 60px);
+  z-index: 68;
+  pointer-events: none;
+}
+
+.nitro-notification-center-container .nitro-notification-center {
+  background-color: #1c1c20fa;
+  height: 100%;
+  pointer-events: all;
+}
+
+.nitro-alert {
+  min-height: 150px;
+  max-height: 550px;
+  max-width: 500px;
+}
+
+.nitro-alert .notification-frank {
+  background-image: url(data:image/gif;base64,R0lGODlhLwBVAMQAAPX19e3t/+/v76Wl1P/OnP/LmPjDjL29vbCvr/8A///MZsyiebGWbJqIduORHJx7WodjOtY4OKMiIpYfH3t7e2ZmZkZDQHsaGmUVFV8UFFgSEksQEDMzMwAAAAAAAAAAACH5BAkIAAkALAAAAAAvAFUAAAX+YCKO5NidaNqVbOu65zXNdI2+OB5fcu3zl1NuaALyfD/jiqjbGHvI2XOzZLI6G6cxSptSrdfskys1ZqvgBFa8JXu/aXVWq1TtzOe4fA48Kf6Af3dzcCQpTXwdgnaKCh0XhGgiHQaUQjCRjh0VnJ2cfmt5JZaVlZhnjp6qnYqhkmqlli9YHQ4dHJ4IugieHLW0V5QMsbO/HMcVuim6Fce+tq+kBsOvJrbOyh0F2wUnus6/V5XDBqYtv7sIJ9zs3R3p4YbU5eaGKBYp7fruJ/jR9OWiNWjQj+C+fR0a+DtHblo0fN0M8tPGLV9EbdU6DGNwY1SHBQkxQgAAAALFDiP+S2IkCPIcigAwMyqkCOAEAHY1O9zsZoEgDJhAAwjsALFAzp3bjm4jGjIao1EzZxq1iZMqUYI9oznggaGrpBQEKR5kdyKsChMKgHiFIZXs0nZXGwGyNWnrha4YqqlhWrFp2Ir+FDgQLDhFWq55dRhMOLDxwJUnbDmYLLmWYMSJi620wLnz4hNUoKGwZQTD3cwuN9vJ2m1O5F+O1J7W+/LexwW4cTNF4bryI9PA13oUJFQhvgXsQHImaAtVK7zQUU+SSzwFcm4gUWTPkrd79LxfA00mLjS7dd2/ojOKNncwNFsxc8sHKdQW3ktDFI1/XzlmBwIABthBfb/pdY4thf3+AtovQJ0gYEykGXjgaL9EAl+DJzQYIRi/VOYIG6EN2KAEGf4SBIeO+MZHHxd2oEEEEmjw2okcthIKGywO6KIEEehoSwYSnvMhISvmKJSMEALDoQNEEqkEfB1EIKOJhTChSJORPHlCj9DwUCURtXjZpI5PetjBBJAEecVhYw4wgFB1BPELml/mZ9cZZ7jpHw+tBBGEFHXmoAgQVJyRAmlBRNgKnWqOYpeXtFDWJZ98zplmGoOaYQcbfT5yJqOYbvAooaDRkaini17KISSXTXEHpXLaAiqmkGzQKp9w9hGbp4A2eoWYl4mY66lyOjJrHDucgeEjsL42Q6BWxiDiCQ/+FPCAp7tSQQO0YBoqVLXu8NlcLVk86+s5kSzFrBZY8OfauaNEkiwdojIbGWXwGuJkrWYg2kdHetxIyBSklUGXHpNgaSok0NRwgSMIJ6wwIRFCccHBCN8o6caPTNCxFBBnnAW+6/XwMZoYI1uvHwsfMcPJD+dryLgYMNmGDRanvOQaHWCgAB1RwBwysq7UDDQSMOvMoWs+H+2D0DKbwLTNLj+dc9QSn9A0EEFDgV/GK/RMNRQ4e9yBAAJ8nfHWVdtwggAHwA031iYYzfXTZ8sd9wF8060GeHe/jAIFFPBtuOF+d1A4s4Kj3Tfhh/OddsRqQJ6C43A/XrjkaSdO+OY1h2eOOOFoqx3wAZ9DHvnhZ5secQd8p7563J1TDgPsqKvOueu22xN74aX7XaPkvPeuQ/F6hAAAOw==);
+  width: 47px;
+  height: 85px;
+}
+
+.nitro-alert .notification-text {
+  min-width: 250px;
+}
+
+.nitro-alert.nitro-alert-default,
+.nitro-alert.nitro-alert-motd {
+  width: 350px;
+}
+
+.nitro-alert.nitro-alert-default .notification-text,
+.nitro-alert.nitro-alert-motd .notification-text {
+  min-width: auto;
+}
+
+.nitro-alert.nitro-alert-moderation,
+.nitro-alert.nitro-alert-alert {
+  width: 250px;
+}
+
+.nitro-alert.nitro-alert-moderation .notification-text,
+.nitro-alert.nitro-alert-alert .notification-text {
+  min-width: 225px;
+}
+
+.nitro-notification-bubble {
+  pointer-events: all;
+  padding: 6px 5px;
+  background-color: var(--holo-notifications);
+  box-shadow: var(--holo-box-shadow);
+  border: var(--holo-border-size) solid var(--holo-border-color-primary);
+  font-size: .7875rem;
+}
+
+.nitro-notification-bubble,
+.nitro-notification-bubble * {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-tertiary) !important;
+}
+
+.nitro-notification-bubble .bubble-image-container {
+  width: 50px;
+  height: 50px;
+}
+
+.progress-bar-container {
+  width: 200px;
+}
+
+.progress-bar-container .progress-bar-title,
+.progress-bar-container .progress-bar-desc {
+  text-align: center;
+}
+
+.progress-bar-container .progress-bar-title {
+  font-size: 1.2em;
+  margin: 0;
+}
+
+.progress-bar-container .progress-bar-view {
+  position: relative;
+  height: 15px;
+  width: 100%;
+}
+
+.progress-bar-container .progress-bar-view .progress-bar-element {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  border-radius: 5px;
+  transition: clip-path .5s;
+}

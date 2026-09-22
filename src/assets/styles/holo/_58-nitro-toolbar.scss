@@ -1,0 +1,146 @@
+// Reference stylesheet segment 58 - mainly "nitro-toolbar". Original cascade order, do not reorder.
+// Contains (owner: rules): nitro-toolbar:21, toolbar:1
+
+.nitro-toolbar {
+  position: absolute;
+  bottom: 15px;
+  left: 0;
+  width: calc(100% - var(--holo-paddings) * 2);
+  height: 60px;
+  z-index: 91;
+  margin: 0 var(--holo-paddings);
+}
+
+.nitro-toolbar #toolbar-chat-input-container {
+  flex-grow: 1;
+}
+
+.nitro-toolbar .inactive {
+  display: none !important;
+}
+
+@media (min-width: 1106px) {
+  .nitro-toolbar {
+    background-color: hsla(var(--holo-primary-H),var(--holo-primary-S),var(--holo-primary-L),.7);
+    border-radius: var(--holo-border-radius);
+    box-shadow: var(--holo-box-shadow);
+    border: var(--holo-border-size) solid var(--holo-border-color-primary);
+    backdrop-filter: blur(3px);
+  }
+}
+
+@media (max-width: 1105px) and (min-width: 925px) {
+  .nitro-toolbar {
+    background-color: hsla(var(--holo-primary-H),var(--holo-primary-S),var(--holo-primary-L),.7);
+    border-radius: var(--holo-border-radius);
+    box-shadow: var(--holo-box-shadow);
+    border: var(--holo-border-size) solid var(--holo-border-color-primary);
+    backdrop-filter: blur(3px);
+  }
+  .nitro-toolbar .nitro-toolbar-container.center {
+    flex-grow: 1;
+  }
+  .nitro-toolbar .nitro-toolbar-container.right #toolbar-friend-bar-container {
+    display: none !important;
+  }
+}
+
+@media (max-width: 924px) {
+  .nitro-toolbar .nitro-toolbar-container {
+    background-color: hsla(var(--holo-primary-H),var(--holo-primary-S),var(--holo-primary-L),.7);
+    border-radius: var(--holo-border-radius);
+    box-shadow: var(--holo-box-shadow);
+    border: var(--holo-border-size) solid var(--holo-border-color-primary);
+    backdrop-filter: blur(3px);
+  }
+  .nitro-toolbar .nitro-toolbar-container.center {
+    position: absolute;
+    bottom: 75px;
+    width: 415px;
+  }
+  .nitro-toolbar .nitro-toolbar-container.right #toolbar-friend-bar-container {
+    display: none !important;
+  }
+}
+
+.nitro-toolbar .nitro-toolbar-container {
+  pointer-events: all;
+  height: 60px;
+  padding: calc(var(--holo-paddings) * 1 / 2);
+}
+
+.nitro-toolbar .nitro-toolbar-container.center {
+  z-index: 80;
+}
+
+.nitro-toolbar .nitro-toolbar-container .navigation-item {
+  position: relative;
+  width: 60px;
+  height: 45px;
+  border-radius: var(--holo-border-radius);
+}
+
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-habbo,
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-house {
+  background-color: var(--holo-landing-view-color-theme-primary);
+}
+
+.nitro-toolbar .nitro-toolbar-container .navigation-item.item-avatar {
+  background-color: var(--holo-me-color-theme-primary);
+}
+
+.nitro-toolbar .nitro-toolbar-container .navigation-item.item-avatar .avatar-image {
+  clip-path: inset(0 0 50px 0);
+  margin-top: 15px;
+}
+
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-rooms {
+  background-color: var(--holo-navigator-color-theme-primary);
+}
+
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-catalog {
+  background-color: var(--holo-catalog-color-theme-primary);
+}
+
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-inventory {
+  background-color: var(--holo-inventory-color-theme-primary);
+}
+
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-camera {
+  background-color: var(--holo-camera-color-theme-primary);
+}
+
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-modtools {
+  background-color: var(--holo-tertiary);
+}
+
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-friendall {
+  background-color: var(--holo-friends-color-theme-primary);
+}
+
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-message {
+  background-color: var(--holo-messages-color-theme-primary);
+}
+
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-message.false {
+  opacity: .5;
+}
+
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-me-profile,
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-me-rooms,
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-me-clothing,
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-me-settings,
+.nitro-toolbar .nitro-toolbar-container .navigation-item.icon-modtools {
+  background-color: var(--holo-tertiary);
+}
+
+.toolbar-icon-animation {
+  position: absolute;
+  object-fit: cover;
+  height: auto;
+  width: auto;
+  max-width: 120px;
+  max-height: 150px;
+  z-index: 500;
+  filter: drop-shadow(2px 1px 0 white) drop-shadow(-2px 1px 0 white) drop-shadow(0 -2px 0 white);
+}

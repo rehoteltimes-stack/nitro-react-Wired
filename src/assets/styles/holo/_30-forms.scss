@@ -1,0 +1,424 @@
+// Reference stylesheet segment 30 - mainly "forms". Original cascade order, do not reorder.
+// Contains (owner: rules): forms:35, nitro-graph:7, canvas:7, joystick:6
+
+.input-color-picker {
+  width: 100%;
+  max-width: 400px;
+  height: 30px;
+}
+
+.input-color-picker.disabled {
+  pointer-events: none;
+  opacity: .2;
+}
+
+.input-color-picker .input-color-picker-bar {
+  position: relative;
+  width: 100%;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.input-color-picker .input-color-picker-bar .gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 4px;
+  z-index: 0;
+}
+
+.input-color-picker .input-color-picker-bar .handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%,-50%);
+  top: 50%;
+  border-radius: 50%;
+  border: 2px solid var(--holo-primary);
+  background-color: var(--holo-secondary);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input-color-picker .eye-dropper-icon-container {
+  width: 35px;
+  height: 35px;
+  border-radius: calc(var(--holo-border-radius) / 2);
+  position: relative;
+}
+
+.input-color-picker .eye-dropper-icon-container .eye-dropper-icon {
+  width: 20px !important;
+  height: 20px !important;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  position: absolute;
+}
+
+.custom-input-range {
+  --height: 6px;
+  --thumb-size: 14px;
+  --fill-input-range: 100%;
+  position: relative;
+  width: var(--fill-input-range);
+  height: var(--height);
+}
+
+.custom-input-range.disabled {
+  filter: brightness(.7);
+  cursor: not-allowed !important;
+}
+
+.custom-input-range--vertical {
+  width: var(--height);
+  height: var(--fill-input-range);
+}
+
+.custom-input-range .custom-range-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--holo-border-radius);
+  box-shadow: var(--holo-box-shadow);
+  background-color: var(--holo-tertiary);
+  touch-action: none;
+  user-select: none;
+}
+
+.custom-input-range .custom-range-fill {
+  position: absolute;
+  background-color: var(--holo-primary);
+  border-radius: var(--holo-border-radius);
+  pointer-events: none;
+}
+
+.custom-input-range--horizontal .custom-range-fill {
+  top: 0;
+  left: 0;
+  height: 100%;
+}
+
+.custom-input-range--vertical .custom-range-fill {
+  right: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.custom-input-range .custom-range-thumb,
+.custom-input-range .custom-range-thumb-wrapper {
+  position: absolute;
+  cursor: pointer;
+  transform: translate(-50%,-50%);
+  z-index: 1;
+}
+
+.custom-input-range .custom-range-thumb {
+  width: var(--thumb-size);
+  height: var(--thumb-size);
+  background: var(--holo-primary);
+  border: 3px solid var(--holo-tertiary);
+  border-radius: var(--holo-border-radius);
+  box-sizing: border-box;
+}
+
+.custom-input-range--vertical .custom-range-thumb,
+.custom-input-range--vertical .custom-range-thumb-wrapper {
+  left: 50%;
+}
+
+.custom-input-range--horizontal .custom-range-thumb,
+.custom-input-range--horizontal .custom-range-thumb-wrapper {
+  top: 50%;
+}
+
+.custom-select-root {
+  cursor: pointer;
+  height: var(--holo-input-height);
+}
+
+.custom-select-root.disabled {
+  cursor: not-allowed;
+  opacity: var(--holo-disabled-input-opacity);
+}
+
+.custom-select-root .custom-select-display {
+  background-color: var(--holo-primary);
+  border-radius: var(--holo-border-radius);
+  box-shadow: var(--holo-box-shadow);
+  border: var(--holo-border-size) solid var(--holo-border-color-primary);
+  border: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+  padding: calc(var(--holo-paddings) * 2 / 3) var(--holo-paddings);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.custom-select-panel {
+  background-color: var(--holo-primary);
+  border-radius: var(--holo-border-radius);
+  box-shadow: var(--holo-box-shadow);
+  border: var(--holo-border-size) solid var(--holo-border-color-primary);
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+  position: absolute;
+  border: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+  background: var(--holo-primary);
+  z-index: 2147483647;
+  max-height: 260px;
+  position: fixed;
+  padding: calc(var(--holo-border-radius) * 1 / 2) 0;
+  padding-right: 2px;
+}
+
+.custom-select-panel:before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -8px;
+  left: 20px;
+  width: 15px;
+  height: 15px;
+  background: var(--holo-primary);
+  transform: rotate(45deg);
+  border-left: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+  border-top: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+}
+
+.custom-select-panel .custom-select-group {
+  padding: 1px 0;
+}
+
+.custom-select-panel .custom-select-separator {
+  font-weight: 700;
+  padding: calc(var(--holo-paddings) * 1 / 2) var(--holo-paddings);
+  background: var(--holo-secondary);
+  cursor: pointer;
+}
+
+.custom-select-panel .custom-select-item {
+  padding: calc(var(--holo-paddings) * 1 / 2) var(--holo-paddings);
+  cursor: pointer;
+}
+
+.custom-select-panel .custom-select-item:hover {
+  background: var(--holo-tertiary);
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary-invert) !important;
+}
+
+.custom-select-panel .custom-select-selected {
+  background: var(--holo-tertiary);
+  filter: opacity(.5);
+}
+
+.custom-grid-select-root {
+  cursor: pointer;
+  height: var(--holo-input-height);
+}
+
+.custom-grid-select-root.disabled {
+  cursor: not-allowed;
+  opacity: var(--holo-disabled-input-opacity);
+}
+
+.custom-grid-select-root .custom-grid-select-display {
+  background-color: var(--holo-primary);
+  border-radius: var(--holo-border-radius);
+  box-shadow: var(--holo-box-shadow);
+  border: var(--holo-border-size) solid var(--holo-border-color-primary);
+  border: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+  padding: calc(var(--holo-paddings) * 2 / 3) var(--holo-paddings);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.custom-grid-select-panel {
+  background-color: var(--holo-primary);
+  border-radius: var(--holo-border-radius);
+  box-shadow: var(--holo-box-shadow);
+  border: var(--holo-border-size) solid var(--holo-border-color-primary);
+  position: fixed;
+  border: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+  background: var(--holo-primary);
+  z-index: 2147483647;
+  max-height: 260px;
+  min-width: 400px;
+  padding: calc(var(--holo-border-radius) * 1 / 2);
+  padding-right: 2px;
+}
+
+.custom-grid-select-panel:before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -8px;
+  left: 20px;
+  width: 15px;
+  height: 15px;
+  background: var(--holo-primary);
+  transform: rotate(45deg);
+  border-left: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+  border-top: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+}
+
+.custom-grid-select-panel .custom-grid-select-grid {
+  display: grid;
+  grid-template-columns: repeat(8,1fr);
+  gap: 6px;
+  padding: 6px;
+}
+
+.custom-grid-select-panel .custom-grid-select-item {
+  min-width: 0;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.joystick-input {
+  --joystick-size: 160px;
+  position: relative;
+  width: var(--joystick-size);
+  height: var(--joystick-size);
+  user-select: none;
+  touch-action: none;
+}
+
+.joystick-input--disabled {
+  pointer-events: none;
+  opacity: .5;
+}
+
+.joystick-input__base {
+  position: absolute;
+  width: var(--joystick-size);
+  height: var(--joystick-size);
+  inset: 0;
+  border-radius: 50%;
+  background-color: var(--holo-secondary);
+  border: var(--holo-border-size) solid var(--holo-border-color-primary);
+}
+
+.joystick-input__inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  border-radius: 50%;
+  transform: translate(-50%,-50%) translate(calc(var(--joystick-x, 0%) / 3),calc(var(--joystick-y, 0%) / 3)) scale(.5);
+  background-color: var(--holo-primary);
+  border: var(--holo-border-size) solid var(--holo-border-color-secondary);
+}
+
+.joystick-input__handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 25%;
+  height: 25%;
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+  cursor: grab;
+}
+
+.joystick-input__inner:active .joystick-input__handle {
+  cursor: grabbing;
+}
+
+.nitro-graph-tooltip {
+  position: absolute;
+  background: rgba(0,0,0,.9);
+  border: 1px solid gray;
+  border-radius: 5px;
+  padding: 7px;
+  font-size: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.nitro-graph-tooltip.left {
+  transform: translate(calc(-100% - 10px),-50%);
+}
+
+.nitro-graph-tooltip.right {
+  transform: translate(10px,-50%);
+}
+
+.nitro-graph-tooltip .nitro-graph-tooltip-inner {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+
+.nitro-graph-tooltip .nitro-graph-tooltip-inner.left {
+  right: -6px;
+  border-left: 6px solid rgba(0,0,0,.9);
+}
+
+.nitro-graph-tooltip .nitro-graph-tooltip-inner.right {
+  left: -6px;
+  border-right: 6px solid rgba(0,0,0,.9);
+}
+
+.nitro-graph-tooltip .graph-view-tooltip-text {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.canvas-cropper-view .crop-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.canvas-cropper-view .crop-user-select {
+  user-select: none;
+}
+
+.canvas-cropper-view .crop-position {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.canvas-cropper-view svg {
+  pointer-events: none;
+  z-index: 1;
+}
+
+.canvas-cropper-view .crop-overlay {
+  position: absolute;
+  border: 1px dashed white;
+}
+
+.canvas-cropper-view .crop-overlay .crop-overlay-content>div {
+  transform-origin: top left;
+  pointer-events: none;
+}
+
+.canvas-cropper-view .resize-handle {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background-color: #fff;
+  border: 1px solid black;
+  z-index: 3;
+}

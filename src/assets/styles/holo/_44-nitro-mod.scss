@@ -1,0 +1,97 @@
+// Reference stylesheet segment 44 - mainly "nitro-mod". Original cascade order, do not reorder.
+// Contains (owner: rules): nitro-mod:15, nitro-navigator:2
+
+.nitro-mod-tools {
+  width: 175px;
+}
+
+.nitro-mod-tools-room,
+.nitro-mod-tools-user-action {
+  width: 240px;
+}
+
+.nitro-mod-tools-room .username,
+.nitro-mod-tools-user-action .username {
+  color: #1e7295;
+  text-decoration: underline;
+}
+
+.nitro-mod-tools-room input,
+.nitro-mod-tools-room textarea,
+.nitro-mod-tools-user-action input,
+.nitro-mod-tools-user-action textarea {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.nitro-mod-tools-user {
+  height: 370px;
+}
+
+.nitro-mod-tools-user .username {
+  color: #1e7295;
+  text-decoration: underline;
+}
+
+.nitro-mod-tools-user .table>:not(caption)>*>* {
+  box-shadow: none;
+  border-bottom: 1px solid rgba(0,0,0,.2);
+}
+
+.nitro-mod-tools-user .table.table-striped>tbody>tr:nth-of-type(odd) {
+  background: rgba(0,0,0,.05);
+}
+
+.nitro-mod-tools-user .table tr {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.nitro-mod-tools-user .mod-tools-group-button div {
+  flex: 1;
+}
+
+.nitro-mod-tools-chatlog,
+.nitro-mod-tools-user-visits,
+.nitro-mod-tools-tickets {
+  width: 400px;
+  min-width: 370px;
+  height: 250px;
+  min-height: 200px;
+}
+
+.nitro-mod-tools-user-message textarea {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.nitro-mod-tools-handle-issue {
+  width: 400px;
+}
+
+.nitro-mod-tools-handle-issue * {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.nitro-mod-tools-chatlog .log-entry.highlighted,
+.nitro-mod-tools-user-visits .log-entry.highlighted {
+  border: 1px solid #a81a12;
+}
+
+.nitro-navigator {
+  width: 440px;
+  height: 590px;
+  min-height: 210px;
+}
+
+.nitro-navigator .content-area .scroll-container svg,
+.nitro-navigator .content-area .scroll-container svg * {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-tertiary-invert) !important;
+}

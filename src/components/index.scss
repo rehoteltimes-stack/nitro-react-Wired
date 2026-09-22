@@ -1,32 +1,10 @@
-@import './achievements/AchievementsView';
-@import './avatar-editor/AvatarEditorView';
-@import './camera/CameraWidgetView';
-@import './campaign/CampaignView';
-@import './catalog/CatalogView';
-@import './chat-history/ChatHistoryView';
-@import './floorplan-editor/FloorplanEditorView.scss';
-@import './friends/FriendsView';
-@import './groups/GroupView';
-@import './groups/GroupForums';
-@import './guide-tool/GuideToolView';
-@import './hc-center/HcCenterView';
-@import './help/HelpView';
-@import './hotel-view/HotelView';
-@import './inventory/InventoryView';
-@import './loading/LoadingView';
-@import './mod-tools/ModToolsView';
-@import './navigator/NavigatorView';
-@import './nitropedia/NitropediaView';
-@import './notification-center/NotificationCenterView';
-@import './purse/PurseView';
-@import './right-side/RightSideView';
-@import './room/RoomView';
-@import './room-tools/RoomToolsView';
-@import './toolbar/ToolbarView';
-@import './user-profile/UserProfileVew';
+// Own features only. Order matters: wired/WiredView defines the nw-* mixins the later files include,
+// builder-toolbar defines bm-raised-button.
 @import './wired/WiredView';
+@import './wired/WiredEmbedded';
+@import './builder-toolbar/BuilderToolbarView';
 @import './wired-creator-tools-habbo/WiredCreatorToolsView';
 @import './wired-chests/ChestView';
 @import './wired-chests/ContractView';
 @import './wired-chests/RewardPopupView';
-@import './game-center/GameCenterView.scss';
+@import './room-tools/RoomToolsView';

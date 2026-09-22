@@ -1,0 +1,142 @@
+// Reference stylesheet segment 45 - mainly "navigator". Original cascade order, do not reorder.
+// Contains (owner: rules): navigator:13, nitro-room:9, room-widgets:2, nitro-navigator:1
+
+.navigator-item-text {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.navigator-popup-room-description {
+  height: 75px;
+}
+
+.navigator-popup-room-link {
+  user-select: all !important;
+  width: 100% !important;
+  color: var(--holo-text-secondary) !important;
+  box-shadow: 0 0 10px #00000024 !important;
+}
+
+.navigator-items .navigator-item {
+  background: var(--holo-navigator-color-theme-secondary);
+  border-radius: var(--holo-border-radius);
+  width: 120px;
+  padding-top: 5px;
+  height: 160px;
+}
+
+.navigator-items .navigator-item:hover {
+  background: var(--holo-navigator-color-theme-primary);
+}
+
+.navigator-items .navigator-item:hover .navigator-item-text {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary-invert) !important;
+}
+
+.navigator-grid .navigator-item {
+  height: 32px;
+  font-size: 16px;
+  box-shadow: 0 0 10px #0000001a;
+  border-radius: var(--holo-border-radius);
+}
+
+.navigator-grid .navigator-item .badge {
+  width: 35px;
+  min-width: 35px;
+  border-radius: var(--holo-border-radius);
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: #fff !important;
+}
+
+.navigator-grid .navigator-item:hover {
+  background: var(--holo-navigator-color-theme-primary);
+}
+
+.navigator-grid .navigator-item:hover .navigator-item-text {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary-invert) !important;
+}
+
+.navigator-grid:not(.two-columns) .navigator-item:not(:hover):nth-child(odd) {
+  background-color: var(--holo-navigator-color-theme-secondary);
+}
+
+.navigator-grid:not(.two-columns) .navigator-item:not(:hover):nth-child(even) {
+  background-color: var(--holo-navigator-color-theme-tertiary);
+}
+
+.navigator-grid.two-columns .navigator-item:not(:hover):nth-child(4n-2),
+.navigator-grid.two-columns .navigator-item:not(:hover):nth-child(4n-3) {
+  background: #D1E0D0;
+}
+
+.room-thumbnail .badge {
+  width: 35px;
+  min-width: 35px;
+  border-radius: var(--holo-border-radius);
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: #fff !important;
+}
+
+.nitro-navigator-doorbell,
+.nitro-navigator-password {
+  width: 250px;
+}
+
+.nitro-room-info {
+  width: 325px;
+}
+
+.nitro-room-link {
+  width: 400px;
+}
+
+.nitro-room-link input {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.nitro-room-settings {
+  width: 460px;
+}
+
+.nitro-room-settings .list-container {
+  height: 116px;
+  background-color: var(--holo-primary);
+  border-radius: var(--holo-border-radius);
+  box-shadow: var(--holo-box-shadow);
+  border: var(--holo-border-size) solid var(--holo-border-color-primary);
+}
+
+.nitro-room-settings input,
+.nitro-room-settings textarea {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.nitro-room-settings .room-settings-skin-tab {
+  max-height: 230px;
+  overflow: hidden;
+}
+
+.nitro-room-settings .room-settings-skin-tab .layout-grid-item.active {
+  border: 2px solid var(--holo-navigator-color-theme-primary);
+}
+
+.nitro-room-settings .room-settings-permissions-tab {
+  max-height: 300px;
+}
+
+.room-info {
+  width: 325px;
+  min-width: 325px;
+  max-width: 325px;
+}

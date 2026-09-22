@@ -1,0 +1,85 @@
+// Reference stylesheet segment 50 - mainly "nitro-chat". Original cascade order, do not reorder.
+// Contains (owner: rules): nitro-chat:12
+
+.nitro-chat-input-container {
+  --margin-right: -15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  height: var(--holo-input-height);
+  border-radius: 6px;
+  margin-bottom: 4px;
+  font-size: 16px;
+  flex-grow: 1;
+  min-width: 25vw;
+  border-radius: var(--holo-border-radius);
+  box-shadow: var(--holo-box-shadow);
+  overflow: hidden;
+}
+
+.nitro-chat-input-container .chatstyles-icon-container {
+  flex-shrink: 0;
+  height: 100%;
+  background-color: var(--holo-secondary);
+  border-radius: var(--holo-border-radius) 0 0 var(--holo-border-radius);
+  margin-right: var(--margin-right);
+  padding: 0 calc(var(--margin-right) * -1) 0 var(--holo-paddings);
+}
+
+.nitro-chat-input-container .chatstyles-icon-container .chatstyles-icon {
+  position: relative;
+  right: calc(var(--margin-right) * -.5);
+}
+
+.nitro-chat-input-container .input-sizer {
+  display: inline-grid;
+  vertical-align: top;
+  height: 100%;
+  border-radius: var(--holo-border-radius);
+  flex: 1;
+  min-width: 0;
+}
+
+.nitro-chat-input-container .input-sizer input,
+.nitro-chat-input-container .input-sizer textarea {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  box-shadow: none !important;
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
+.nitro-chat-input-container .bubble-container {
+  visibility: visible;
+  width: 75%;
+}
+
+.nitro-chat-style-selector-container {
+  width: 320px;
+  max-height: 250px;
+}
+
+.nitro-chat-style-selector-container .content-area {
+  max-height: 250px !important;
+}
+
+.nitro-chat-style-selector-container .bubble-parent-container {
+  height: 35px;
+}
+
+.nitro-chat-style-selector-container .bubble-parent-container .bubble-container {
+  position: relative;
+  width: 50px;
+}
+
+.nitro-chat-style-selector-container .bubble-parent-container .bubble-container .chat-bubble {
+  height: 26px;
+}
+
+.nitro-chat-style-selector-container .bubble-parent-container.selected {
+  background-color: var(--holo-tertiary);
+  border-radius: var(--holo-border-radius);
+}

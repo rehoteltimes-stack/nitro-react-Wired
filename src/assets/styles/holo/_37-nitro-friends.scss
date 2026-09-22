@@ -1,0 +1,162 @@
+// Reference stylesheet segment 37 - mainly "nitro-friends". Original cascade order, do not reorder.
+// Contains (owner: rules): nitro-friends:26, messenger:1
+
+.nitro-friends-spritesheet {
+  background: url(data:image/png;base64,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) transparent no-repeat;
+}
+
+.nitro-friends-spritesheet.icon-friendbar-visit {
+  width: 21px;
+  height: 21px;
+  background-position: -38px -5px;
+}
+
+.nitro-friends-spritesheet.icon-heart {
+  width: 16px;
+  height: 14px;
+  background-position: -5px -67px;
+}
+
+.nitro-friends-spritesheet.icon-new-message {
+  width: 14px;
+  height: 14px;
+  background-position: -96px -53px;
+}
+
+.nitro-friends-spritesheet.icon-none {
+  width: 16px;
+  height: 14px;
+  background-position: -31px -67px;
+}
+
+.nitro-friends-spritesheet.icon-profile {
+  width: 21px;
+  height: 21px;
+  background-position: -5px -36px;
+}
+
+.nitro-friends-spritesheet.icon-profile-sm {
+  width: 13px;
+  height: 11px;
+  background-position: -51px -91px;
+}
+
+.nitro-friends-spritesheet.icon-profile-sm:hover {
+  width: 13px;
+  height: 11px;
+  background-position: -74px -91px;
+}
+
+.nitro-friends-spritesheet.icon-smile {
+  width: 16px;
+  height: 14px;
+  background-position: -57px -67px;
+}
+
+.nitro-friends-spritesheet.icon-warning {
+  width: 23px;
+  height: 21px;
+  background-position: -5px -5px;
+}
+
+.nitro-friends-spritesheet.icon-accept {
+  width: 13px;
+  height: 14px;
+  background-position: -5px -91px;
+}
+
+.nitro-friends-spritesheet.icon-add {
+  width: 16px;
+  height: 15px;
+  background-position: -69px -31px;
+}
+
+.nitro-friends-spritesheet.icon-bobba {
+  width: 16px;
+  height: 14px;
+  background-position: -96px -5px;
+}
+
+.nitro-friends-spritesheet.icon-chat {
+  width: 17px;
+  height: 16px;
+  background-position: -69px -5px;
+}
+
+.nitro-friends-spritesheet.icon-deny {
+  width: 13px;
+  height: 14px;
+  background-position: -28px -91px;
+}
+
+.nitro-friends-spritesheet.icon-follow {
+  width: 16px;
+  height: 14px;
+  background-position: -96px -29px;
+}
+
+.nitro-friends-spritesheet.icon-friendbar-chat {
+  width: 20px;
+  height: 21px;
+  background-position: -36px -36px;
+}
+
+.nitro-friends-spritesheet.icon-friendbar-element:hover {
+  transform: translate(-1px,-1px);
+  filter: drop-shadow(1px 1px 1px #000000);
+}
+
+.messenger-notification-icon {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAAa0lEQVR42mNgoDP4TwOMagEtALJFcEGXg8+phtEtoroFyBZhtWTGna8U41FLqGsJXSJ+1JJRS6hvCc0LSGKLemyGEFHU/ye6wkK2BM0A0iouYiyhxAKCVTOWIPhP9fqf1hYwUBoM5FgyOAEAlc0ilScSWdgAAAAASUVORK5CYII=) transparent no-repeat;
+  width: 25px;
+  height: 25px;
+}
+
+.nitro-friends {
+  width: 350px;
+  min-width: 280px;
+  height: 500px;
+  min-height: 240px;
+}
+
+.nitro-friends .holo-main-search-bar-input-text {
+  width: 50px;
+}
+
+.nitro-friends .nitro-friend-list-entry {
+  --holo-input-border-size: 1px;
+  height: 40px;
+  border-radius: var(--holo-border-radius);
+  border: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+  padding-right: var(--holo-paddings);
+}
+
+.nitro-friends .nitro-friend-list-entry .avatar-image-container {
+  width: 50px;
+  height: 42px;
+  top: -1px;
+  left: -1px;
+  bottom: -1px;
+  overflow: hidden;
+  border-radius: var(--holo-border-radius);
+  box-shadow: var(--holo-box-shadow);
+  background-color: var(--holo-secondary);
+}
+
+.nitro-friends .nitro-friend-list-entry .avatar-image-container .avatar-image {
+  top: -27px;
+  left: -20px;
+}
+
+.nitro-friends .nitro-friend-list-entry .friend-name {
+  font-weight: 700;
+}
+
+.nitro-friends .nitro-friend-list-entry.selected {
+  background-color: var(--holo-friends-color-theme-primary);
+}
+
+.nitro-friends-room-invite,
+.nitro-friends-remove-confirmation {
+  width: 350px;
+}

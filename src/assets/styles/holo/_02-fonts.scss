@@ -1,0 +1,12 @@
+// Reference stylesheet segment 2 - mainly "fonts". Original cascade order, do not reorder.
+// Contains (owner: rules): fonts:2
+
+@font-face  {
+  font-family: Ubuntu;
+  src: url('@/assets/holo/Ubuntu-C.ttf');
+}
+
+@font-face  {
+  font-family: UbuntuMono;
+  src: url('@/assets/holo/Ubuntu-mono.ttf');
+}

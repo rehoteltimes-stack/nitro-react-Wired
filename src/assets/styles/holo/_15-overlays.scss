@@ -1,0 +1,176 @@
+// Reference stylesheet segment 15 - mainly "overlays". Original cascade order, do not reorder.
+// Contains (owner: rules): overlays:34
+
+.alert {
+  position: relative;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: .25rem;
+}
+
+.alert-heading {
+  color: inherit;
+}
+
+.alert-link {
+  font-weight: 700;
+}
+
+.alert-dismissible {
+  padding-right: 3rem;
+}
+
+.alert-dismissible .btn-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  padding: 1.25rem 1rem;
+}
+
+.alert-primary {
+  color: #124459;
+  background-color: #d2e3ea;
+  border-color: #bcd5df;
+}
+
+.alert-primary .alert-link {
+  color: #0e3647;
+}
+
+.alert-secondary {
+  color: #0e3849;
+  background-color: #d1dfe4;
+  border-color: #baced7;
+}
+
+.alert-secondary .alert-link {
+  color: #0b2d3a;
+}
+
+.alert-success {
+  color: #004d07;
+  background-color: #cce6ce;
+  border-color: #b3d9b6;
+}
+
+.alert-success .alert-link {
+  color: #003e06;
+}
+
+.alert-info {
+  color: #055160;
+  background-color: #cff4fc;
+  border-color: #b6effb;
+}
+
+.alert-info .alert-link {
+  color: #04414d;
+}
+
+.alert-warning {
+  color: #664d03;
+  background-color: #fff3cd;
+  border-color: #ffecb5;
+}
+
+.alert-warning .alert-link {
+  color: #523e02;
+}
+
+.alert-danger {
+  color: #65100b;
+  background-color: #eed1d0;
+  border-color: #e5bab8;
+}
+
+.alert-danger .alert-link {
+  color: #510d09;
+}
+
+.alert-light {
+  color: #595959;
+  background-color: #f9f9f9;
+  border-color: #f5f5f5;
+}
+
+.alert-light .alert-link {
+  color: #474747;
+}
+
+.alert-dark {
+  color: #111113fc;
+  background-color: #d3d3d4fe;
+  border-color: #bdbdbefe;
+}
+
+.alert-dark .alert-link {
+  color: #0e0e0ffd;
+}
+
+.alert-light-dark {
+  color: #1f2326;
+  background-color: #d6d8d9;
+  border-color: #c2c4c6;
+}
+
+.alert-light-dark .alert-link {
+  color: #191c1e;
+}
+
+.alert-white {
+  color: #666;
+  background-color: #fff;
+  border-color: #fff;
+}
+
+.alert-white .alert-link {
+  color: #525252;
+}
+
+.alert-black {
+  color: #000;
+  background-color: #ccc;
+  border-color: #b3b3b3;
+}
+
+.alert-black .alert-link {
+  color: #000;
+}
+
+.alert-muted {
+  color: #494c4f;
+  background-color: #f0f2f3;
+  border-color: #e9ecee;
+}
+
+.alert-muted .alert-link {
+  color: #3a3d3f;
+}
+
+.alert-purple {
+  color: #432874;
+  background-color: #e2d9f3;
+  border-color: #d4c6ec;
+}
+
+.alert-purple .alert-link {
+  color: #36205d;
+}
+
+.alert-gainsboro {
+  color: #575757;
+  background-color: #f7f7f7;
+  border-color: #f4f4f4;
+}
+
+.alert-gainsboro .alert-link {
+  color: #464646;
+}
+
+@keyframes progress-bar-stripes {
+  0% {
+    background-position-x: 1rem;
+  }
+}

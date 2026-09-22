@@ -1,0 +1,134 @@
+// Reference stylesheet segment 29 - mainly "holo-components". Original cascade order, do not reorder.
+// Contains (owner: rules): holo-components:12, scroll:9
+
+.holo-main-search-bar-input-element {
+  --holo-input-height: 35px;
+  min-height: var(--holo-input-height);
+  max-height: var(--holo-input-height);
+  height: var(--holo-input-height);
+  border-radius: var(--holo-border-radius);
+  box-shadow: 0 0 10px #00000024;
+  padding: 0 calc(var(--holo-paddings) * 2 / 3);
+  border: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+}
+
+.holo-main-search-bar-input-element .custom-select-root {
+  --holo-input-border-size: 1px;
+  height: 21px;
+}
+
+.holo-main-search-bar-input-element .custom-select-root .custom-select-display {
+  border: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+}
+
+.holo-main-search-bar-input-element .holo-main-search-bar-input-container {
+  background-color: var(--holo-primary);
+  border-radius: var(--holo-border-radius);
+  padding: 0 calc(var(--holo-paddings) * 2 / 3);
+}
+
+.holo-main-search-bar-input-element .holo-main-search-bar-input-container * {
+  color: inherit;
+}
+
+.holo-main-search-bar-input-element .holo-main-search-bar-input-container .holo-main-search-bar-input-text {
+  padding: 0 calc(var(--holo-paddings) * 2 / 3) !important;
+  border: 0px solid transparent !important;
+  box-shadow: none !important;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  border: none;
+  flex: 1;
+  height: calc(var(--holo-input-height) - var(--holo-input-border-size) * 2) !important;
+}
+
+.holo-main-search-bar-input-element .holo-main-search-bar-input-container .holo-main-search-bar-input-select {
+  width: 130px;
+  max-width: 130px;
+  min-width: 130px;
+}
+
+.holo-main-search-bar-input-element .holo-main-search-bar-input-container .holo-main-search-bar-input-select .custom-select-display {
+  --holo-input-border-size: 1px;
+  padding: 0 var(--holo-paddings);
+  box-shadow: none !important;
+  border: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+}
+
+.holo-main-search-bar-input-element .holo-main-search-bar-input-container .holo-main-search-bar-input-select,
+.holo-main-search-bar-input-element .holo-main-search-bar-input-container .holo-main-search-bar-input-select * {
+  color: var(--holo-text-primary) !important;
+  text-wrap: nowrap;
+  text-transform: uppercase;
+}
+
+.holo-main-search-bar-input-element .holo-main-search-bar-input-container .custom-select-selected {
+  color: var(--holo-text-primary-invert);
+}
+
+.holo-main-search-bar-input-element .icon,
+.holo-main-search-bar-input-element .fa-icon {
+  flex-shrink: 0 !important;
+}
+
+.holo-main-search-bar-input-element svg,
+.holo-main-search-bar-input-element svg * {
+  cursor: pointer;
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: #fff !important;
+}
+
+.scroll-container {
+  --scrollbar-width: 6px;
+  --scrollbar-height: 6px;
+  position: relative;
+  grid-template-columns: 1fr var(--scrollbar-width, 0px);
+  grid-template-rows: 1fr var(--scrollbar-height, 0px);
+}
+
+.scroll-container .scroll-content {
+  grid-column: 1/2;
+  grid-row: 1/2;
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+.scroll-container .scroll-content.vertical,
+.scroll-container .scroll-content.both {
+  overflow-y: scroll;
+}
+
+.scroll-container .scroll-content.horizontal,
+.scroll-container .scroll-content.both {
+  overflow-x: scroll;
+}
+
+.scroll-container .scroll-bar {
+  box-shadow: var(--holo-box-shadow);
+  background-color: var(--holo-scrollbar-background);
+  overflow: hidden;
+}
+
+.scroll-container .scroll-thumb {
+  position: absolute;
+  background-color: var(--holo-scrollbar-thumb);
+}
+
+.scroll-container .scroll-bar,
+.scroll-container .scroll-thumb {
+  border-radius: 15px;
+}
+
+.scroll-container .scroll-bar.vertical,
+.scroll-container .scroll-thumb.vertical {
+  width: var(--scrollbar-width, 0px) !important;
+}
+
+.scroll-container .scroll-bar.horizontal,
+.scroll-container .scroll-thumb.horizontal {
+  height: var(--scrollbar-height, 0px) !important;
+}

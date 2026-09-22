@@ -1,0 +1,342 @@
+// Reference stylesheet segment 27 - mainly "nitro-card". Original cascade order, do not reorder.
+// Contains (owner: rules): nitro-card:33, holo-components:9, collapsible:5, nitro-infostand:4, vertical:2, horizontal:1
+
+.nitro-card {
+  background-color: var(--holo-primary);
+  border-radius: var(--holo-border-radius);
+  box-shadow: var(--holo-box-shadow);
+  border: var(--holo-border-size) solid var(--holo-border-color-primary);
+}
+
+.nitro-card * {
+  font-family: var(--holo-font) !important;
+}
+
+.nitro-card.invisible-card {
+  --holo-border-size: 0px;
+  --holo-border-radius: 0px;
+  --holo-primary: transparent;
+  --holo-secondary: transparent;
+  --holo-tertiary: transparent;
+  --holo-paddings: 0px;
+}
+
+.nitro-card.invisible-card .nitro-card-header-buttons {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  display: flex;
+  justify-content: flex-end;
+  z-index: 1000000;
+  pointer-events: none;
+}
+
+.nitro-card.invisible-card .nitro-card-header-buttons .nitro-card-header-button {
+  background-color: transparent;
+  pointer-events: all;
+  opacity: .5;
+  transition: opacity .2s ease-in-out;
+}
+
+.nitro-card.invisible-card .nitro-card-header-buttons .nitro-card-header-button:hover {
+  opacity: 1;
+}
+
+.nitro-card.invisible-card .nitro-card-header-buttons .nitro-card-header-button:active {
+  opacity: .8;
+}
+
+.nitro-card.invisible-card .nitro-card-header-buttons .nitro-card-header-button svg {
+  filter: drop-shadow(1px 0px 0px white) drop-shadow(0px 1px 0px white) drop-shadow(-1px 0px 0px white) drop-shadow(0px -1px 0px white);
+}
+
+.nitro-card.invisible-card .nitro-card-header-buttons .nitro-card-header-button svg,
+.nitro-card.invisible-card .nitro-card-header-buttons .nitro-card-header-button svg * {
+  color: #000 !important;
+}
+
+.nitro-card .resize-handler {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 15px;
+  height: 15px;
+  z-index: 2147483647;
+}
+
+.nitro-card .resize-handler:after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  background: linear-gradient(135deg,transparent 50%,var(--holo-tertiary) 50%);
+  border-bottom-right-radius: calc(var(--holo-border-radius) / 4);
+}
+
+.nitro-card.theme-primary,
+.nitro-card.theme-primary-slim {
+  filter: drop-shadow(4px 4px 4px rgba(0,0,0,.4117647059));
+}
+
+.nitro-card.theme-primary .nitro-card-header,
+.nitro-card.theme-primary-slim .nitro-card-header {
+  position: relative;
+  min-height: 40px;
+  max-height: 40px;
+  background: var(--holo-primary);
+  border-radius: var(--holo-border-radius) var(--holo-border-radius) 0 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.nitro-card.theme-primary .nitro-card-header .nitro-card-header-content,
+.nitro-card.theme-primary-slim .nitro-card-header .nitro-card-header-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(100% + var(--holo-paddings) * 2);
+  height: calc(100% + var(--holo-paddings) * 2);
+  transform: translate(-50%,-50%);
+  padding: var(--holo-paddings) var(--holo-paddings) 0 var(--holo-paddings);
+}
+
+.nitro-card.theme-primary .nitro-card-header .nitro-card-header-text,
+.nitro-card.theme-primary-slim .nitro-card-header .nitro-card-header-text {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+  text-shadow: 0px 4px 4px var(--holo-text-shadow);
+  font-size: 22px;
+  height: 22px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  font-weight: 700;
+  position: relative;
+  margin-left: var(--holo-paddings);
+}
+
+.nitro-card.theme-primary>*:not(.nitro-card-header),
+.nitro-card.theme-primary-slim>*:not(.nitro-card-header) {
+  z-index: 1;
+}
+
+.nitro-card-header-button {
+  cursor: pointer;
+  padding: 3px;
+  line-height: 1;
+  border-radius: .25rem;
+  background: var(--holo-text-primary);
+}
+
+.nitro-card-header-button:hover {
+  filter: brightness(1.2);
+}
+
+.nitro-card-header-button:active {
+  filter: brightness(.8);
+}
+
+.nitro-card-header-button:last-child {
+  margin-right: var(--holo-paddings);
+}
+
+.nitro-card-header-button svg * {
+  color: var(--holo-primary) !important;
+}
+
+.nitro-card-header-button svg:hover * {
+  color: var(--holo-secondary) !important;
+}
+
+.nitro-card-tabs {
+  background-color: var(--holo-primary);
+}
+
+.nitro-card-tabs .nav-item {
+  z-index: 1;
+  background-color: var(--holo-primary);
+  border: 1px solid var(--holo-tertiary) !important;
+  border-radius: var(--holo-border-radius);
+  padding: calc(var(--holo-paddings) * 2 / 3) var(--holo-paddings);
+  flex: auto;
+  justify-content: center;
+}
+
+.nitro-card-tabs .nav-item,
+.nitro-card-tabs .nav-item *:not(.nitro-item-count) {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-tertiary-invert) !important;
+  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.nitro-card-tabs .nav-item .nitro-item-count {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: #fff !important;
+}
+
+.nitro-card-tabs .nav-item.active {
+  background-color: var(--holo-tertiary);
+}
+
+.nitro-card-tabs .nav-item.active,
+.nitro-card-tabs .nav-item.active * {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-tertiary) !important;
+}
+
+.nitro-card-tabs.small .nav-item {
+  padding: calc(var(--holo-paddings) * 1 / 3) calc(var(--holo-paddings) * 2 / 3);
+}
+
+.nitro-card-tabs.small .nav-item,
+.nitro-card-tabs.small .nav-item * {
+  font-size: 12px;
+}
+
+:not(.nitro-infostand) .content-area {
+  width: 100%;
+  height: calc(100% - 33px - var(--holo-border-size) * 2 - 1px);
+  overflow: visible;
+  background-color: var(--holo-primary);
+  border-radius: 0 0 var(--holo-border-radius) var(--holo-border-radius);
+}
+
+:not(.nitro-infostand) .content-area .content-area-inner {
+  margin: var(--holo-paddings);
+  height: calc(100% - var(--holo-paddings) * 2);
+  width: calc(100% - var(--holo-paddings) * 2);
+}
+
+:not(.nitro-infostand) .content-area .content-area-inner,
+:not(.nitro-infostand) .content-area .content-area-inner * {
+  min-height: 0;
+}
+
+.nitro-infostand .content-area {
+  padding: var(--holo-paddings);
+}
+
+.nitro-card-header {
+  position: relative;
+  height: 100%;
+}
+
+.nitro-card-accordion-set.active {
+  height: 100%;
+  overflow: hidden;
+  background: rgba(255,255,255,.5);
+  border-bottom: 1px solid rgba(0,0,0,.2);
+}
+
+.nitro-card-accordion-set .nitro-card-accordion-set-header {
+  border-bottom: 1px solid rgba(0,0,0,.2);
+}
+
+.vertical-separator,
+.horizontal-separator {
+  background-color: var(--holo-tertiary);
+}
+
+.vertical-separator {
+  width: 1px;
+  height: 100%;
+}
+
+.horizontal-separator {
+  height: 1px;
+  width: 100%;
+}
+
+.collapsible-area .collapsible-header {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.collapsible-area .collapsible-content {
+  display: grid;
+  padding-top: 0;
+  grid-template-rows: 0fr;
+}
+
+.collapsible-area .collapsible-content.expanded {
+  padding-top: 1rem;
+  grid-template-rows: 1fr;
+}
+
+.collapsible-area .collapsible-icon {
+  flex-shrink: 0;
+}
+
+.collapsible-area .collapsible-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.holo-button {
+  position: relative;
+  min-height: 35px;
+  max-height: 35px;
+  height: 35px;
+  border-radius: var(--holo-border-radius);
+  box-shadow: 0 0 10px #00000054;
+  padding: 0 calc(var(--holo-paddings) * 2 / 3);
+  overflow: visible;
+  text-transform: uppercase;
+}
+
+.holo-button>* {
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 100%;
+  letter-spacing: 0%;
+}
+
+.holo-button.success {
+  background-color: #52bc48;
+}
+
+.holo-button.success>* {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: #fff !important;
+}
+
+.holo-button.primary {
+  background-color: #22abd6;
+}
+
+.holo-button.primary>* {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: #fff !important;
+}
+
+.holo-button.danger {
+  background-color: #ea4646;
+}
+
+.holo-button.danger>* {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: #fff !important;
+}
+
+.holo-button.disabled {
+  cursor: not-allowed;
+}

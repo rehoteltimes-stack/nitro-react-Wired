@@ -1,0 +1,193 @@
+// Reference stylesheet segment 7 - mainly "bootstrap-components". Original cascade order, do not reorder.
+// Contains (owner: rules): bootstrap-components:21, grid:3, forms:1
+
+.table-sm>:not(caption)>*>* {
+  padding: .25rem;
+}
+
+.table-bordered>:not(caption)>* {
+  border-width: 1px 0;
+}
+
+.table-bordered>:not(caption)>*>* {
+  border-width: 0 1px;
+}
+
+.table-borderless>:not(caption)>*>* {
+  border-bottom-width: 0;
+}
+
+.table-striped>tbody>tr:nth-of-type(odd) {
+  --bs-table-accent-bg: var(--bs-table-striped-bg);
+  color: var(--bs-table-striped-color);
+}
+
+.table-active {
+  --bs-table-accent-bg: var(--bs-table-active-bg);
+  color: var(--bs-table-active-color);
+}
+
+.table-hover>tbody>tr:hover {
+  --bs-table-accent-bg: var(--bs-table-hover-bg);
+  color: var(--bs-table-hover-color);
+}
+
+.table-primary {
+  --bs-table-bg: #d2e3ea;
+  --bs-table-striped-bg: #c8d8de;
+  --bs-table-striped-color: #000;
+  --bs-table-active-bg: #bdccd3;
+  --bs-table-active-color: #000;
+  --bs-table-hover-bg: #c2d2d8;
+  --bs-table-hover-color: #000;
+  color: #000;
+  border-color: #bdccd3;
+}
+
+.table-secondary {
+  --bs-table-bg: #d1dfe4;
+  --bs-table-striped-bg: #c7d4d9;
+  --bs-table-striped-color: #000;
+  --bs-table-active-bg: #bcc9cd;
+  --bs-table-active-color: #000;
+  --bs-table-hover-bg: #c1ced3;
+  --bs-table-hover-color: #000;
+  color: #000;
+  border-color: #bcc9cd;
+}
+
+.table-success {
+  --bs-table-bg: #cce6ce;
+  --bs-table-striped-bg: #c2dbc4;
+  --bs-table-striped-color: #000;
+  --bs-table-active-bg: #b8cfb9;
+  --bs-table-active-color: #000;
+  --bs-table-hover-bg: #bdd5bf;
+  --bs-table-hover-color: #000;
+  color: #000;
+  border-color: #b8cfb9;
+}
+
+.table-info {
+  --bs-table-bg: #cff4fc;
+  --bs-table-striped-bg: #c5e8ef;
+  --bs-table-striped-color: #000;
+  --bs-table-active-bg: #badce3;
+  --bs-table-active-color: #000;
+  --bs-table-hover-bg: #bfe2e9;
+  --bs-table-hover-color: #000;
+  color: #000;
+  border-color: #badce3;
+}
+
+.table-warning {
+  --bs-table-bg: #fff3cd;
+  --bs-table-striped-bg: #f2e7c3;
+  --bs-table-striped-color: #000;
+  --bs-table-active-bg: #e6dbb9;
+  --bs-table-active-color: #000;
+  --bs-table-hover-bg: #ece1be;
+  --bs-table-hover-color: #000;
+  color: #000;
+  border-color: #e6dbb9;
+}
+
+.table-danger {
+  --bs-table-bg: #eed1d0;
+  --bs-table-striped-bg: #e2c7c6;
+  --bs-table-striped-color: #000;
+  --bs-table-active-bg: #d6bcbb;
+  --bs-table-active-color: #000;
+  --bs-table-hover-bg: #dcc1c0;
+  --bs-table-hover-color: #000;
+  color: #000;
+  border-color: #d6bcbb;
+}
+
+.table-light {
+  --bs-table-bg: #DFDFDF;
+  --bs-table-striped-bg: #d4d4d4;
+  --bs-table-striped-color: #000;
+  --bs-table-active-bg: #c9c9c9;
+  --bs-table-active-color: #000;
+  --bs-table-hover-bg: #cecece;
+  --bs-table-hover-color: #000;
+  color: #000;
+  border-color: #c9c9c9;
+}
+
+.table-dark {
+  --bs-table-bg: rgba(28, 28, 32, .9803921569);
+  --bs-table-striped-bg: rgba(40, 40, 44, .981372549);
+  --bs-table-striped-color: #fff;
+  --bs-table-active-bg: rgba(52, 52, 55, .9823529412);
+  --bs-table-active-color: #fff;
+  --bs-table-hover-bg: rgba(46, 46, 49, .9818627451);
+  --bs-table-hover-color: #fff;
+  color: #fff;
+  border-color: #343437fb;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 575.98px) {
+  .table-responsive-sm {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .table-responsive-md {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .table-responsive-lg {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 1199.98px) {
+  .table-responsive-xl {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 1399.98px) {
+  .table-responsive-xxl {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+.form-label {
+  margin-bottom: .5rem;
+}
+
+.col-form-label {
+  padding-top: calc(.375rem + 1px);
+  padding-bottom: calc(.375rem + 1px);
+  margin-bottom: 0;
+  font-size: inherit;
+  line-height: 1.5;
+}
+
+.col-form-label-lg {
+  padding-top: calc(.5rem + 1px);
+  padding-bottom: calc(.5rem + 1px);
+  font-size: 1.125rem;
+}
+
+.col-form-label-sm {
+  padding-top: calc(.25rem + 1px);
+  padding-bottom: calc(.25rem + 1px);
+  font-size: .7875rem;
+}

@@ -1,26 +1,5 @@
-@import './assets/styles';
-
-html,
-body {
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    user-select: none;
-    scrollbar-width: thin;
-
-    .image-rendering-pixelated {
-        image-rendering: pixelated;
-        image-rendering: -moz-crisp-edges;
-    }
-
-    * {
-        -webkit-font-smoothing: antialiased;
-    }
-}
-
-img {
-    object-fit: none;
-}
-
-@import './App';
+// Two layers only:
+//  1. the HabboCity stylesheet (tokens + ordered reference segments) - the whole look of the client
+//  2. styles of features that only exist in this project (Wired, builder mode, clothes shop)
+@import './assets/styles/holo';
+@import './components';
