@@ -36,12 +36,27 @@ const useInventoryBannerState = () =>
 
         setBanners(parser.items);
         setActiveBannerId(parser.activeBannerId);
-        setSelectedBannerId(parser.activeBannerId);
+        // When nothing is worn (activeBannerId === -1), default the selection to the first owned banner rather
+        // than leaving it at -1 - same "select the first item when nothing else applies" convention this
+        // project's own useInventoryBadges.ts already uses for its own selectedBadgeCode.
+        setSelectedBannerId((parser.activeBannerId !== -1) ? parser.activeBannerId : (parser.items[0]?.bannerId ?? -1));
     });
 
     useMessageEvent<BannerActiveChangedEvent>(BannerActiveChangedEvent, event =>
     {
-        setActiveBannerId(event.getParser().activeBannerId);
+        const newActiveBannerId = event.getParser().activeBannerId;
+
+        setActiveBannerId(newActiveBannerId);
+
+        // Same "default to the first owned banner when nothing is worn" rule as the BannerDataEvent handler above,
+        // applied here too so it also covers Remove (not just the initial load). Deliberately done here, against
+        // this hook's own `banners` closure, rather than in InventoryBannerView's click handler - use-between
+        // re-invokes this whole hook body on every state change, and a value read from a component's own render
+        // closure at click time was observed live to be stale (banners[0] resolved to undefined even though the
+        // list clearly still had all 4 items) - the exact class of race already documented at the top of this
+        // file. This callback is itself recreated fresh on every one of those re-invocations, so `banners` here
+        // is always the one from the render that produced this specific callback instance.
+        if(newActiveBannerId === -1) setSelectedBannerId(banners.length ? banners[0].bannerId : -1);
     });
 
     const requestBanners = () => SendMessageComposer(new BannerRequestComposer());
