@@ -93,29 +93,37 @@ export const InventoryPetView: FC<InventoryPetViewProps> = props =>
         );
     }
 
+    // Real reference: same structural fix as Furniture/Badges (couldn't confirm this exact tab's own footer
+    // against a real owned pet - the reference account owns none - but the shell structure itself
+    // (search/tabs/grid/footer as four siblings of content-area-inner, footer full-width not nested in the right
+    // column) is already confirmed universal there, so applied consistently rather than left with the old,
+    // already-disproven-elsewhere nested layout).
     return (
         <>
             { searchPortal }
-            <Grid>
-                <Column size={ 7 } overflow="hidden">
-                    <AutoGrid columnCount={ 5 }>
-                        { filteredPetItems && (filteredPetItems.length > 0) && filteredPetItems.map(item => <InventoryPetItemView key={ item.petData.id } petItem={ item } />) }
-                    </AutoGrid>
-                </Column>
-                <Column size={ 5 } overflow="auto">
-                    <Column overflow="hidden" position="relative">
-                        <LayoutRoomPreviewerView roomPreviewer={ roomPreviewer } height={ 140 } />
+            <Column grow overflow="hidden">
+                <Grid fullHeight overflow="hidden">
+                    <Column size={ 7 } overflow="hidden">
+                        <AutoGrid columnCount={ 5 }>
+                            { filteredPetItems && (filteredPetItems.length > 0) && filteredPetItems.map(item => <InventoryPetItemView key={ item.petData.id } petItem={ item } />) }
+                        </AutoGrid>
                     </Column>
-                    { selectedPet && selectedPet.petData &&
-                        <Column grow justifyContent="between" gap={ 2 }>
-                            <Text grow truncate>{ selectedPet.petData.name }</Text>
-                            { !!roomSession &&
-                                <Button variant="success" onClick={ event => attemptPetPlacement(selectedPet) }>
-                                    { LocalizeText('inventory.furni.placetoroom') }
-                                </Button> }
-                        </Column> }
-                </Column>
-            </Grid>
+                    <Column size={ 5 } overflow="auto">
+                        <Column overflow="hidden" position="relative">
+                            <LayoutRoomPreviewerView roomPreviewer={ roomPreviewer } height={ 140 } />
+                        </Column>
+                        { selectedPet && selectedPet.petData &&
+                            <Column grow>
+                                <Text grow truncate>{ selectedPet.petData.name }</Text>
+                            </Column> }
+                    </Column>
+                </Grid>
+            </Column>
+
+            { selectedPet && selectedPet.petData && !!roomSession &&
+                <Button fullWidth variant="success" onClick={ event => attemptPetPlacement(selectedPet) }>
+                    { LocalizeText('inventory.furni.placetoroom') }
+                </Button> }
         </>
     );
 }

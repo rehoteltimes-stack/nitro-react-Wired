@@ -2,9 +2,8 @@ import { IRoomSession, RoomObjectVariable, RoomPreviewer, Vector3d } from '@nitr
 import { FC, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FaTrash } from 'react-icons/fa';
-import { attemptItemPlacement, DispatchUiEvent, FurniCategory, GetRoomEngine, GetSessionDataManager, GroupItem, LocalizeText, UnseenItemCategory } from '../../../../api';
+import { attemptItemPlacement, FurniCategory, GetRoomEngine, GetSessionDataManager, GroupItem, LocalizeText, UnseenItemCategory } from '../../../../api';
 import { AutoGrid, Button, Column, Flex, Grid, LayoutLimitedEditionCompactPlateView, LayoutRarityLevelView, LayoutRoomPreviewerView, Text } from '../../../../common';
-import { CatalogPostMarketplaceOfferEvent } from '../../../../events';
 import { useCatalog, useInventoryFurni, useInventoryUnseenTracker } from '../../../../hooks';
 import { InventoryCategoryEmptyView } from '../InventoryCategoryEmptyView';
 import { InventoryFurnitureItemView } from './InventoryFurnitureItemView';
@@ -19,15 +18,6 @@ interface InventoryFurnitureViewProps
     // DOM position this was confirmed against and why a portal is used instead of lifting this tab's own filter
     // state up into the shared shell component.
     searchSlot?: HTMLDivElement;
-}
-
-const attemptPlaceMarketplaceOffer = (groupItem: GroupItem) =>
-{
-    const item = groupItem.getLastItem();
-    if(!item) return false;
-    if(!item.sellable) return false;
-
-    DispatchUiEvent(new CatalogPostMarketplaceOfferEvent(item));
 }
 
 export const InventoryFurnitureView: FC<InventoryFurnitureViewProps> = props =>
@@ -177,87 +167,94 @@ export const InventoryFurnitureView: FC<InventoryFurnitureViewProps> = props =>
         );
     }
 
+    // Real reference: the button row is NOT nested inside the right preview column - it's a fourth, separate,
+    // full-width sibling of the search bar/tabs/grid inside .content-area-inner, confirmed live via bounding-rect
+    // capture (button width 455px, near the card's own full 528px width, not the ~200px the right column alone
+    // would give it). Same real structural pattern this project's own Banners tab already got right (its own
+    // Wear/Remove button sits outside its Grid entirely) - Furniture had it wrong, nested inside Column size={5}.
     return (
         <>
             { searchPortal }
-            <Grid>
-                <Column size={ 7 } overflow="hidden">
-                    <AutoGrid columnCount={ 5 }>
-                        { filteredGroupItems.length > 0 &&
-                            filteredGroupItems.map((item, index) =>
-                                <InventoryFurnitureItemView key={ index } groupItem={ item } />
-                            )
-                        }
-                    </AutoGrid>
-                </Column>
-
-                <Column size={ 5 } overflow="auto">
-                    <Column overflow="hidden" position="relative">
-                        <LayoutRoomPreviewerView roomPreviewer={ roomPreviewer } height={ 140 } />
-
-                        { selectedItem?.stuffData.isUnique &&
-                            <LayoutLimitedEditionCompactPlateView
-                                className="top-2 end-2"
-                                position="absolute"
-                                uniqueNumber={ selectedItem.stuffData.uniqueNumber }
-                                uniqueSeries={ selectedItem.stuffData.uniqueSeries }
-                            />
-                        }
-
-                        { selectedItem && selectedItem.stuffData.rarityLevel > -1 &&
-                            <LayoutRarityLevelView
-                                className="top-2 end-2"
-                                position="absolute"
-                                level={ selectedItem.stuffData.rarityLevel }
-                            />
-                        }
+            { /* grow, not fullHeight: this Column is a flex child of content-area-inner alongside the search bar,
+                 tabs, and the footer button row below - h-100 ignores those siblings' own real space and
+                 overflows/pushes the footer out, flex-grow-1 correctly fills only what's left after them. */ }
+            <Column grow overflow="hidden">
+                <Grid fullHeight overflow="hidden">
+                    <Column size={ 7 } overflow="hidden">
+                        <AutoGrid columnCount={ 5 }>
+                            { filteredGroupItems.length > 0 &&
+                                filteredGroupItems.map((item, index) =>
+                                    <InventoryFurnitureItemView key={ index } groupItem={ item } />
+                                )
+                            }
+                        </AutoGrid>
                     </Column>
 
-                    { selectedItem &&
-                        <Column grow justifyContent="between" gap={ 2 }>
-                            <Text grow truncate>{ selectedItem.name }</Text>
+                    <Column size={ 5 } overflow="auto">
+                        <Column overflow="hidden" position="relative">
+                            <LayoutRoomPreviewerView roomPreviewer={ roomPreviewer } height={ 140 } />
 
-                            { /* Real reference footer, confirmed live on two unrelated, ordinary items
-                                 ("Corde d'alpiniste", "Poubelle") - a horizontal row (.d-flex.w-100.flex-grow-1
-                                 .flex-shrink-0.gap-1), not the vertical stack this used to be: a .flex-fill
-                                 sub-row holding the equal-width action buttons, plus a separate icon-only
-                                 .btn-danger.btn-sm as a third sibling. See attemptBuyAnother's own comment above
-                                 for what "Acheter un" does on the reference vs. what's actually implemented here. */ }
-                            <Flex fullWidth gap={ 1 }>
-                                <Flex fullWidth grow gap={ 1 }>
-                                    { !!roomSession &&
-                                        <Button variant="success" fullWidth onClick={ () => attemptItemPlacement(selectedItem) }>
-                                            { LocalizeText('inventory.furni.placetoroom') }
-                                        </Button>
-                                    }
+                            { selectedItem?.stuffData.isUnique &&
+                                <LayoutLimitedEditionCompactPlateView
+                                    className="top-2 end-2"
+                                    position="absolute"
+                                    uniqueNumber={ selectedItem.stuffData.uniqueNumber }
+                                    uniqueSeries={ selectedItem.stuffData.uniqueSeries }
+                                />
+                            }
 
-                                    { selectedItem.isSellable &&
-                                        <Button fullWidth onClick={ () => attemptPlaceMarketplaceOffer(selectedItem) }>
-                                            { LocalizeText('inventory.marketplace.sell') }
-                                        </Button>
-                                    }
-
-                                    <Button variant="primary" fullWidth onClick={ () => attemptBuyAnother(selectedItem) }>
-                                        { LocalizeText('infostand.button.buy') }
-                                    </Button>
-                                </Flex>
-
-                                { /* Real reference icon (FaTrash, path-verified against react-icons/fa), real
-                                     danger styling and position - genuinely unverified function, not guessed at:
-                                     no dedicated "discard/delete an inventory item" composer exists anywhere in
-                                     this project's own vendored @nitrots/nitro-renderer protocol, and clicking
-                                     this destructively on the read-only reference account to find out was not an
-                                     option. Added visually, deliberately left unwired, consistent with this
-                                     project's own established precedent for a confirmed-real but functionally
-                                     unverified control (the outfit editor's own FaRecycle button). */ }
-                                <Button variant="danger">
-                                    <FaTrash className="fa-icon" />
-                                </Button>
-                            </Flex>
+                            { selectedItem && selectedItem.stuffData.rarityLevel > -1 &&
+                                <LayoutRarityLevelView
+                                    className="top-2 end-2"
+                                    position="absolute"
+                                    level={ selectedItem.stuffData.rarityLevel }
+                                />
+                            }
                         </Column>
-                    }
-                </Column>
-            </Grid>
+
+                        { selectedItem &&
+                            <Column grow>
+                                <Text grow truncate>{ selectedItem.name }</Text>
+                            </Column>
+                        }
+                    </Column>
+                </Grid>
+            </Column>
+
+            { /* Real reference footer, confirmed live on two unrelated, ordinary items ("Corde d'alpiniste",
+                 "Poubelle") - a horizontal row (.d-flex.w-100.flex-grow-1.flex-shrink-0.gap-1), not the vertical
+                 stack this used to be: a .flex-fill sub-row holding the equal-width action buttons, plus a
+                 separate icon-only .btn-danger.btn-sm as a third sibling. See attemptBuyAnother's own comment
+                 above for what "Acheter un" does on the reference vs. what's actually implemented here. */ }
+            { selectedItem &&
+                <Flex fullWidth gap={ 1 }>
+                    <Flex fullWidth grow gap={ 1 }>
+                        { !!roomSession &&
+                            <Button variant="success" fullWidth onClick={ () => attemptItemPlacement(selectedItem) }>
+                                { LocalizeText('inventory.furni.placetoroom') }
+                            </Button>
+                        }
+
+                        { /* Marketplace/sell disabled per explicit user direction - never confirmed present in
+                             this exact footer on the reference anyway (both test items were non-sellable). */ }
+
+                        <Button variant="primary" fullWidth onClick={ () => attemptBuyAnother(selectedItem) }>
+                            { LocalizeText('infostand.button.buy') }
+                        </Button>
+                    </Flex>
+
+                    { /* Real reference icon (FaTrash, path-verified against react-icons/fa), real danger styling
+                         and position - genuinely unverified function, not guessed at: no dedicated "discard/
+                         delete an inventory item" composer exists anywhere in this project's own vendored
+                         @nitrots/nitro-renderer protocol, and clicking this destructively on the read-only
+                         reference account to find out was not an option. Added visually, deliberately left
+                         unwired, consistent with this project's own established precedent for a confirmed-real
+                         but functionally unverified control (the outfit editor's own FaRecycle button). */ }
+                    <Button variant="danger">
+                        <FaTrash className="fa-icon" />
+                    </Button>
+                </Flex>
+            }
         </>
     );
 };

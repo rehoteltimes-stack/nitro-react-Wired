@@ -77,7 +77,12 @@ export const InventoryBannerView: FC<InventoryBannerViewProps> = props =>
     return (
         <>
             { searchPortal }
-            <Column fullHeight overflow="hidden">
+            { /* grow, not fullHeight: this became a real bug once the search bar was added above as a sibling
+                 (this file didn't have one when this Column was first written) - h-100 ignores the search
+                 bar/tabs/footer button's own real space in the same flex column and overflows/pushes the footer
+                 out; flex-grow-1 correctly fills only what's left after them. Same fix applied to Furniture's and
+                 Badges' own equivalent wrapping Column. */ }
+            <Column grow overflow="hidden">
                 <Grid fullHeight overflow="hidden">
                     <Column size={ 9 } overflow="hidden" classNames={ [ 'inventory-item-list' ] }>
                         <ScrollContainer className="flex-grow-1">

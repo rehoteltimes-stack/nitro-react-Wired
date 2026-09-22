@@ -95,29 +95,37 @@ export const InventoryBotView: FC<InventoryBotViewProps> = props =>
         );
     }
 
+    // Real reference: same structural fix as Furniture/Badges (couldn't confirm this exact tab's own footer
+    // against a real owned bot - the reference account owns none - but the shell structure itself
+    // (search/tabs/grid/footer as four siblings of content-area-inner, footer full-width not nested in the right
+    // column) is already confirmed universal there, so applied consistently rather than left with the old,
+    // already-disproven-elsewhere nested layout).
     return (
         <>
             { searchPortal }
-            <Grid>
-                <Column size={ 7 } overflow="hidden">
-                    <AutoGrid columnCount={ 5 }>
-                        { filteredBotItems && (filteredBotItems.length > 0) && filteredBotItems.map(item => <InventoryBotItemView key={ item.botData.id } botItem={ item } />) }
-                    </AutoGrid>
-                </Column>
-                <Column size={ 5 } overflow="auto">
-                    <Column overflow="hidden" position="relative">
-                        <LayoutRoomPreviewerView roomPreviewer={ roomPreviewer } height={ 140 } />
+            <Column grow overflow="hidden">
+                <Grid fullHeight overflow="hidden">
+                    <Column size={ 7 } overflow="hidden">
+                        <AutoGrid columnCount={ 5 }>
+                            { filteredBotItems && (filteredBotItems.length > 0) && filteredBotItems.map(item => <InventoryBotItemView key={ item.botData.id } botItem={ item } />) }
+                        </AutoGrid>
                     </Column>
-                    { selectedBot &&
-                        <Column grow justifyContent="between" gap={ 2 }>
-                            <Text grow truncate>{ selectedBot.botData.name }</Text>
-                            { !!roomSession &&
-                                <Button variant="success" onClick={ event => attemptBotPlacement(selectedBot) }>
-                                    { LocalizeText('inventory.furni.placetoroom') }
-                                </Button> }
-                        </Column> }
-                </Column>
-            </Grid>
+                    <Column size={ 5 } overflow="auto">
+                        <Column overflow="hidden" position="relative">
+                            <LayoutRoomPreviewerView roomPreviewer={ roomPreviewer } height={ 140 } />
+                        </Column>
+                        { selectedBot &&
+                            <Column grow>
+                                <Text grow truncate>{ selectedBot.botData.name }</Text>
+                            </Column> }
+                    </Column>
+                </Grid>
+            </Column>
+
+            { selectedBot && !!roomSession &&
+                <Button fullWidth variant="success" onClick={ event => attemptBotPlacement(selectedBot) }>
+                    { LocalizeText('inventory.furni.placetoroom') }
+                </Button> }
         </>
     );
 }
