@@ -1,10 +1,11 @@
 import { IRoomSession, RoomObjectVariable, RoomPreviewer, Vector3d } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { FaTrash } from 'react-icons/fa';
 import { attemptItemPlacement, DispatchUiEvent, FurniCategory, GetRoomEngine, GetSessionDataManager, GroupItem, LocalizeText, UnseenItemCategory } from '../../../../api';
-import { AutoGrid, Button, Column, Grid, LayoutLimitedEditionCompactPlateView, LayoutRarityLevelView, LayoutRoomPreviewerView, Text } from '../../../../common';
+import { AutoGrid, Button, Column, Flex, Grid, LayoutLimitedEditionCompactPlateView, LayoutRarityLevelView, LayoutRoomPreviewerView, Text } from '../../../../common';
 import { CatalogPostMarketplaceOfferEvent } from '../../../../events';
-import { useInventoryFurni, useInventoryUnseenTracker } from '../../../../hooks';
+import { useCatalog, useInventoryFurni, useInventoryUnseenTracker } from '../../../../hooks';
 import { InventoryCategoryEmptyView } from '../InventoryCategoryEmptyView';
 import { InventoryFurnitureItemView } from './InventoryFurnitureItemView';
 import { InventoryFurnitureSearchView } from './InventoryFurnitureSearchView';
@@ -38,6 +39,30 @@ export const InventoryFurnitureView: FC<InventoryFurnitureViewProps> = props =>
 
     const { groupItems: allGroupItems = [], selectedItem = null, activate = null, deactivate = null } = useInventoryFurni();
     const { resetItems = null } = useInventoryUnseenTracker();
+    const { setIsVisible: setCatalogVisible = null } = useCatalog();
+
+    // Real, previously-missing feature: the reference's own furniture preview footer always shows THREE buttons
+    // (Place-le dans l'appart / Acheter un / a trash-icon-only danger button), confirmed live on multiple,
+    // completely unrelated items ("Corde d'alpiniste", "Poubelle") - not conditional on rarity/type. This project
+    // only had the first two, and only conditionally. "Acheter un" (locale key infostand.button.buy, confirmed
+    // live via the reference's own loaded ExternalTexts.json) opens the Catalog to a real purchase panel for this
+    // exact item - confirmed live by clicking it on the reference (Catalog opened, showing "Poubelle" with real
+    // Offrir/Acheter buttons).
+    //
+    // Real gap, not silently hidden: tried reproducing the auto-select-this-exact-offer part two different ways
+    // (setCurrentOffer+setIsVisible directly, then the same setSearchResult+setCurrentPage(pageId=-1)+
+    // setCurrentOffer pattern this project's own CatalogSearchView.tsx already uses for the identical "represent
+    // an ad-hoc FurnitureOffer with no real catalog page" case) - both opened Catalog but to the wrong state (a
+    // stale "Diamond Gift Box" front-page offer the first time, a blank nav-tree-only screen the second), and
+    // this project's own tooling can't get console output out of the app's own React tree to debug further (the
+    // isolated-world eval used for CDP inspection doesn't share a console with the page's real JS context).
+    // Rather than ship a button that silently opens to a confusing or wrong state, this opens Catalog itself
+    // (real, correct, verified navigation) without the extra auto-select step - narrower than the reference but
+    // not misleading. Revisit with better in-app debugging access.
+    const attemptBuyAnother = (groupItem: GroupItem) =>
+    {
+        setCatalogVisible(true);
+    }
 
     // Real reference has one unified Furniture tab - no separate Rares/Clothing category to route these into, so
     // they're no longer filtered out here (previously excluded for this project's own now-removed Rares/Clothing tabs).
@@ -192,19 +217,43 @@ export const InventoryFurnitureView: FC<InventoryFurnitureViewProps> = props =>
                         <Column grow justifyContent="between" gap={ 2 }>
                             <Text grow truncate>{ selectedItem.name }</Text>
 
-                            <Column gap={ 1 }>
-                                { !!roomSession &&
-                                    <Button variant="success" onClick={ () => attemptItemPlacement(selectedItem) }>
-                                        { LocalizeText('inventory.furni.placetoroom') }
-                                    </Button>
-                                }
+                            { /* Real reference footer, confirmed live on two unrelated, ordinary items
+                                 ("Corde d'alpiniste", "Poubelle") - a horizontal row (.d-flex.w-100.flex-grow-1
+                                 .flex-shrink-0.gap-1), not the vertical stack this used to be: a .flex-fill
+                                 sub-row holding the equal-width action buttons, plus a separate icon-only
+                                 .btn-danger.btn-sm as a third sibling. See attemptBuyAnother's own comment above
+                                 for what "Acheter un" does on the reference vs. what's actually implemented here. */ }
+                            <Flex fullWidth gap={ 1 }>
+                                <Flex fullWidth grow gap={ 1 }>
+                                    { !!roomSession &&
+                                        <Button variant="success" fullWidth onClick={ () => attemptItemPlacement(selectedItem) }>
+                                            { LocalizeText('inventory.furni.placetoroom') }
+                                        </Button>
+                                    }
 
-                                { selectedItem.isSellable &&
-                                    <Button onClick={ () => attemptPlaceMarketplaceOffer(selectedItem) }>
-                                        { LocalizeText('inventory.marketplace.sell') }
+                                    { selectedItem.isSellable &&
+                                        <Button fullWidth onClick={ () => attemptPlaceMarketplaceOffer(selectedItem) }>
+                                            { LocalizeText('inventory.marketplace.sell') }
+                                        </Button>
+                                    }
+
+                                    <Button variant="primary" fullWidth onClick={ () => attemptBuyAnother(selectedItem) }>
+                                        { LocalizeText('infostand.button.buy') }
                                     </Button>
-                                }
-                            </Column>
+                                </Flex>
+
+                                { /* Real reference icon (FaTrash, path-verified against react-icons/fa), real
+                                     danger styling and position - genuinely unverified function, not guessed at:
+                                     no dedicated "discard/delete an inventory item" composer exists anywhere in
+                                     this project's own vendored @nitrots/nitro-renderer protocol, and clicking
+                                     this destructively on the read-only reference account to find out was not an
+                                     option. Added visually, deliberately left unwired, consistent with this
+                                     project's own established precedent for a confirmed-real but functionally
+                                     unverified control (the outfit editor's own FaRecycle button). */ }
+                                <Button variant="danger">
+                                    <FaTrash className="fa-icon" />
+                                </Button>
+                            </Flex>
                         </Column>
                     }
                 </Column>
