@@ -2,12 +2,14 @@ import { ILinkEventTracker, NitroSettingsEvent, UserSettingsCameraFollowComposer
 import { FC, useEffect, useState } from 'react';
 import { FaVolumeDown, FaVolumeMute, FaVolumeUp } from 'react-icons/fa';
 import { AddEventLinkTracker, DispatchMainEvent, DispatchUiEvent, LocalizeText, RemoveLinkEventTracker, SendMessageComposer } from '../../api';
-import { classNames, Column, Flex, NitroCardContentView, NitroCardHeaderView, NitroCardView, Text } from '../../common';
+import { classNames, Column, Flex, NitroCardContentView, NitroCardHeaderView, NitroCardTabsItemView, NitroCardTabsView, NitroCardView, Text } from '../../common';
 import { useCatalogPlaceMultipleItems, useCatalogSkipPurchaseConfirmation, useMessageEvent } from '../../hooks';
+import { UserSettingsModerateView } from './UserSettingsModerateView';
 
 export const UserSettingsView: FC<{}> = props =>
 {
     const [ isVisible, setIsVisible ] = useState(false);
+    const [ activeTab, setActiveTab ] = useState(0);
     const [ userSettings, setUserSettings ] = useState<NitroSettingsEvent>(null);
     const [ catalogPlaceMultipleObjects, setCatalogPlaceMultipleObjects ] = useCatalogPlaceMultipleItems();
     const [ catalogSkipPurchaseConfirmation, setCatalogSkipPurchaseConfirmation ] = useCatalogSkipPurchaseConfirmation();
@@ -126,9 +128,15 @@ export const UserSettingsView: FC<{}> = props =>
     if(!isVisible || !userSettings) return null;
 
     return (
-        <NitroCardView uniqueKey="user-settings" className="user-settings-window" theme="primary-slim">
+        <NitroCardView uniqueKey="user-settings" className="user-settings-window">
             <NitroCardHeaderView headerText={ LocalizeText('widget.memenu.settings.title') } onCloseClick={ event => processAction('close_view') } />
-            <NitroCardContentView className="text-black">
+            <NitroCardContentView className="user-settings-tab-container">
+                <NitroCardTabsView>
+                    <NitroCardTabsItemView isActive={ (activeTab === 0) } onClick={ event => setActiveTab(0) }>General</NitroCardTabsItemView>
+                    <NitroCardTabsItemView isActive={ (activeTab === 2) } onClick={ event => setActiveTab(2) }>Moderate</NitroCardTabsItemView>
+                </NitroCardTabsView>
+                { (activeTab === 0) &&
+                <>
                 <Column gap={ 1 }>
                     <Flex alignItems="center" gap={ 1 }>
                         <input className="form-check-input" type="checkbox" checked={ userSettings.oldChat } onChange={ event => processAction('oldchat', event.target.checked) } />
@@ -181,6 +189,9 @@ export const UserSettingsView: FC<{}> = props =>
                         </Flex>
                     </Column>
                 </Column>
+                </> }
+                { (activeTab === 2) &&
+                    <UserSettingsModerateView /> }
             </NitroCardContentView>
         </NitroCardView>
     );
