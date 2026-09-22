@@ -2,7 +2,7 @@ import { HabboClubLevelEnum, RoomControllerLevel } from '@nitrots/nitro-renderer
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChatMessageTypeEnum, GetClubMemberLevel, GetConfiguration, GetSessionDataManager, LocalizeText, RoomWidgetUpdateChatInputContentEvent } from '../../../../api';
-import { Text } from '../../../../common';
+import { Flex, Text } from '../../../../common';
 import { useChatInputWidget, useRoom, useSessionInfo, useUiEvent } from '../../../../hooks';
 import { ChatInputStyleSelectorView } from './ChatInputStyleSelectorView';
 
@@ -27,7 +27,7 @@ export const ChatInputView: FC<{}> = props =>
 
         if(inputRef && (inputRef.current === activeElement)) return false;
 
-        if(!(activeElement instanceof HTMLInputElement) && !(activeElement instanceof HTMLTextAreaElement)) return false;
+        if(!(activeElement instanceof HTMLInputElement) && !(activeElement instanceof HTMLTextAreaElement) && !(activeElement as HTMLElement).isContentEditable) return false;
 
         return true;
     }, [ inputRef ]);
@@ -122,6 +122,10 @@ export const ChatInputView: FC<{}> = props =>
     const onKeyDownEvent = useCallback((event: KeyboardEvent) =>
     {
         if(floodBlocked || !inputRef.current || anotherInputHasFocus()) return;
+
+        const target = event.target;
+
+        if((target instanceof HTMLElement) && (target.closest('.text-select-text') || target.closest('.text-select-all'))) return;
 
         if(document.activeElement !== inputRef.current) setInputFocus();
 
@@ -237,12 +241,12 @@ export const ChatInputView: FC<{}> = props =>
         createPortal(
             <div className="nitro-chat-input-container">
                 <ChatInputStyleSelectorView chatStyleId={ chatStyleId } chatStyleIds={ chatStyleIds } selectChatStyleId={ updateChatStyleId } />
-                <div className="input-sizer align-items-center">
+                <Flex className="input-sizer align-items-center" gap={ 0 }>
                     { !floodBlocked &&
-                        <input ref={ inputRef } type="text" className="chat-input" placeholder={ LocalizeText('widgets.chatinput.default') } value={ chatValue } maxLength={ maxChatLength } onChange={ event => updateChatInput(event.target.value) } onMouseDown={ event => setInputFocus() } /> }
+                        <input ref={ inputRef } type="text" className="chat-input" autoComplete="off" placeholder={ LocalizeText('widgets.chatinput.default') } value={ chatValue } maxLength={ maxChatLength } onChange={ event => updateChatInput(event.target.value) } onMouseDown={ event => setInputFocus() } /> }
                     { floodBlocked &&
                         <Text variant="danger">{ LocalizeText('chat.input.alert.flood', [ 'time' ], [ floodBlockedSeconds.toString() ]) } </Text> }
-                </div>
+                </Flex>
             </div>, document.getElementById('toolbar-chat-input-container'))
     );
 }

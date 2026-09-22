@@ -1,6 +1,6 @@
-import { FC, MouseEvent, useEffect, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { Overlay, Popover } from 'react-bootstrap';
-import { Base, Flex, Grid, NitroCardContentView } from '../../../../common';
+import { Base, Column, Flex, Grid, NitroCardContentView, ScrollContainer } from '../../../../common';
 
 interface ChatInputStyleSelectorViewProps
 {
@@ -12,57 +12,51 @@ interface ChatInputStyleSelectorViewProps
 export const ChatInputStyleSelectorView: FC<ChatInputStyleSelectorViewProps> = props =>
 {
     const { chatStyleId = 0, chatStyleIds = null, selectChatStyleId = null } = props;
-    const [ target, setTarget ] = useState<(EventTarget & HTMLElement)>(null);
     const [ selectorVisible, setSelectorVisible ] = useState(false);
-
-    const selectStyle = (styleId: number) =>
-    {
-        selectChatStyleId(styleId);
-        setSelectorVisible(false);
-    }
-
-    const toggleSelector = (event: MouseEvent<HTMLElement>) =>
-    {
-        let visible = false;
-
-        setSelectorVisible(prevValue =>
-        {
-            visible = !prevValue;
-
-            return visible;
-        });
-
-        if(visible) setTarget((event.target as (EventTarget & HTMLElement)));
-    }
+    const iconRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() =>
     {
-        if(selectorVisible) return;
+        if(!selectorVisible) return;
 
-        setTarget(null);
+        const onMouseDown = (event: MouseEvent) =>
+        {
+            if(iconRef.current && iconRef.current.contains(event.target as Node)) return;
+
+            if(contentRef.current && !contentRef.current.contains(event.target as Node)) setSelectorVisible(false);
+        }
+
+        document.addEventListener('mousedown', onMouseDown);
+
+        return () => document.removeEventListener('mousedown', onMouseDown);
     }, [ selectorVisible ]);
 
     return (
-        <>
-            <Base pointer className="chatstyles-selector cursor-pointer" onClick={ toggleSelector } />
-            <Overlay show={ selectorVisible } target={ target } placement="top">
-                <Popover className="nitro-chat-style-selector-container">
-                    <NitroCardContentView overflow="hidden" className="bg-transparent bubble-window image-rendering-pixelated">
-                        <Grid gap={ 1 } columnCount={ 3 } overflow="auto">
-                            { chatStyleIds && (chatStyleIds.length > 0) && chatStyleIds.map((styleId) =>
-                            {
-                                return (
-                                    <Flex center pointer key={ styleId } className="bubble-parent-container" onClick={ event => selectStyle(styleId) }>
-                                        <Base key={ styleId } className="bubble-container">
-                                            <Base className={ `chat-bubble bubble-${ styleId }` }>&nbsp;</Base>
-                                        </Base>
-                                    </Flex>
-                                );
-                            }) }
-                        </Grid>
+        <Flex className="chatstyles-icon-container" alignItems="center">
+            <Base pointer className="icon chatstyles-icon" innerRef={ iconRef } onClick={ event => setSelectorVisible(value => !value) } />
+            <Overlay show={ selectorVisible } target={ iconRef } placement="top">
+                <Popover className="nitro-chat-style-selector-container image-rendering-pixelated">
+                    <NitroCardContentView overflow="hidden" className="bg-transparent" innerRef={ contentRef }>
+                        <Column overflow="hidden" fullWidth fullHeight>
+                            <ScrollContainer>
+                                <Grid columnCount={ 4 }>
+                                    { chatStyleIds && (chatStyleIds.length > 0) && chatStyleIds.map(styleId =>
+                                    {
+                                        return (
+                                            <Flex center pointer key={ styleId } className={ `bubble-parent-container ${ (chatStyleId === styleId) ? 'selected' : '' }` } onClick={ event => { selectChatStyleId(styleId); setSelectorVisible(false); } }>
+                                                <Base className="bubble-container">
+                                                    <Base className={ `chat-bubble bubble-${ styleId }` }>&nbsp;</Base>
+                                                </Base>
+                                            </Flex>
+                                        );
+                                    }) }
+                                </Grid>
+                            </ScrollContainer>
+                        </Column>
                     </NitroCardContentView>
                 </Popover>
             </Overlay>
-        </>
+        </Flex>
     );
 }
