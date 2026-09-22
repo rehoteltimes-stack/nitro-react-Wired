@@ -15,6 +15,7 @@ export * from './FormGroup';
 export * from './Grid';
 export * from './GridContext';
 export * from './HoloButton';
+export * from './PeekCarousel';
 export * from './HorizontalRule';
 export * from './InfiniteScroll';
 export * from './layout';
