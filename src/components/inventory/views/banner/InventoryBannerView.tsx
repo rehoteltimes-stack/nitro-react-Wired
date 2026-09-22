@@ -1,5 +1,4 @@
 import { FC, useEffect } from 'react';
-import { RegisterBannerMessages } from '../../../../api';
 import { Button, Column, Grid } from '../../../../common';
 import { useInventoryBanner } from '../../../../hooks';
 import { InventoryCategoryEmptyView } from '../InventoryCategoryEmptyView';
@@ -7,11 +6,12 @@ import { InventoryBannerItemView } from './InventoryBannerItemView';
 
 export const InventoryBannerView: FC<{}> = props =>
 {
+    // Message-class registration (RegisterBannerMessages) happens inside useInventoryBanner() itself now, before
+    // its own useMessageEvent subscriptions - see that hook's own comment for the real ordering bug this fixes.
     const { banners = [], activeBannerId = -1, selectedBannerId = -1, setActiveBanner = null, requestBanners = null } = useInventoryBanner();
 
     useEffect(() =>
     {
-        RegisterBannerMessages();
         requestBanners();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
