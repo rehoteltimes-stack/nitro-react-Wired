@@ -1,5 +1,30 @@
 # nitro-react-Wired — CLAUDE.md
 
+> ## CURRENT STATE (2026-09-22, branch `habbocity-rebuild`) — read this first
+> The sections further down describe the **abandoned layered approach** (a `habbocity/_*.scss` overlay on top of stock
+> Nitro CSS, kept only on branch `backup/habbocity-wip-2026-09-22`). It was replaced by a strict rebuild:
+>
+> * **Stylesheet = the reference stylesheet, verbatim.** `src/assets/styles/holo/` holds HabboCity's compiled CSS as
+>   ordered segments (`_index.scss` imports them; **order is the cascade — never reorder or sort**), plus
+>   `_tokens.scss` (`:root` = light, `body.dark-mode` = dark; theme switched in `src/index.tsx` from `?theme=`).
+>   Segment headers list which owners each file contains. Regenerate/verify with the scripts in
+>   `c:\tools\nitro-catalog-copy\scripts\` (`hc-gen-holo.js`, `hc-cssdiff.js`, `hc-extract.js`).
+> * **All stock Nitro CSS was deleted** (the bootstrap copy, every component `.scss`, icons/utils/scrollbars/fonts).
+>   Only own-feature SCSS remains: Wired (`components/wired*`, `wired/WiredEmbedded.scss`), `builder-toolbar`,
+>   `clothes-shop`, `room-tools` (Wired `nw-*` tools) and the `common/habbo` layout engine (Flash-style window chrome
+>   used only by the Wired Creator Tools port). `src/components/index.scss` lists exactly those.
+> * **No new CSS for HabboCity components.** If something looks wrong the DOM/classnames are wrong: fix the TSX to the
+>   reference structure (from the live DOM **and** the minified `index-*.js` component source), never add rules.
+> * Tools: `cssdiff` (compiled ours vs reference: 0 rules missing, remaining diffs are Sass re-serialisation only),
+>   DOM-tree dump + computed-style table on both clients, and an "undefined classes on live DOM" check
+>   (classes present in our DOM that no stylesheet defines = leftover stock classnames to remove).
+> * Done + verified (DOM and computed style vs reference): toolbar (+ inline Me-panel), purse, friend bar,
+>   shared `Text` / `Button` primitives. Deliberate feature decisions: no `icon-reports`, achievements entry, purse
+>   logout button or seasonal split (none exist in the reference and none have styling now).
+> * Backlog (from the undefined-class check): chat input, room-tools, then every window (navigator, catalog,
+>   inventory, avatar editor, user settings, profile, friends list, notifications, room widgets…), one at a time.
+
+
 Persistent state doc for this project, same convention as `hCMS/CLAUDE.md`,
 `LTDUIOVERLAY/habboworld.be/CLAUDE.md`, etc. — **read this fully before doing anything else.**
 

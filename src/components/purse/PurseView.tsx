@@ -1,10 +1,9 @@
 import { FriendlyTime, HabboClubLevelEnum } from '@nitrots/nitro-renderer';
 import { FC, useMemo } from 'react';
 import { CreateLinkEvent, GetConfiguration, LocalizeText } from '../../api';
-import { Column, Flex, Grid, LayoutCurrencyIcon } from '../../common';
+import { Column, Flex, LayoutCurrencyIcon, Text } from '../../common';
 import { usePurse } from '../../hooks';
 import { CurrencyView } from './views/CurrencyView';
-import { SeasonalView } from './views/SeasonalView';
 
 export const PurseView: FC<{}> = props =>
 {
@@ -23,71 +22,40 @@ export const PurseView: FC<{}> = props =>
         if(purse.clubLevel === HabboClubLevelEnum.NO_CLUB) return LocalizeText('purse.clubdays.zero.amount.text');
 
         else if((minutesUntilExpiration > -1) && (minutesUntilExpiration < (60 * 24))) return FriendlyTime.shortFormat(minutesUntilExpiration * 60);
-        
+
         else return FriendlyTime.shortFormat(totalDays * 86400);
     })();
 
-    const getCurrencyElements = (offset: number, limit: number = -1, seasonal: boolean = false) =>
+    const activityPointTypes = useMemo(() =>
     {
-        if(!purse || !purse.activityPoints || !purse.activityPoints.size) return null;
+        if(!purse || !purse.activityPoints) return [];
 
-        const types = Array.from(purse.activityPoints.keys()).filter(type => (displayedCurrencies.indexOf(type) >= 0));
-
-        let count = 0;
-
-        while(count < offset)
-        {
-            types.shift();
-
-            count++;
-        }
-
-        count = 0;
-
-        const elements: JSX.Element[] = [];
-
-        for(const type of types)
-        {
-            if((limit > -1) && (count === limit)) break;
-
-            if(seasonal) elements.push(<SeasonalView key={ type } type={ type } amount={ purse.activityPoints.get(type) } />);
-            else elements.push(<CurrencyView key={ type } type={ type } amount={ purse.activityPoints.get(type) } short={ currencyDisplayNumberShort } />);
-
-            count++;
-        }
-
-        return elements;
-    }
+        return Array.from(purse.activityPoints.keys()).filter(type => (displayedCurrencies.indexOf(type) >= 0));
+    }, [ purse, displayedCurrencies ]);
 
     if(!purse) return null;
 
     return (
-        <Column className="nitro-purse-container" gap={ 1 }>
-            <Flex className="nitro-purse rounded-bottom p-1 w-100">
-                <Grid fullWidth gap={ 1 }>
-                    <Column justifyContent="center" size={ hcDisabled ? 8 : 6 } gap={ 1 }>
-                        <CurrencyView type={ -1 } amount={ purse.credits } short={ currencyDisplayNumberShort } />
-                        { getCurrencyElements(0, 2) }
-                    </Column>
-                    { !hcDisabled &&
-                        <Column center pointer size={ 3 } gap={ 1 } className="nitro-purse-subscription rounded" onClick={ event => CreateLinkEvent('habboUI/open/hccenter') }>
-                            <LayoutCurrencyIcon className="club-text" type="hc" />
-                            <span>{ getClubText }</span>
-                        </Column> }
-                    <Column justifyContent="center" size={ 3 } gap= { 0 }>
-                        <Flex className="cursor-pointer align-items-center justify-content-center test-btn help" onClick={ event => CreateLinkEvent('help/show') }>
-                            <span>{ LocalizeText('help.button.cfh') }</span>
-                        </Flex>
-                        <Flex className="cursor-pointer align-items-center justify-content-center test-btn logout" onClick={ event => CreateLinkEvent('disconnect') }>
-                            <i className="icon icon-exit"/>
-                        </Flex>
-                        <Flex className="cursor-pointer align-items-center justify-content-center test-btn settings" onClick={ event => CreateLinkEvent('user-settings/toggle') } >
-                            <i className="icon icon-gear"/>
-                        </Flex>
-                    </Column>
-                </Grid>
+        <Column alignItems="end" className="nitro-purse-container" gap={ 1 }>
+            <Flex className="nitro-purse" gap={ 2 }>
+                <Column className="nitro-purse-list" justifyContent="center" gap={ 0 }>
+                    <CurrencyView type={ -1 } amount={ purse.credits } short={ currencyDisplayNumberShort } />
+                    { activityPointTypes.map(type => <CurrencyView key={ type } type={ type } amount={ purse.activityPoints.get(type) } short={ currencyDisplayNumberShort } />) }
+                </Column>
+                { !hcDisabled &&
+                    <Column center pointer size={ 4 } gap={ 1 } className="nitro-purse-subscription rounded" onClick={ event => CreateLinkEvent('habboUI/open/hccenter') }>
+                        <LayoutCurrencyIcon type="hc" />
+                        <Text variant="white">{ getClubText }</Text>
+                    </Column> }
+                <Column justifyContent="center" gap={ 2 } className="nitro-purse-buttons">
+                    <Flex center pointer className="nitro-purse-button" onClick={ event => CreateLinkEvent('help/show') }>
+                        <i className="icon icon-help" />
+                    </Flex>
+                    <Flex center pointer className="nitro-purse-button" onClick={ event => CreateLinkEvent('user-settings/toggle') }>
+                        <i className="icon icon-cog-purse" />
+                    </Flex>
+                </Column>
             </Flex>
-            { getCurrencyElements(2, -1, true) }
         </Column>
     );
 }
