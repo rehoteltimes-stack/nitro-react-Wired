@@ -1,23 +1,15 @@
-import { Dispose, DropBounce, EaseOut, JumpBy, Motions, NitroToolbarAnimateIconEvent, PerkAllowancesMessageEvent, PerkEnum, Queue, RoomControllerLevel, Wait } from '@nitrots/nitro-renderer';
+import { Dispose, DropBounce, EaseOut, JumpBy, Motions, NitroToolbarAnimateIconEvent, PerkAllowancesMessageEvent, PerkEnum, Queue, RoomControllerLevel, RoomSessionEvent, Wait } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useState } from 'react';
 import { CreateLinkEvent, GetConfiguration, GetSessionDataManager, GetWiredCreatorToolsSettings, MessengerIconState, OpenMessengerChat, VisitDesktop, WIRED_CREATOR_TOOLS_SETTINGS_EVENT } from '../../api';
 import { Base, Flex, LayoutAvatarImageView, LayoutItemCountView } from '../../common';
-import { useAchievements, useFriends, useInventoryUnseenTracker, useMessageEvent, useMessenger, useRoom, useRoomEngineEvent, useSessionInfo } from '../../hooks';
+import { useAchievements, useFriends, useInventoryUnseenTracker, useMessageEvent, useMessenger, useRoom, useRoomEngineEvent, useRoomSessionManagerEvent, useSessionInfo } from '../../hooks';
 import { ToolbarMeView } from './ToolbarMeView';
 
 export const ToolbarView: FC<{ isInRoom: boolean }> = props =>
 {
     const { isInRoom } = props;
-    // Reference's own toolbar keeps a second, independent CREATED/ENDED listener purely local to itself
-    // (mirrored here originally) - real, reproducible bug found live: on a fresh page load where the account is
-    // already placed into a room on login, this second listener can miss the CREATED event that already fired by
-    // the time ToolbarView finishes mounting, leaving it permanently out of sync with MainView's own (correct)
-    // landingViewVisible state passed down as `isInRoom` - confirmed via CDP (camera/modtools icons, gated on the
-    // `isInRoom` prop, showed correctly for a real non-spectator room session; icon-house/icon-habbo, gated on the
-    // old local isLandingView copy, did not). Single source of truth now: derive it from the same prop instead of
-    // a second listener that can race the first.
-    const isLandingView = !isInRoom;
     const [ isMeExpanded, setMeExpanded ] = useState(false);
+    const [ isLandingView, setLandingView ] = useState(true);
     const [ useGuideTool, setUseGuideTool ] = useState(false);
     const [ showWiredToolbar, setShowWiredToolbar ] = useState(() => GetWiredCreatorToolsSettings().showToolbar);
     const { userFigure = null } = useSessionInfo();
@@ -37,6 +29,9 @@ export const ToolbarView: FC<{ isInRoom: boolean }> = props =>
 
         return () => window.removeEventListener(WIRED_CREATOR_TOOLS_SETTINGS_EVENT, updateSettings);
     }, []);
+
+    useRoomSessionManagerEvent<RoomSessionEvent>(RoomSessionEvent.CREATED, event => setLandingView(false));
+    useRoomSessionManagerEvent<RoomSessionEvent>(RoomSessionEvent.ENDED, event => setLandingView(event.openLandingView));
 
     useMessageEvent<PerkAllowancesMessageEvent>(PerkAllowancesMessageEvent, event =>
     {
