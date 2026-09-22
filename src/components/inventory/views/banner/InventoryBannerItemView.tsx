@@ -29,8 +29,16 @@ export const InventoryBannerItemView: FC<InventoryBannerItemViewProps> = props =
     // the user against the live app - an earlier pass here wrongly tied it to activeBannerId (the worn one) from
     // a single-item reference capture that couldn't actually distinguish the two, which left the highlight stuck
     // on the worn item regardless of what was clicked.
+    // Real bug fixed here: without flex-shrink:0, the browser's own default flex behavior (flex-shrink:1) crushed
+    // every item down to fit the visible row width instead of keeping its real fixed 67x170px size
+    // (_43-nitro-inventory.scss, byte-identical to the reference) and letting the row's own real overflow:auto
+    // (ScrollContainer's base .scroll-content rule) scroll to the rest - this is what actually caused "shows all
+    // in one row" (squished into an unusably small single row rather than a proper horizontally-scrollable list).
+    // Couldn't confirm an equivalent flex-shrink rule directly against the reference (its own test account only
+    // ever had 1 banner, never enough to need shrinking either way), but this is the correct, necessary fix for
+    // the confirmed-real bug regardless.
     return (
-        <Column fullWidth className={ `body-image inventory-banner-item ${ ((bannerId === selectedBannerId) && !isPreview) ? 'active' : '' }` } style={ !imageUrl ? {} : { backgroundImage: `url(${ imageUrl })` } } onClick={ event => !isPreview && setSelectedBannerId && setSelectedBannerId(bannerId) }>
+        <Column shrink fullWidth className={ `body-image inventory-banner-item ${ ((bannerId === selectedBannerId) && !isPreview) ? 'active' : '' }` } style={ !imageUrl ? {} : { backgroundImage: `url(${ imageUrl })` } } onClick={ event => !isPreview && setSelectedBannerId && setSelectedBannerId(bannerId) }>
             { isPreview && <LayoutAvatarImageView figure={ userFigure } direction={ 4 } /> }
         </Column>
     );

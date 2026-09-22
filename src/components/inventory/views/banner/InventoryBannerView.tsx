@@ -86,6 +86,13 @@ export const InventoryBannerView: FC<InventoryBannerViewProps> = props =>
                 <Grid fullHeight overflow="hidden">
                     <Column size={ 9 } overflow="hidden" classNames={ [ 'inventory-item-list' ] }>
                         <ScrollContainer className="flex-grow-1">
+                            { /* Checked live on the reference before "fixing" this: the row's own real computed
+                                 flex-wrap is "nowrap", not wrap - a single horizontal row is the real, intended
+                                 layout here, not a multi-row grid. Scrolling to reach items beyond the visible
+                                 width relies on the ScrollContainer's own base .scroll-content rule
+                                 (overflow: auto, both axes) staying active alongside .vertical's own
+                                 overflow-y:scroll - a real horizontal scrollbar (the browser's native one, no
+                                 custom UI built for it) rather than wrapping into more rows. */ }
                             <Flex>
                                 { filteredBanners.map(banner => <InventoryBannerItemView key={ banner.bannerId } bannerId={ banner.bannerId } imageFilename={ banner.imageFilename } selectedBannerId={ selectedBannerId } setSelectedBannerId={ setSelectedBannerId } />) }
                             </Flex>

@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FaTrash } from 'react-icons/fa';
-import { GetConfiguration, LocalizeBadgeDescription, LocalizeBadgeName, LocalizeText, UnseenItemCategory } from '../../../../api';
+import { LocalizeBadgeDescription, LocalizeBadgeName, LocalizeText, UnseenItemCategory } from '../../../../api';
 import { AutoGrid, Button, Column, Flex, Grid, LayoutBadgeImageView, Text } from '../../../../common';
 import { useInventoryBadges, useInventoryUnseenTracker } from '../../../../hooks';
 import { InventoryBadgeItemView } from './InventoryBadgeItemView';
@@ -84,26 +84,45 @@ export const InventoryBadgeView: FC<InventoryBadgeViewProps> = props =>
                          Badges tab). The right column is instead a single centered row: a compact worn-badges
                          slot rack (.badge-layout, real classname) beside the SELECTED badge's own icon + name +
                          DESCRIPTION (LocalizeBadgeDescription - a real, already-existing function in this
-                         project's own api/utils that was never actually rendered anywhere before this). Exact
-                         slot-rack row/column arrangement not fully verified - the reference account only had 2
-                         of its slots filled, not enough to confirm the special first-row treatment seen there
-                         (a narrower row pairing one badge with a 0x0 "group" variant slot); rendered here as a
-                         plain 2-per-row rack of real activeBadgeCodes up to the real maxBadgeCount, which is a
-                         confirmed-correct partial reproduction, not a guessed-at exact one. */ }
+                         project's own api/utils that was never actually rendered anywhere before this).
+                         The rack's own real row arrangement, re-verified via a deep DOM dump (not a plain
+                         uniform grid, per the user's own catch that the first version looked like "a different
+                         grid"): slot 1 gets its OWN row together with a group-badge companion icon (0x0/collapsed
+                         when that badge has no group counterpart - LayoutBadgeImageView's own isGroup variant
+                         naturally renders nothing when getGroupBadgeImage() has nothing to return), then slots
+                         2-7 render as 3 rows of 2 - matching 1+6=7, the real maxBadgeCount confirmed via the
+                         live ui-config.json comparison (was wrongly 5 in this project before that fix). */ }
                     <Column justifyContent="center" size={ 5 } overflow="auto">
                         { !!selectedBadgeCode &&
                             <Flex gap={ 2 } alignItems="center">
+                                { /* Real, confirmed cause of inconsistent box sizes: .badge-image's own base CSS
+                                     rule (_24-utilities.scss) sets no width/height at all
+                                     ("position:relative; background-repeat:no-repeat; background-position:center")
+                                     - LayoutBadgeImageView only sets an inline width/height once its own image
+                                     has actually loaded, sized to THAT image's own natural dimensions (varies
+                                     ~39-42px per badge asset). An empty slot with no badgeCode got neither,
+                                     collapsing to 0x0. The reference's own rack cells are a fixed, uniform 42x42
+                                     regardless of content or load state - forced here via each slot's own style
+                                     prop (LayoutBadgeImageView already merges a caller style over its own
+                                     computed one, confirmed by reading its own source) rather than left to vary
+                                     with whatever asset happens to load. */ }
                                 <Column gap={ 1 } alignItems="start" classNames={ [ 'badge-layout' ] }>
-                                    { Array.from({ length: GetConfiguration<number>('user.badges.max.slots', 5) }).map((_, index) =>
-                                    {
-                                        const badgeCode = activeBadgeCodes[index];
+                                    <Flex gap={ 1 } alignItems="end">
+                                        { activeBadgeCodes[0] ? <LayoutBadgeImageView badgeCode={ activeBadgeCodes[0] } style={ { width: 42, height: 42 } } /> : <div className="badge-image" style={ { width: 42, height: 42 } } /> }
+                                        { activeBadgeCodes[0] ? <LayoutBadgeImageView isGroup badgeCode={ activeBadgeCodes[0] } style={ { width: 42, height: 42 } } /> : <div className="badge-image group-badge-image" /> }
+                                    </Flex>
+                                    { [ 1, 3, 5 ].map(rowStart =>
+                                        <Flex key={ rowStart } gap={ 1 } alignItems="center" justifyContent="center">
+                                            { [ rowStart, rowStart + 1 ].map(index =>
+                                            {
+                                                const badgeCode = activeBadgeCodes[index];
 
-                                        return (
-                                            <Flex key={ index } gap={ 1 } alignItems="center" justifyContent="center">
-                                                { badgeCode ? <LayoutBadgeImageView badgeCode={ badgeCode } /> : <div className="badge-image" /> }
-                                            </Flex>
-                                        );
-                                    }) }
+                                                return badgeCode
+                                                    ? <LayoutBadgeImageView key={ index } badgeCode={ badgeCode } style={ { width: 42, height: 42 } } />
+                                                    : <div key={ index } className="badge-image" style={ { width: 42, height: 42 } } />;
+                                            }) }
+                                        </Flex>
+                                    ) }
                                 </Column>
 
                                 <Column gap={ 2 } alignItems="center">
