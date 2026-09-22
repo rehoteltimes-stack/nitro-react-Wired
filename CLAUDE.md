@@ -24,6 +24,60 @@
 > * Backlog (from the undefined-class check): chat input, room-tools, then every window (navigator, catalog,
 >   inventory, avatar editor, user settings, profile, friends list, notifications, room widgets…), one at a time.
 
+## STRICTER RULES (2026-09-22, user-mandated, applies to EVERY component — not just whichever one is being
+## touched right now)
+
+**Given verbatim by the user, twice in the same session** — first as a full reverse-engineering protocol after a
+toolbar button turned out to be misplaced, then explicitly widened: *"not only toolbar every component."* Treat
+every rule below as standing, project-wide, permanent — not a one-off checklist for the toolbar incident that
+prompted it.
+
+1. **1:1 with HabboCity, no skipped features, ever.** The goal is never "close enough" or "looks right" — it is
+   the same DOM, the same classnames, the same CSS, the same interaction behavior, for every component, not just
+   the ones currently being worked on. A feature HabboCity has and we don't is a gap to close, not a footnote.
+
+2. **The mandated investigation order for ANY discrepancy (visual, positional, behavioral) is fixed and does not
+   skip steps:**
+   ```
+   1. Live DOM (CDP) - actual hierarchy, classnames, attributes, order
+   2. DevTools Styles/Computed - actual winning rules, actual resolved values
+   3. Minified CSS - the real declaration, the real selector, the real specificity
+   4. Minified JS - the real component source, the real state, the real event wiring
+   5. Compare ours the exact same way (DOM -> classnames -> computed -> our source)
+   6. Only then replace/fix
+   ```
+   Never reorder this, never shortcut to step 6. Screenshots are not, and have never been, part of this chain at
+   any step.
+
+3. **Positioning/layout bugs are traced upward through the DOM, never patched with numbers.** For any
+   element in the wrong place: `element -> immediate parent -> parent -> container -> root`, capturing DOM
+   hierarchy + computed layout (display, position, flex/grid, gap, padding, margin, top/right/bottom/left,
+   transform, z-index, box-sizing, overflow) at **every** level, on both the reference and ours, at matching
+   viewport/state. Compensating with `top`/`left`/`margin`/`!important` instead of fixing the real hierarchy or
+   the real state is exactly what this rule forbids — it hides the actual bug instead of fixing it.
+
+4. **A wrong-looking element is not automatically a CSS bug.** The 2026-09-22 toolbar incident is the concrete
+   case study: `icon-house` was showing instead of `icon-habbo` while genuinely inside a room. The CSS/DOM
+   structure was already byte-correct — the actual cause was **component state**, not layout: `ToolbarView` kept
+   its own local `isLandingView` state via a second, independent `RoomSessionEvent.CREATED/ENDED` listener that
+   mirrored the reference's own toolbar pattern, separate from `MainView`'s already-correct `landingViewVisible`
+   (passed down as the `isInRoom` prop). On a fresh load where the account starts already inside a room, that
+   second listener can miss the `CREATED` event fired before it finished mounting, leaving stale default state -
+   a real race, confirmed live (not assumed) by checking which of two props/states each sibling icon was actually
+   gated on. **When investigating "wrong" behavior, trace state ownership through the component tree exactly like
+   DOM hierarchy is traced** - which component owns the state, who else reads/derives the same real thing, and
+   whether two independent listeners for the same event exist where one, single source of truth would do. Prefer
+   deriving from an already-correct parent-provided prop over a second independent listener, even when the
+   reference itself uses two independent listeners — copy HabboCity's real UI/behavior, not a fragile
+   implementation detail that provably races in our own environment.
+
+5. **Audit for the same class of bug elsewhere, not just where it was first found.** Finding one component with a
+   duplicated/racy local copy of state a parent already owns correctly is a signal to check for the same pattern
+   in sibling components, not a closed, one-off fix.
+
+See also `memory/feedback_side_by_side_property_comparison.md` and
+`memory/feedback_dom_js_css_cross_reference.md` for the earlier, narrower versions of this same discipline this
+section supersedes/generalizes.
 
 Persistent state doc for this project, same convention as `hCMS/CLAUDE.md`,
 `LTDUIOVERLAY/habboworld.be/CLAUDE.md`, etc. — **read this fully before doing anything else.**
