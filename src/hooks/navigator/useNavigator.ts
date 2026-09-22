@@ -1,7 +1,7 @@
 import { CanCreateRoomEventEvent, CantConnectMessageParser, DoorbellMessageEvent, FlatAccessDeniedMessageEvent, FlatCreatedEvent, FollowFriendMessageComposer, GenericErrorEvent, GetGuestRoomMessageComposer, GetGuestRoomResultEvent, GetUserEventCatsMessageComposer, GetUserFlatCatsMessageComposer, HabboWebTools, LegacyExternalInterface, NavigatorCategoryDataParser, NavigatorEventCategoryDataParser, NavigatorHomeRoomEvent, NavigatorMetadataEvent, NavigatorOpenRoomCreatorEvent, NavigatorSearchEvent, NavigatorSearchResultSet, NavigatorTopLevelContext, RoomDataParser, RoomDoorbellAcceptedEvent, RoomEnterErrorEvent, RoomEntryInfoMessageEvent, RoomForwardEvent, RoomScoreEvent, RoomSettingsUpdatedEvent, SecurityLevel, UserEventCatsEvent, UserFlatCatsEvent, UserInfoEvent, UserPermissionsEvent } from '@nitrots/nitro-renderer';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useBetween } from 'use-between';
-import { CreateLinkEvent, CreateRoomSession, DoorStateType, GetConfiguration, GetSessionDataManager, INavigatorData, LocalizeText, NotificationAlertType, SendMessageComposer, TryVisitRoom, VisitDesktop } from '../../api';
+import { CreateLinkEvent, CreateRoomSession, DoorStateType, GetConfiguration, GetSessionDataManager, INavigatorData, INavigatorHistory, LocalizeText, NotificationAlertType, SendMessageComposer, TryVisitRoom, VisitDesktop } from '../../api';
 import { useMessageEvent } from '../events';
 import { useNotification } from '../notification';
 
@@ -27,6 +27,8 @@ const useNavigatorState = () =>
         currentRoomRating: 0,
         canRate: true
     });
+    const [ navigatorHistory, setNavigatorHistory ] = useState<INavigatorHistory>({ index: 0, history: [] });
+    const historyChangeTo = useRef(-1);
     const { simpleAlert = null } = useNotification();
 
     useMessageEvent<RoomSettingsUpdatedEvent>(RoomSettingsUpdatedEvent, event =>
@@ -109,6 +111,27 @@ const useNavigatorState = () =>
         if(parser.roomEnter)
         {
             setDoorData({ roomInfo: null, state: DoorStateType.NONE });
+
+            // an entry reached through goToHistory keeps the list as it is and only moves the cursor
+            const changeTo = historyChangeTo.current;
+
+            historyChangeTo.current = -1;
+
+            setNavigatorHistory(prevValue =>
+            {
+                const { history } = prevValue;
+
+                if((changeTo === -1) || (history[changeTo]?.roomId !== parser.data.roomId))
+                {
+                    const newHistory = (history[history.length - 1]?.roomId !== parser.data.roomId)
+                        ? [ ...history, { roomId: parser.data.roomId, roomName: parser.data.roomName, date: new Date(), index: history.length } ]
+                        : history;
+
+                    return { index: (newHistory.length - 1), history: newHistory };
+                }
+
+                return { index: changeTo, history };
+            });
 
             setNavigatorData(prevValue =>
             {
@@ -436,7 +459,18 @@ const useNavigatorState = () =>
 
     useMessageEvent<NavigatorOpenRoomCreatorEvent>(NavigatorOpenRoomCreatorEvent, event => CreateLinkEvent('navigator/show'));
 
-    return { categories, doorData, setDoorData, topLevelContext, topLevelContexts, searchResult, navigatorData };
+    const goToHistory = (index: number) =>
+    {
+        const entry = navigatorHistory.history[Math.max(0, Math.min(index, (navigatorHistory.history.length - 1)))];
+
+        if(!entry) return;
+
+        historyChangeTo.current = entry.index;
+
+        TryVisitRoom(entry.roomId);
+    }
+
+    return { categories, doorData, setDoorData, topLevelContext, topLevelContexts, searchResult, navigatorData, navigatorHistory, goToHistory };
 }
 
 export const useNavigator = () => useBetween(useNavigatorState);
