@@ -24,7 +24,18 @@ export const LayoutGridItem: FC<LayoutGridItemProps> = props =>
 
     const getClassNames = useMemo(() =>
     {
-        const newClassNames: string[] = [ 'layout-grid-item', 'border', 'border-2', 'border-muted', 'rounded' ];
+        // Real reference classlist, confirmed live on Inventory's own Badges tab: "layout-grid-item border-2
+        // rounded" (base) / "...active" (selected) - NO "border" or "border-muted" utility classes exist there
+        // at all. Those two were stock leftovers fighting the already-correctly-ported real rule
+        // (.nitro-inventory .layout-grid-item{border-color:var(--holo-primary)} / .active{border-color:
+        // var(--holo-inventory-color-theme-primary)}, in _43-nitro-inventory.scss, byte-identical to the
+        // reference's own compiled CSS) - Bootstrap's own .border-muted utility color was winning instead,
+        // showing a plain gray border always, active or not. Root-caused via computed-style diff (ours read
+        // rgb(182,190,197) where the reference read var(--holo-primary)/var(--holo-inventory-color-theme-primary)
+        // depending on .active), not assumed. This component is shared with Catalog's own furni grid too -
+        // checked first that no .nitro-catalog-scoped override rule exists for .layout-grid-item, so removing
+        // these two only lets the correct (transparent-by-default) base rule through there, no regression.
+        const newClassNames: string[] = [ 'layout-grid-item', 'border-2', 'rounded' ];
 
         if(itemActive) newClassNames.push('active');
 
