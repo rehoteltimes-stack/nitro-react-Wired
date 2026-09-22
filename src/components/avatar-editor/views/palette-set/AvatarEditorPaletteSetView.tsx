@@ -1,7 +1,6 @@
-import { FC, useCallback, useEffect, useMemo, useRef } from 'react';
-import { AvatarEditorGridColorItem, CategoryData, GetConfiguration, IAvatarEditorCategoryModel } from '../../../../api';
+import { FC, useCallback, useEffect, useRef } from 'react';
+import { AvatarEditorGridColorItem, CategoryData, IAvatarEditorCategoryModel } from '../../../../api';
 import { AutoGrid } from '../../../../common';
-import { AvatarEditorColorPickerView } from './AvatarEditorColorPickerView';
 import { AvatarEditorPaletteSetItem } from './AvatarEditorPaletteSetItemView';
 
 export interface AvatarEditorPaletteSetViewProps
@@ -16,18 +15,15 @@ export const AvatarEditorPaletteSetView: FC<AvatarEditorPaletteSetViewProps> = p
 {
     const { model = null, category = null, paletteSet = [], paletteIndex = -1 } = props;
     const elementRef = useRef<HTMLDivElement>(null);
-    const hcDisabled = GetConfiguration<boolean>('hc.disabled', false);
 
-    const selectColorIndex = useCallback((index: number) =>
+    const selectColor = useCallback((item: AvatarEditorGridColorItem) =>
     {
-        if((index < 0) || !model || !category) return;
+        const index = paletteSet.indexOf(item);
+
+        if(index === -1) return;
 
         model.selectColor(category.name, index, paletteIndex);
-    }, [ model, category, paletteIndex ]);
-
-    const selectColor = useCallback((item: AvatarEditorGridColorItem) => selectColorIndex(paletteSet.indexOf(item)), [ paletteSet, selectColorIndex ]);
-
-    const selectedIndex = useMemo(() => paletteSet.findIndex(item => item.isSelected), [ paletteSet ]);
+    }, [ model, category, paletteSet, paletteIndex ]);
 
     useEffect(() =>
     {
@@ -37,12 +33,9 @@ export const AvatarEditorPaletteSetView: FC<AvatarEditorPaletteSetViewProps> = p
     }, [ model, category ]);
 
     return (
-        <>
-            <AvatarEditorColorPickerView paletteSet={ paletteSet } selectedIndex={ selectedIndex } onSelect={ selectColorIndex } disabled={ hcDisabled } />
-            <AutoGrid innerRef={ elementRef } gap={ 1 } columnCount={ 5 } columnMinWidth={ 30 }>
-                { (paletteSet.length > 0) && paletteSet.map((item, index) =>
-                    <AvatarEditorPaletteSetItem key={ index } colorItem={ item } onClick={ event => selectColor(item) } />) }
-            </AutoGrid>
-        </>
+        <AutoGrid innerRef={ elementRef } gap={ 1 } columnCount={ 5 } columnMinWidth={ 30 }>
+            { (paletteSet.length > 0) && paletteSet.map((item, index) =>
+                <AvatarEditorPaletteSetItem key={ index } colorItem={ item } onClick={ event => selectColor(item) } />) }
+        </AutoGrid>
     );
 }
