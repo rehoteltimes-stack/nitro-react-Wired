@@ -101,7 +101,7 @@ export const MainView: FC<{}> = props =>
             </TransitionAnimation>
             <ToolbarView isInRoom={ !landingViewVisible } />
             <ModToolsView />
-            <RoomView />
+            <RoomView isInRoom={ !landingViewVisible } />
             <AreaHideView />
             <ChatHistoryView />
             <WiredView />
