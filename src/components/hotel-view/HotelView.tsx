@@ -1,33 +1,20 @@
-import { NitroConfiguration, RoomSessionEvent } from '@nitrots/nitro-renderer';
-import { FC, useState } from 'react';
+import { NitroConfiguration } from '@nitrots/nitro-renderer';
+import { FC } from 'react';
 import { GetConfiguration } from '../../api';
 import { LayoutAvatarImageView } from '../../common';
-import { useRoomSessionManagerEvent, useSessionInfo } from '../../hooks';
+import { useSessionInfo } from '../../hooks';
 import { WidgetSlotView } from './views/widgets/WidgetSlotView';
 
 const widgetSlotCount = 7;
 
+// MainView already mounts/unmounts this entirely (TransitionAnimation's own isChildrenVisible state, driven by
+// its inProp === MainView's landingViewVisible - the single correct source). A second, independent
+// RoomSessionEvent.CREATED/ENDED listener used to live here too, duplicating that same fact locally - the exact
+// race-prone pattern documented in this project's own CLAUDE.md (the 2026-09-22 toolbar incident) and provably
+// redundant here (the parent already fully controls whether this component is mounted at all).
 export const HotelView: FC<{}> = props =>
 {
-    const [ isVisible, setIsVisible ] = useState(true);
     const { userFigure = null } = useSessionInfo();
-
-    useRoomSessionManagerEvent<RoomSessionEvent>([
-        RoomSessionEvent.CREATED,
-        RoomSessionEvent.ENDED ], event =>
-    {
-        switch(event.type)
-        {
-            case RoomSessionEvent.CREATED:
-                setIsVisible(false);
-                return;
-            case RoomSessionEvent.ENDED:
-                setIsVisible(event.openLandingView);
-                return;
-        }
-    });
-
-    if(!isVisible) return null;
 
     const backgroundColor = GetConfiguration('hotelview')['images']['background.colour'];
     const background = NitroConfiguration.interpolate(GetConfiguration('hotelview')['images']['background']);
