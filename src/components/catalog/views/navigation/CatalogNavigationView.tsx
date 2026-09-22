@@ -1,8 +1,7 @@
 import { FC } from 'react';
 import { ICatalogNode } from '../../../../api';
-import { AutoGrid, Column } from '../../../../common';
+import { AutoGrid, Column, ScrollContainer } from '../../../../common';
 import { useCatalog } from '../../../../hooks';
-import { CatalogSearchView } from '../page/common/CatalogSearchView';
 import { CatalogNavigationItemView } from './CatalogNavigationItemView';
 import { CatalogNavigationSetView } from './CatalogNavigationSetView';
 
@@ -15,11 +14,10 @@ export const CatalogNavigationView: FC<CatalogNavigationViewProps> = props =>
 {
     const { node = null } = props;
     const { searchResult = null } = useCatalog();
-    
+
     return (
-        <>
-            <CatalogSearchView />
-            <Column fullHeight className="nitro-catalog-navigation-grid-container rounded p-1" overflow="hidden">
+        <Column className="nitro-catalog-navigation-grid-container rounded p-1" overflow="hidden" fullHeight>
+            <ScrollContainer>
                 <AutoGrid id="nitro-catalog-main-navigation" gap={ 1 } columnCount={ 1 }>
                     { searchResult && (searchResult.filteredNodes.length > 0) && searchResult.filteredNodes.map((n, index) =>
                     {
@@ -28,7 +26,7 @@ export const CatalogNavigationView: FC<CatalogNavigationViewProps> = props =>
                     { !searchResult &&
                         <CatalogNavigationSetView node={ node } /> }
                 </AutoGrid>
-            </Column>
-        </>
+            </ScrollContainer>
+        </Column>
     );
 }

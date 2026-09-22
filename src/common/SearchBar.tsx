@@ -1,5 +1,6 @@
 import { ChangeEvent, FC, KeyboardEvent } from 'react';
 import { FaSearch } from 'react-icons/fa';
+import { LocalizeText } from '../api';
 import { Base } from './Base';
 import { CustomSelect } from './CustomSelect';
 import { Flex } from './Flex';
@@ -22,7 +23,7 @@ export interface SearchBarProps
 // filter select and a trailing icon, all tinted by the window's theme colour.
 export const SearchBar: FC<SearchBarProps> = props =>
 {
-    const { selectOptions = undefined, iconClass = '', color = null, placeholder = '', value = '', selectValue = undefined, onChange = undefined, onSelectChange = undefined, onKeyDown = undefined, onClick = undefined } = props;
+    const { selectOptions = undefined, iconClass = '', color = null, placeholder = LocalizeText('generic.search'), value = '', selectValue = undefined, onChange = undefined, onSelectChange = undefined, onKeyDown = undefined, onClick = undefined } = props;
 
     return (
         <Flex shrink grow className="holo-main-search-bar-input-element" style={ { backgroundColor: color } } alignItems="center" justifyContent="between" gap={ 2 }>

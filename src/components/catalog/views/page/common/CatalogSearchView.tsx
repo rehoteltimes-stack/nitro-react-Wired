@@ -1,14 +1,19 @@
 import { IFurnitureData } from '@nitrots/nitro-renderer';
-import { FC, useEffect, useState } from 'react';
-import { FaSearch, FaTimes } from 'react-icons/fa';
-import { CatalogPage, CatalogType, FilterCatalogNode, FurnitureOffer, GetOfferNodes, GetSessionDataManager, ICatalogNode, ICatalogPage, IPurchasableOffer, LocalizeText, PageLocalization, SearchResult } from '../../../../../api';
-import { Button, Flex } from '../../../../../common';
+import { ChangeEvent, Dispatch, FC, SetStateAction, useEffect } from 'react';
+import { CatalogPage, CatalogType, FilterCatalogNode, FurnitureOffer, GetOfferNodes, GetSessionDataManager, ICatalogNode, ICatalogPage, IPurchasableOffer, PageLocalization, SearchResult } from '../../../../../api';
+import { SearchBar } from '../../../../../common';
 import { useCatalog } from '../../../../../hooks';
 
-export const CatalogSearchView: FC<{}> = props =>
+interface CatalogSearchViewProps
 {
-    const [ searchValue, setSearchValue ] = useState('');
-    const { currentType = null, rootNode = null, offersToNodes = null, searchResult = null, setSearchResult = null, setCurrentPage = null } = useCatalog();
+    searchValue: string;
+    setSearchValue: Dispatch<SetStateAction<string>>;
+}
+
+export const CatalogSearchView: FC<CatalogSearchViewProps> = props =>
+{
+    const { searchValue = '', setSearchValue = null } = props;
+    const { currentType = null, rootNode = null, offersToNodes = null, setSearchResult = null, setCurrentPage = null } = useCatalog();
 
     useEffect(() =>
     {
@@ -79,18 +84,11 @@ export const CatalogSearchView: FC<{}> = props =>
     }, [ offersToNodes, currentType, rootNode, searchValue, setCurrentPage, setSearchResult ]);
 
     return (
-        <Flex gap={ 1 }>
-            <Flex fullWidth alignItems="center" position="relative">
-                <input type="text" className="form-control form-control-sm" placeholder={ LocalizeText('generic.search') } value={ searchValue } onChange={ event => setSearchValue(event.target.value) } />
-            </Flex>
-            { (!searchValue || !searchValue.length) &&
-                <Button variant="primary" className="catalog-search-button">
-                    <FaSearch className="fa-icon" />
-                </Button> }
-            { searchValue && !!searchValue.length &&
-                <Button variant="primary" className="catalog-search-button" onClick={ event => setSearchValue('') }>
-                    <FaTimes className="fa-icon" />
-                </Button> }
-        </Flex>
+        <SearchBar
+            iconClass="icon-catalog"
+            color="var(--holo-catalog-color-theme-primary)"
+            value={ searchValue }
+            onChange={ (event: ChangeEvent<HTMLInputElement>) => setSearchValue(event.target.value) }
+        />
     );
 }

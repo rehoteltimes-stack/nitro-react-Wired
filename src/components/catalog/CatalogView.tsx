@@ -1,16 +1,18 @@
 import { ILinkEventTracker } from '@nitrots/nitro-renderer';
-import { FC, useEffect } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { AddEventLinkTracker, CatalogType, GetConfiguration, LocalizeText, RemoveLinkEventTracker } from '../../api';
-import { Column, Flex, Grid, NitroCardContentView, NitroCardHeaderView, NitroCardTabsItemView, NitroCardTabsView, NitroCardView } from '../../common';
+import { Column, Flex, NitroCardContentView, NitroCardHeaderView, NitroCardTabsItemView, NitroCardTabsView, NitroCardView } from '../../common';
 import { useCatalog } from '../../hooks';
 import { CatalogIconView } from './views/catalog-icon/CatalogIconView';
 import { CatalogGiftView } from './views/gift/CatalogGiftView';
 import { CatalogNavigationView } from './views/navigation/CatalogNavigationView';
+import { CatalogSearchView } from './views/page/common/CatalogSearchView';
 import { GetCatalogLayout } from './views/page/layout/GetCatalogLayout';
 import { MarketplacePostOfferView } from './views/page/layout/marketplace/MarketplacePostOfferView';
 
 export const CatalogView: FC<{}> = props =>
 {
+    const [ searchValue, setSearchValue ] = useState('');
     const { isVisible = false, setIsVisible = null, rootNode = null, currentPage = null, currentType = null, navigationHidden = false, setNavigationHidden = null, activeNodes = [], searchResult = null, setSearchResult = null, openPageByName = null, openPageByOfferId = null, activateNode = null, switchCatalogType = null } = useCatalog();
 
     // Link tracker for the regular catalog
@@ -44,9 +46,11 @@ export const CatalogView: FC<{}> = props =>
                         }
                         return;
                     case 'open':
+                        if((parts.length === 5) && (parts[4] === 'reset')) setSearchValue('');
+
                         if(parts.length > 2)
                         {
-                            if(parts.length === 4)
+                            if(parts.length >= 4)
                             {
                                 switch(parts[2])
                                 {
@@ -76,14 +80,22 @@ export const CatalogView: FC<{}> = props =>
         return () => RemoveLinkEventTracker(linkTracker);
     }, [ currentType, setIsVisible, openPageByOfferId, openPageByName, switchCatalogType ]);
 
+    if(!isVisible)
+    {
+        return (
+            <>
+                <CatalogGiftView />
+                <MarketplacePostOfferView />
+            </>
+        );
+    }
+
     return (
         <>
-            { isVisible &&
-                <NitroCardView theme="primary-slim" uniqueKey="catalog" className="nitro-catalog" style={ GetConfiguration('catalog.headers') ? { width: 710 } : {} }>
-                    <NitroCardHeaderView
-                        headerText={ LocalizeText('catalog.title') }
-                        onCloseClick={ event => setIsVisible(false) }
-                    />
+            <NitroCardView uniqueKey="catalog" resize="both" overflow="visible" className="nitro-catalog" style={ GetConfiguration('catalog.headers') ? { width: 710 } : {} }>
+                <NitroCardHeaderView headerText={ LocalizeText('catalog.title') } onCloseClick={ event => setIsVisible(false) } />
+                <NitroCardContentView>
+                    <CatalogSearchView searchValue={ searchValue } setSearchValue={ setSearchValue } />
                     <NitroCardTabsView>
                         { rootNode && (rootNode.children.length > 0) && rootNode.children.map(child =>
                         {
@@ -95,7 +107,7 @@ export const CatalogView: FC<{}> = props =>
                                     if(searchResult) setSearchResult(null);
 
                                     activateNode(child);
-                                } } >
+                                } }>
                                     <Flex gap={ GetConfiguration('catalog.tab.icons') ? 1 : 0 } alignItems="center">
                                         { GetConfiguration('catalog.tab.icons') && <CatalogIconView icon={ child.iconId } /> }
                                         { child.localization }
@@ -104,20 +116,18 @@ export const CatalogView: FC<{}> = props =>
                             );
                         }) }
                     </NitroCardTabsView>
-                    <NitroCardContentView>
-                        <Grid>
-                            { !navigationHidden &&
-                                <Column size={ 3 } overflow="hidden">
-                                    { activeNodes && (activeNodes.length > 0) &&
-                                        <CatalogNavigationView node={ activeNodes[0] } /> }
-                                </Column> }
-
-                            <Column size={ !navigationHidden ? 9 : 12 } overflow="hidden">
-                                { GetCatalogLayout(currentPage, () => setNavigationHidden(true)) }
-                            </Column>
-                        </Grid>
-                    </NitroCardContentView>
-                </NitroCardView> }
+                </NitroCardContentView>
+                <Flex gap={ 3 } className="nitro-catalog-content">
+                    { !navigationHidden &&
+                        <Column size={ 3 } fullHeight>
+                            { activeNodes && (activeNodes.length > 0) &&
+                                <CatalogNavigationView node={ activeNodes[0] } /> }
+                        </Column> }
+                    <Column fullHeight fullWidth className="nitro-catalog-layout">
+                        { GetCatalogLayout(currentPage, () => setNavigationHidden(true)) }
+                    </Column>
+                </Flex>
+            </NitroCardView>
             <CatalogGiftView />
             <MarketplacePostOfferView />
         </>
