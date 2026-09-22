@@ -1,7 +1,6 @@
-import { Dispatch, FC, SetStateAction, useEffect, useState } from 'react';
-import { FaSearch } from 'react-icons/fa';
-import { GroupItem, LocalizeText } from '../../../../api';
-import { Button, Flex } from '../../../../common';
+import { ChangeEvent, Dispatch, FC, SetStateAction, useEffect, useState } from 'react';
+import { GroupItem } from '../../../../api';
+import { SearchBar } from '../../../../common';
 
 export interface InventoryRaresSearchViewProps
 {
@@ -37,11 +36,11 @@ export const InventoryRaresSearchView: FC<InventoryRaresSearchViewProps> = props
     }, [ groupItems, setGroupItems, searchValue ]);
 
     return (
-        <Flex gap={ 1 }>
-            <input type="text" className="form-control form-control-sm" placeholder={ LocalizeText('generic.search') } value={ searchValue } onChange={ event => setSearchValue(event.target.value) } />
-            <Button variant="primary">
-                <FaSearch className="fa-icon" />
-            </Button>
-        </Flex>
+        <SearchBar
+            iconClass="icon-inventory"
+            color="var(--holo-inventory-color-theme-primary)"
+            value={ searchValue }
+            onChange={ (event: ChangeEvent<HTMLInputElement>) => setSearchValue(event.target.value) }
+        />
     );
 }
