@@ -1,29 +1,35 @@
 import { useState } from 'react';
 import { useBetween } from 'use-between';
+import { BannerActiveChangedEvent, BannerDataEvent, BannerItemData, BannerRequestComposer, BannerSetActiveComposer, SendMessageComposer } from '../../api';
+import { useMessageEvent } from '../events';
 
-// The reference's real "Banners" tab is backed by two SessionDataManager fields
-// (inventoryBannerList / activeBannerCode) plus a dedicated composer/event pair, all added by
-// HabboCity's own server fork - none of it exists in this project's vendored @nitrots/nitro-renderer
-// (confirmed: no matches for inventoryBannerList/activeBannerCode/BannerChangedEvent/any Banner
-// composer anywhere in node_modules). Real UI structure is built (see InventoryBannerView /
-// InventoryBannerItemView), but with no server-side protocol to back it, `banners` stays an empty
-// list - the tab honestly renders the reference's own real "no banners" empty state, same as the
-// Floor tab / FaRecycle button precedent elsewhere in this project: don't fabricate a mechanism
-// that isn't there.
+// Real protocol, bridging hCMS's already-live website banner purchase flow (App\Domain\Banners) to the client -
+// see api/inventory/BannerProtocol.ts and hcms-emulator-plugin's own BannerProtocol.java for the wire format.
 const useInventoryBannerState = () =>
 {
-    const [ banners ] = useState<string[]>([]);
-    const [ activeBannerCode, setActiveBannerCodeState ] = useState<string>('');
-    const [ selectedBannerCode, setSelectedBannerCode ] = useState<string>('');
+    const [ banners, setBanners ] = useState<BannerItemData[]>([]);
+    const [ activeBannerId, setActiveBannerId ] = useState<number>(-1);
+    const [ selectedBannerId, setSelectedBannerId ] = useState<number>(-1);
 
-    const setActiveBanner = (code: string) =>
+    useMessageEvent<BannerDataEvent>(BannerDataEvent, event =>
     {
-        setActiveBannerCodeState(code);
+        const parser = event.getParser();
 
-        // no real composer exists to persist this server-side yet - see the module comment above.
-    }
+        setBanners(parser.items);
+        setActiveBannerId(parser.activeBannerId);
+        setSelectedBannerId(parser.activeBannerId);
+    });
 
-    return { banners, activeBannerCode, selectedBannerCode, setSelectedBannerCode, setActiveBanner };
+    useMessageEvent<BannerActiveChangedEvent>(BannerActiveChangedEvent, event =>
+    {
+        setActiveBannerId(event.getParser().activeBannerId);
+    });
+
+    const requestBanners = () => SendMessageComposer(new BannerRequestComposer());
+
+    const setActiveBanner = (bannerId: number) => SendMessageComposer(new BannerSetActiveComposer(bannerId));
+
+    return { banners, activeBannerId, selectedBannerId, setSelectedBannerId, setActiveBanner, requestBanners };
 }
 
 export const useInventoryBanner = () => useBetween(useInventoryBannerState);

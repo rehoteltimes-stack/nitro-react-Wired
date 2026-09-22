@@ -1,3 +1,4 @@
+export * from './BannerProtocol';
 export * from './FurniCategory';
 export * from './FurnitureItem';
 export * from './FurnitureUtilities';

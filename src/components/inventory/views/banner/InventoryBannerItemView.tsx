@@ -1,28 +1,25 @@
-import { FC, useEffect, useState } from 'react';
+import { FC } from 'react';
 import { GetConfiguration } from '../../../../api';
 import { Column, LayoutAvatarImageView } from '../../../../common';
 import { useInventoryBanner, useSessionInfo } from '../../../../hooks';
 
 export interface InventoryBannerItemViewProps
 {
-    item: string;
+    bannerId: number;
+    imageFilename?: string;
     isPreview?: boolean;
 }
 
 export const InventoryBannerItemView: FC<InventoryBannerItemViewProps> = props =>
 {
-    const { item = '', isPreview = false } = props;
-    const { selectedBannerCode = '', setSelectedBannerCode = null } = useInventoryBanner();
+    const { bannerId = -1, imageFilename = '', isPreview = false } = props;
+    const { selectedBannerId = -1, setSelectedBannerId = null } = useInventoryBanner();
     const { userFigure = null } = useSessionInfo();
-    const [ imageUrl, setImageUrl ] = useState<string>(null);
 
-    useEffect(() =>
-    {
-        setImageUrl((item === '') ? '' : `${ GetConfiguration<string>('banner.url') }/player_profile_${ item }.png`);
-    }, [ item ]);
+    const imageUrl = (bannerId === -1) ? '' : `${ GetConfiguration<string>('banner.url') }/${ imageFilename }`;
 
     return (
-        <Column fullWidth className={ `body-image inventory-banner-item ${ ((item === selectedBannerCode) && !isPreview) ? 'active' : '' }` } style={ (imageUrl === '') ? {} : { backgroundImage: `url(${ imageUrl })` } } onClick={ event => !isPreview && setSelectedBannerCode(item) }>
+        <Column fullWidth className={ `body-image inventory-banner-item ${ ((bannerId === selectedBannerId) && !isPreview) ? 'active' : '' }` } style={ !imageUrl ? {} : { backgroundImage: `url(${ imageUrl })` } } onClick={ event => !isPreview && setSelectedBannerId(bannerId) }>
             { isPreview && <LayoutAvatarImageView figure={ userFigure } direction={ 4 } /> }
         </Column>
     );
