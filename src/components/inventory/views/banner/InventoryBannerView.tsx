@@ -1,14 +1,26 @@
-import { FC, useEffect } from 'react';
+import { FC, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { BannerItemData } from '../../../../api';
 import { Button, Column, Flex, Grid, ScrollContainer, Text } from '../../../../common';
 import { useInventoryBanner } from '../../../../hooks';
 import { InventoryCategoryEmptyView } from '../InventoryCategoryEmptyView';
 import { InventoryBannerItemView } from './InventoryBannerItemView';
+import { InventoryBannerSearchView } from './InventoryBannerSearchView';
 
-export const InventoryBannerView: FC<{}> = props =>
+export interface InventoryBannerViewProps
 {
+    // Real reference: the search bar is a full-width sibling ABOVE the tabs - see InventoryView.tsx's own
+    // comment for the real DOM position and why a portal is used.
+    searchSlot?: HTMLDivElement;
+}
+
+export const InventoryBannerView: FC<InventoryBannerViewProps> = props =>
+{
+    const { searchSlot = null } = props;
     // Message-class registration (RegisterBannerMessages) happens inside useInventoryBanner() itself now, before
     // its own useMessageEvent subscriptions - see that hook's own comment for the real ordering bug this fixes.
     const { banners = [], activeBannerId = -1, selectedBannerId = -1, setSelectedBannerId = null, setActiveBanner = null, requestBanners = null } = useInventoryBanner();
+    const [ filteredBanners, setFilteredBanners ] = useState<BannerItemData[]>([]);
 
     useEffect(() =>
     {
@@ -16,7 +28,24 @@ export const InventoryBannerView: FC<{}> = props =>
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    if(!banners.length) return <InventoryCategoryEmptyView title="No banners" desc="You don't have any profile banners yet. Buy one from the website's Center > Banners page." />;
+    // Real, previously-missing feature: the reference's Banners tab also has this same search bar - see
+    // InventoryBannerSearchView's own comment for what's confirmed vs. implemented-for-consistency here.
+    useEffect(() =>
+    {
+        setFilteredBanners(banners);
+    }, [ banners ]);
+
+    const searchPortal = searchSlot && createPortal(<InventoryBannerSearchView banners={ banners } setBanners={ setFilteredBanners } />, searchSlot);
+
+    if(!banners.length)
+    {
+        return (
+            <>
+                { searchPortal }
+                <InventoryCategoryEmptyView title="No banners" desc="You don't have any profile banners yet. Buy one from the website's Center > Banners page." />
+            </>
+        );
+    }
 
     // Real reference structure, CDP-captured against the live habbocity.fr Bannières tab:
     // .g-col-9.inventory-item-list > .scroll-container (this project's own ScrollContainer) > .scroll-content.vertical
@@ -31,26 +60,10 @@ export const InventoryBannerView: FC<{}> = props =>
     // The preview column shows whichever banner is currently SELECTED (selectedBannerId), not just the worn one -
     // clicking any owned banner in the list must update the preview/avatar/name immediately, before Wear is even
     // pressed (selectedBannerId defaults to activeBannerId on load, so nothing changes until a different item is
-    // clicked). Reading activeBanner here instead was the real cause of "can't choose another banner".
-    //
-    // Real bug fixed here, found live: on a fresh Inventory open (Banners tab clicked for the first time after
-    // reopening the panel), the Wear/Remove button correctly read "Remove" (proving THIS component's own
-    // selectedBannerId was already correct), but none of the list items showed the red .active border, even on
-    // the one actually worn. Root cause is the same use-between race already documented elsewhere in this project
-    // (RoomView.tsx's own comment on this hook family): each InventoryBannerItemView independently called
-    // useInventoryBanner() for its own selectedBannerId, and a component that only just mounted (the four list
-    // items don't exist until `banners` itself first becomes non-empty) can subscribe to use-between's shared
-    // state AFTER the same update that set selectedBannerId has already finished notifying its existing
-    // subscribers - it then never gets that value until some later, unrelated state change happens to re-render
-    // it. Fixed by passing selectedBannerId/setSelectedBannerId down as plain props from this component's own
-    // single, already-correct hook call, instead of letting each item independently subscribe to the shared hook.
-    //
-    // Checked the real reference for the "nothing worn/selected" state specifically (via CDP, not assumed): it
-    // does NOT hide the preview column - it keeps rendering .inventory-banner-item (with a real, but EMPTY,
-    // background-image style, i.e. no url()) and the avatar nested inside it, plus an empty
-    // .inventory-banner-name-container. Only the background image and the name text go blank; the boxes
-    // themselves and the avatar stay. So the preview column is always rendered, never conditionally hidden -
-    // InventoryBannerItemView already handles bannerId=-1 by leaving backgroundImage unset.
+    // clicked). Reading activeBanner here instead was the real cause of "can't choose another banner". The
+    // preview reads from the FULL (unfiltered) banners list, not filteredBanners - a search filtering the list
+    // shouldn't blank out an already-selected preview, same as Furniture's own selectedItem staying independent
+    // of its own search filter.
     const selectedBanner = banners.find(banner => (banner.bannerId === selectedBannerId));
 
     // Real bug fixed here, root-caused against real DB ground truth (not assumed): when no banner is worn at all,
@@ -63,12 +76,13 @@ export const InventoryBannerView: FC<{}> = props =>
 
     return (
         <>
+            { searchPortal }
             <Column fullHeight overflow="hidden">
                 <Grid fullHeight overflow="hidden">
                     <Column size={ 9 } overflow="hidden" classNames={ [ 'inventory-item-list' ] }>
                         <ScrollContainer className="flex-grow-1">
                             <Flex>
-                                { banners.map(banner => <InventoryBannerItemView key={ banner.bannerId } bannerId={ banner.bannerId } imageFilename={ banner.imageFilename } selectedBannerId={ selectedBannerId } setSelectedBannerId={ setSelectedBannerId } />) }
+                                { filteredBanners.map(banner => <InventoryBannerItemView key={ banner.bannerId } bannerId={ banner.bannerId } imageFilename={ banner.imageFilename } selectedBannerId={ selectedBannerId } setSelectedBannerId={ setSelectedBannerId } />) }
                             </Flex>
                         </ScrollContainer>
                     </Column>

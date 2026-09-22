@@ -1,5 +1,6 @@
 import { IRoomSession, RoomObjectVariable, RoomPreviewer, Vector3d } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { attemptItemPlacement, DispatchUiEvent, FurniCategory, GetRoomEngine, GetSessionDataManager, GroupItem, LocalizeText, UnseenItemCategory } from '../../../../api';
 import { AutoGrid, Button, Column, Grid, LayoutLimitedEditionCompactPlateView, LayoutRarityLevelView, LayoutRoomPreviewerView, Text } from '../../../../common';
 import { CatalogPostMarketplaceOfferEvent } from '../../../../events';
@@ -12,6 +13,11 @@ interface InventoryFurnitureViewProps
 {
     roomSession: IRoomSession;
     roomPreviewer: RoomPreviewer;
+    // Real reference: the search bar is a full-width sibling ABOVE the tabs (.content-area-inner's own direct
+    // child), not nested inside this tab's own 7-column grid - see InventoryView.tsx's own comment for the real
+    // DOM position this was confirmed against and why a portal is used instead of lifting this tab's own filter
+    // state up into the shared shell component.
+    searchSlot?: HTMLDivElement;
 }
 
 const attemptPlaceMarketplaceOffer = (groupItem: GroupItem) =>
@@ -25,7 +31,7 @@ const attemptPlaceMarketplaceOffer = (groupItem: GroupItem) =>
 
 export const InventoryFurnitureView: FC<InventoryFurnitureViewProps> = props =>
 {
-    const { roomSession = null, roomPreviewer = null } = props;
+    const { roomSession = null, roomPreviewer = null, searchSlot = null } = props;
 
     const [ isVisible, setIsVisible ] = useState(false);
     const [ filteredGroupItems, setFilteredGroupItems ] = useState<GroupItem[]>([]);
@@ -128,68 +134,81 @@ export const InventoryFurnitureView: FC<InventoryFurnitureViewProps> = props =>
         return () => setIsVisible(false);
     }, []);
 
+    // Real reference: the search bar stays visible even with zero owned items (confirmed live on the Bots tab,
+    // 0 bots owned, real reference still showed the search input above the "Désolé, parti à la pêche!" empty
+    // message) - so it portals unconditionally, before the empty/non-empty branch, not only in the non-empty path.
+    const searchPortal = searchSlot && createPortal(
+        <InventoryFurnitureSearchView groupItems={ groupItems } setGroupItems={ setFilteredGroupItems } />,
+        searchSlot
+    );
+
     if(!groupItems.length)
-        return <InventoryCategoryEmptyView title={ LocalizeText('inventory.empty.title') } desc={ LocalizeText('inventory.empty.desc') } />;
+    {
+        return (
+            <>
+                { searchPortal }
+                <InventoryCategoryEmptyView title={ LocalizeText('inventory.empty.title') } desc={ LocalizeText('inventory.empty.desc') } />
+            </>
+        );
+    }
 
     return (
-        <Grid>
-            <Column size={ 7 } overflow="hidden">
-                <InventoryFurnitureSearchView
-                    groupItems={ groupItems }
-                    setGroupItems={ setFilteredGroupItems }
-                />
-
-                <AutoGrid columnCount={ 5 }>
-                    { filteredGroupItems.length > 0 &&
-                        filteredGroupItems.map((item, index) =>
-                            <InventoryFurnitureItemView key={ index } groupItem={ item } />
-                        )
-                    }
-                </AutoGrid>
-            </Column>
-
-            <Column size={ 5 } overflow="auto">
-                <Column overflow="hidden" position="relative">
-                    <LayoutRoomPreviewerView roomPreviewer={ roomPreviewer } height={ 140 } />
-
-                    { selectedItem?.stuffData.isUnique &&
-                        <LayoutLimitedEditionCompactPlateView
-                            className="top-2 end-2"
-                            position="absolute"
-                            uniqueNumber={ selectedItem.stuffData.uniqueNumber }
-                            uniqueSeries={ selectedItem.stuffData.uniqueSeries }
-                        />
-                    }
-
-                    { selectedItem && selectedItem.stuffData.rarityLevel > -1 &&
-                        <LayoutRarityLevelView
-                            className="top-2 end-2"
-                            position="absolute"
-                            level={ selectedItem.stuffData.rarityLevel }
-                        />
-                    }
+        <>
+            { searchPortal }
+            <Grid>
+                <Column size={ 7 } overflow="hidden">
+                    <AutoGrid columnCount={ 5 }>
+                        { filteredGroupItems.length > 0 &&
+                            filteredGroupItems.map((item, index) =>
+                                <InventoryFurnitureItemView key={ index } groupItem={ item } />
+                            )
+                        }
+                    </AutoGrid>
                 </Column>
 
-                { selectedItem &&
-                    <Column grow justifyContent="between" gap={ 2 }>
-                        <Text grow truncate>{ selectedItem.name }</Text>
+                <Column size={ 5 } overflow="auto">
+                    <Column overflow="hidden" position="relative">
+                        <LayoutRoomPreviewerView roomPreviewer={ roomPreviewer } height={ 140 } />
 
-                        <Column gap={ 1 }>
-                            { !!roomSession &&
-                                <Button variant="success" onClick={ () => attemptItemPlacement(selectedItem) }>
-                                    { LocalizeText('inventory.furni.placetoroom') }
-                                </Button>
-                            }
+                        { selectedItem?.stuffData.isUnique &&
+                            <LayoutLimitedEditionCompactPlateView
+                                className="top-2 end-2"
+                                position="absolute"
+                                uniqueNumber={ selectedItem.stuffData.uniqueNumber }
+                                uniqueSeries={ selectedItem.stuffData.uniqueSeries }
+                            />
+                        }
 
-                            { selectedItem.isSellable &&
-                                <Button onClick={ () => attemptPlaceMarketplaceOffer(selectedItem) }>
-                                    { LocalizeText('inventory.marketplace.sell') }
-                                </Button>
-                            }
-                        </Column>
+                        { selectedItem && selectedItem.stuffData.rarityLevel > -1 &&
+                            <LayoutRarityLevelView
+                                className="top-2 end-2"
+                                position="absolute"
+                                level={ selectedItem.stuffData.rarityLevel }
+                            />
+                        }
                     </Column>
-                }
-            </Column>
-        </Grid>
+
+                    { selectedItem &&
+                        <Column grow justifyContent="between" gap={ 2 }>
+                            <Text grow truncate>{ selectedItem.name }</Text>
+
+                            <Column gap={ 1 }>
+                                { !!roomSession &&
+                                    <Button variant="success" onClick={ () => attemptItemPlacement(selectedItem) }>
+                                        { LocalizeText('inventory.furni.placetoroom') }
+                                    </Button>
+                                }
+
+                                { selectedItem.isSellable &&
+                                    <Button onClick={ () => attemptPlaceMarketplaceOffer(selectedItem) }>
+                                        { LocalizeText('inventory.marketplace.sell') }
+                                    </Button>
+                                }
+                            </Column>
+                        </Column>
+                    }
+                </Column>
+            </Grid>
+        </>
     );
 };
