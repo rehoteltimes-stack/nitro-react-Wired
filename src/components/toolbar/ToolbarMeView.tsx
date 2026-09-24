@@ -1,6 +1,6 @@
-import { RoomObjectCategory } from '@nitrots/nitro-renderer';
+import { RoomObjectCategory, RoomUnitClickAvatarComposer } from '@nitrots/nitro-renderer';
 import { FC, useEffect } from 'react';
-import { CreateLinkEvent, DispatchUiEvent, GetConfiguration, GetRoomEngine, GetRoomSession, GetSessionDataManager, GetUserProfile } from '../../api';
+import { CreateLinkEvent, DispatchUiEvent, GetConfiguration, GetRoomEngine, GetRoomSession, GetSessionDataManager, GetUserProfile, SendMessageComposer } from '../../api';
 import { Base } from '../../common';
 import { GuideToolEvent } from '../../events';
 
@@ -20,6 +20,12 @@ export const ToolbarMeView: FC<ToolbarMeViewProps> = props =>
         if(!roomSession) return;
 
         GetRoomEngine().selectRoomObject(roomSession.roomId, roomSession.ownRoomIndex, RoomObjectCategory.UNIT);
+
+        // A real in-room click on an avatar also sends this (RoomObjectEventHandler's own mouse-click
+        // handling) - the server's packet 108 reply (WiredClickUserReceivedEvent) is what actually
+        // flushes the pending avatar-info into view (useAvatarInfoWidget's pendingUnitInfoRef).
+        // selectRoomObject() alone only selects the object, it never triggers that server round trip.
+        SendMessageComposer(new RoomUnitClickAvatarComposer(roomSession.ownRoomIndex));
     }, []);
 
     return (

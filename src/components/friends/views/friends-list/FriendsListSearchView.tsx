@@ -1,18 +1,23 @@
 import { HabboSearchComposer, HabboSearchResultData, HabboSearchResultEvent } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useState } from 'react';
 import { LocalizeText, OpenMessengerChat, SendMessageComposer } from '../../../../api';
-import { Base, Column, Flex, NitroCardAccordionItemView, NitroCardAccordionSetView, NitroCardAccordionSetViewProps, Text, UserProfileIconView } from '../../../../common';
+import { Base, Column, Flex, ScrollContainer, Text, UserProfileIconView } from '../../../../common';
 import { useFriends, useMessageEvent } from '../../../../hooks';
 
-interface FriendsSearchViewProps extends NitroCardAccordionSetViewProps
+interface FriendsSearchViewProps
 {
-
+    searchValue: string;
 }
 
+// Real reference tab ("Rechercher"): uses the SAME top search bar value as the Online/Offline tabs
+// (confirmed live in the minified bundle - this tab's own component takes `searchValue` as a prop,
+// not its own independent input state) to search for NEW people to add, not to filter the existing
+// friends list - this file previously had its own separate, duplicate search input instead of
+// reusing the shared one, and wrapped everything in the accordion shell removed from the rest of
+// this feature in the same pass.
 export const FriendsSearchView: FC<FriendsSearchViewProps> = props =>
 {
-    const { ...rest } = props;
-    const [ searchValue, setSearchValue ] = useState('');
+    const { searchValue } = props;
     const [ friendResults, setFriendResults ] = useState<HabboSearchResultData[]>(null);
     const [ otherResults, setOtherResults ] = useState<HabboSearchResultData[]>(null);
     const { canRequestFriend = null, requestFriend = null } = useFriends();
@@ -40,9 +45,8 @@ export const FriendsSearchView: FC<FriendsSearchViewProps> = props =>
     }, [ searchValue ]);
 
     return (
-        <NitroCardAccordionSetView { ...rest }>
-            <input type="text" className="search-input form-control form-control-sm w-100 rounded-0" placeholder={ LocalizeText('generic.search') } value={ searchValue } maxLength={ 50 } onChange={ event => setSearchValue(event.target.value) } />
-            <Column>
+        <ScrollContainer>
+            <Column gap={ 0 }>
                 { friendResults &&
                     <>
                         { (friendResults.length === 0) &&
@@ -55,7 +59,7 @@ export const FriendsSearchView: FC<FriendsSearchViewProps> = props =>
                                     { friendResults.map(result =>
                                     {
                                         return (
-                                            <NitroCardAccordionItemView key={ result.avatarId } justifyContent="between" className="px-2 py-1">
+                                            <Flex key={ result.avatarId } justifyContent="between" className="nitro-friend-list-entry px-2 py-1">
                                                 <Flex alignItems="center" gap={ 1 }>
                                                     <UserProfileIconView userId={ result.avatarId } />
                                                     <div>{ result.avatarName }</div>
@@ -64,7 +68,7 @@ export const FriendsSearchView: FC<FriendsSearchViewProps> = props =>
                                                     { result.isAvatarOnline &&
                                                     <Base className="nitro-friends-spritesheet icon-chat cursor-pointer" onClick={ event => OpenMessengerChat(result.avatarId) } title={ LocalizeText('friendlist.tip.im') } /> }
                                                 </Flex>
-                                            </NitroCardAccordionItemView>
+                                            </Flex>
                                         )
                                     }) }
                                 </Column>
@@ -82,7 +86,7 @@ export const FriendsSearchView: FC<FriendsSearchViewProps> = props =>
                                     { otherResults.map(result =>
                                     {
                                         return (
-                                            <NitroCardAccordionItemView key={ result.avatarId } justifyContent="between" className="px-2 py-1">
+                                            <Flex key={ result.avatarId } justifyContent="between" className="nitro-friend-list-entry px-2 py-1">
                                                 <Flex alignItems="center" gap={ 1 }>
                                                     <UserProfileIconView userId={ result.avatarId } />
                                                     <div>{ result.avatarName }</div>
@@ -91,13 +95,13 @@ export const FriendsSearchView: FC<FriendsSearchViewProps> = props =>
                                                     { canRequestFriend(result.avatarId) &&
                                                     <Base className="nitro-friends-spritesheet icon-add cursor-pointer" onClick={ event => requestFriend(result.avatarId, result.avatarName) } title={ LocalizeText('friendlist.tip.addfriend') } /> }
                                                 </Flex>
-                                            </NitroCardAccordionItemView>
+                                            </Flex>
                                         )
                                     }) }
                                 </Column>
                             </Column> }
                     </> }
             </Column>
-        </NitroCardAccordionSetView>
+        </ScrollContainer>
     );
 }

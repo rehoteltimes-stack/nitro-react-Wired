@@ -22,6 +22,7 @@ export class AvatarInfoFurni implements IAvatarInfo
     public isOwner: boolean = false;
     public stuffData: IObjectData = null;
     public groupId: number = 0;
+    public typeId: number = 0;
     public ownerId: number = 0;
     public ownerName: string = '';
     public usagePolicy: number = 0;

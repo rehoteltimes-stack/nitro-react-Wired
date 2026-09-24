@@ -1,10 +1,9 @@
 import { AvatarEditorFigureCategory, FigureSetIdsMessageEvent, GetWardrobeMessageComposer, IAvatarFigureContainer, ILinkEventTracker, UserFigureComposer, UserWardrobePageEvent } from '@nitrots/nitro-renderer';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { FaDice, FaTrash, FaUndo } from 'react-icons/fa';
-import { AddEventLinkTracker, AvatarEditorAction, AvatarEditorUtilities, BodyModel, FigureData, generateRandomFigure, GetAvatarRenderManager, GetClubMemberLevel, GetConfiguration, GetSessionDataManager, HeadModel, IAvatarEditorCategoryModel, LegModel, LocalizeText, RemoveLinkEventTracker, SendMessageComposer, TorsoModel } from '../../api';
-import { Button, ButtonGroup, Column, Grid, NitroCardContentView, NitroCardHeaderView, NitroCardTabsItemView, NitroCardTabsView, NitroCardView } from '../../common';
+import { FaDice, FaRecycle, FaShoppingBag, FaTrash, FaUndo } from 'react-icons/fa';
+import { AddEventLinkTracker, AvatarEditorAction, AvatarEditorUtilities, BodyModel, CreateLinkEvent, FigureData, generateRandomFigure, GetAvatarRenderManager, GetClubMemberLevel, GetConfiguration, GetSessionDataManager, HeadModel, IAvatarEditorCategoryModel, LegModel, LocalizeText, RemoveLinkEventTracker, SendMessageComposer, TorsoModel } from '../../api';
+import { Button, ButtonGroup, Flex, NitroCardHeaderView, NitroCardTabsItemView, NitroCardTabsView, NitroCardView } from '../../common';
 import { useMessageEvent } from '../../hooks';
-import { AvatarEditorFigurePreviewView } from './views/AvatarEditorFigurePreviewView';
 import { AvatarEditorModelView } from './views/AvatarEditorModelView';
 import { AvatarEditorWardrobeView } from './views/AvatarEditorWardrobeView';
 
@@ -21,7 +20,6 @@ export const AvatarEditorView: FC<{}> = props =>
     const [ figureSetIds, setFigureSetIds ] = useState<number[]>([]);
     const [ boundFurnitureNames, setBoundFurnitureNames ] = useState<string[]>([]);
     const [ savedFigures, setSavedFigures ] = useState<[ IAvatarFigureContainer, string ][]>([]);
-    const [ isWardrobeVisible, setIsWardrobeVisible ] = useState(false);
     const [ lastFigure, setLastFigure ] = useState<string>(null);
     const [ lastGender, setLastGender ] = useState<string>(null);
     const [ needsReset, setNeedsReset ] = useState(true);
@@ -183,20 +181,15 @@ export const AvatarEditorView: FC<{}> = props =>
         setSavedFigures(new Array(maxWardrobeSlots));
     }, [ maxWardrobeSlots ]);
 
+    // Real reference behaviour (verified via CDP + JS source): the wardrobe is an always-visible sidebar, not
+    // a tab that replaces the model view - so its data is fetched once when the editor opens, not on a
+    // visibility toggle.
     useEffect(() =>
     {
-        if(!isWardrobeVisible) return;
+        if(!isVisible) return;
 
-        setActiveCategory(null);
         SendMessageComposer(new GetWardrobeMessageComposer());
-    }, [ isWardrobeVisible ]);
-
-    useEffect(() =>
-    {
-        if(!activeCategory) return;
-
-        setIsWardrobeVisible(false);
-    }, [ activeCategory ]);
+    }, [ isVisible ]);
 
     useEffect(() =>
     {
@@ -264,53 +257,84 @@ export const AvatarEditorView: FC<{}> = props =>
 
     if(!isVisible || !figureData) return null;
 
+    // Real reference structure (verified via CDP outerHTML on the live avatar editor): header, then
+    // .nitro-avatar-editor-content directly (no .content-area wrapper - this window doesn't use the generic
+    // NitroCardContentView pattern) holding two permanent siblings: the wardrobe sidebar and a main column
+    // (tabs -> model/colour view -> bottom action row). The old version put the wardrobe behind a 5th tab
+    // (replacing the whole model view) and split figure-preview/action-buttons into a separate right-hand
+    // Grid column next to the model - neither matches the reference, which keeps the wardrobe always visible
+    // and puts the figure preview inside the model view's own left column (see AvatarEditorModelView).
+    // overflow="visible" matches the real reference's own root class (confirmed via computed style:
+    // overflow:visible there vs NitroCardView's shared default of overflow:auto) - this window has no
+    // internal scroll area of its own, everything scrolls via the nested ScrollContainer grids instead.
+    // gap={3} matches the reference's own real `gap-3` (16px) root class - NitroCardView defaults its inner
+    // Column's gap to 0 when no gap prop is passed, which left zero space between the header and the content
+    // (both measured at the exact same y-coordinate on our dev client before this fix).
     return (
-        <NitroCardView uniqueKey="avatar-editor" className="nitro-avatar-editor">
+        <NitroCardView uniqueKey="avatar-editor" className="nitro-avatar-editor" overflow="visible" gap={ 3 }>
             <NitroCardHeaderView headerText={ LocalizeText('avatareditor.title') } onCloseClick={ event => setIsVisible(false) } />
-            <NitroCardTabsView>
-                { categories && (categories.size > 0) && Array.from(categories.keys()).map(category =>
-                {
-                    const isActive = (activeCategory && (activeCategory.name === category));
+            <Flex gap={ 3 } classNames={ [ 'nitro-avatar-editor-content' ] }>
+                <AvatarEditorWardrobeView figureData={ figureData } savedFigures={ savedFigures } setSavedFigures={ setSavedFigures } loadAvatarInEditor={ loadAvatarInEditor } />
+                <Flex column fullWidth gap={ 2 }>
+                    <NitroCardTabsView>
+                        { categories && (categories.size > 0) && Array.from(categories.keys()).map(category =>
+                        {
+                            const isActive = (activeCategory && (activeCategory.name === category));
 
-                    return (
-                        <NitroCardTabsItemView key={ category } isActive={ isActive } onClick={ event => selectCategory(category) }>
-                            { LocalizeText(`avatareditor.category.${ category }`) }
-                        </NitroCardTabsItemView>
-                    );
-                }) }
-                <NitroCardTabsItemView isActive={ isWardrobeVisible } onClick={ event => setIsWardrobeVisible(true) }>
-                    { LocalizeText('avatareditor.category.wardrobe') }
-                </NitroCardTabsItemView>
-            </NitroCardTabsView>
-            <NitroCardContentView>
-                <Grid>
-                    <Column size={ 9 } overflow="hidden">
-                        { (activeCategory && !isWardrobeVisible) &&
-                            <AvatarEditorModelView model={ activeCategory } gender={ figureData.gender } setGender={ setGender } /> }
-                        { isWardrobeVisible &&
-                            <AvatarEditorWardrobeView figureData={ figureData } savedFigures={ savedFigures } setSavedFigures={ setSavedFigures } loadAvatarInEditor={ loadAvatarInEditor } /> }
-                    </Column>
-                    <Column size={ 3 } overflow="hidden">
-                        <AvatarEditorFigurePreviewView figureData={ figureData } />
-                        <Column grow gap={ 1 }>
-                            <ButtonGroup>
-                                <Button variant="secondary" onClick={ event => processAction(AvatarEditorAction.ACTION_RESET) }>
-                                    <FaUndo className="fa-icon" />
-                                </Button>
-                                <Button variant="secondary" onClick={ event => processAction(AvatarEditorAction.ACTION_CLEAR) }>
-                                    <FaTrash className="fa-icon" />
-                                </Button>
-                                <Button variant="secondary" onClick={ event => processAction(AvatarEditorAction.ACTION_RANDOMIZE) }>
-                                    <FaDice className="fa-icon" />
-                                </Button>
-                            </ButtonGroup>
-                            <Button className="w-100" variant="success" onClick={ event => processAction(AvatarEditorAction.ACTION_SAVE) }>
-                                { LocalizeText('avatareditor.save') }
+                            return (
+                                <NitroCardTabsItemView key={ category } isActive={ isActive } onClick={ event => selectCategory(category) }>
+                                    { LocalizeText(`avatareditor.category.${ category }`) }
+                                </NitroCardTabsItemView>
+                            );
+                        }) }
+                    </NitroCardTabsView>
+                    { activeCategory &&
+                        <AvatarEditorModelView model={ activeCategory } figureData={ figureData } gender={ figureData.gender } setGender={ setGender } /> }
+                    { /* Real, cold-load-only bug: this row had `grow`, and AvatarEditorModelView (the middle,
+                         space-filling section) is conditionally rendered and briefly absent from the DOM while
+                         `activeCategory` is still resolving (model.init() + selectCategory haven't run yet on
+                         first mount). With the model view temporarily missing, this row became the ONLY
+                         flex-grow child in the column and expanded to fill the whole remaining height - the
+                         "buttons show big first, then the boxes appear" report. AvatarEditorModelView doesn't
+                         actually need this row to have `grow` at all: its own root already sets `fullHeight`
+                         (h-100), which - per the flex-basis:auto spec, an explicit height property is used as
+                         the item's flex-basis - already claims the real remaining space once it mounts,
+                         regardless of whether this sibling has flex-grow. Removing `grow` here fixes the race
+                         without needing to force activeCategory to resolve synchronously. */ }
+                    <Flex gap={ 2 }>
+                        <ButtonGroup>
+                            <Button variant="primary" onClick={ event => processAction(AvatarEditorAction.ACTION_RESET) }>
+                                <FaUndo className="fa-icon" />
                             </Button>
-                        </Column>
-                    </Column>
-                </Grid>
-            </NitroCardContentView>
+                            <Button variant="primary" onClick={ event => processAction(AvatarEditorAction.ACTION_CLEAR) }>
+                                <FaTrash className="fa-icon" />
+                            </Button>
+                            <Button variant="primary" onClick={ event => processAction(AvatarEditorAction.ACTION_RANDOMIZE) }>
+                                <FaDice className="fa-icon" />
+                            </Button>
+                            { /* Real, confirmed-present 4th action button (verified via icon path match against
+                                 the live reference) - always disabled there too, so its real function is
+                                 genuinely unknown. Added visually, unwired, per this project's own precedent for
+                                 confirmed-real-but-unverified controls rather than guessing at behaviour. */ }
+                            <Button variant="primary" disabled>
+                                <FaRecycle className="fa-icon" />
+                            </Button>
+                        </ButtonGroup>
+                        { /* Real, own-feature entry point (not from the reference - HabboCity has no shop button
+                             here at all): opens ClothesShopView, hCMS's own instant-grant clothing shop. Placed
+                             here per explicit user direction, since buying clothes while already customizing a
+                             look is the natural point to jump into the shop. Closes this editor first - both
+                             windows use the same default centered position, so leaving this one open behind the
+                             shop just stacks two identical-looking cards on top of each other. */ }
+                        <Button variant="warning" onClick={ event => { setIsVisible(false); CreateLinkEvent('clothes-shop/toggle'); } }>
+                            <FaShoppingBag className="fa-icon" />
+                        </Button>
+                        <Button fullWidth variant="success" onClick={ event => processAction(AvatarEditorAction.ACTION_SAVE) }>
+                            { LocalizeText('avatareditor.save') }
+                        </Button>
+                    </Flex>
+                </Flex>
+            </Flex>
         </NitroCardView>
     );
 }

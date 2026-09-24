@@ -1,6 +1,6 @@
 import { FC } from 'react';
 import { LocalizeText } from '../../../../../api';
-import { Base, Column, Flex, Grid, Text } from '../../../../../common';
+import { Base, Column, Flex, Text } from '../../../../../common';
 import { useCatalog } from '../../../../../hooks';
 import { CatalogBadgeSelectorWidgetView } from '../widgets/CatalogBadgeSelectorWidgetView';
 import { CatalogFirstProductSelectorWidgetView } from '../widgets/CatalogFirstProductSelectorWidgetView';
@@ -16,10 +16,11 @@ export const CatalogLayoutBadgeDisplayView: FC<CatalogLayoutProps> = props =>
     const { page = null } = props;
     const { currentOffer = null } = useCatalog();
 
+    // Same structural fix as CatalogLayoutDefaultView.tsx (2026-09-22/23 pass) - see that file's own comment.
     return (
         <>
             <CatalogFirstProductSelectorWidgetView />
-            <Grid>
+            <Flex fullHeight overflow="hidden">
                 <Column size={ 7 } overflow="hidden">
                     <CatalogItemGridWidgetView shrink />
                     <Column gap={ 1 } overflow="hidden">
@@ -44,11 +45,14 @@ export const CatalogLayoutBadgeDisplayView: FC<CatalogLayoutProps> = props =>
                                 <Flex justifyContent="end">
                                     <CatalogTotalPriceWidget alignItems="end" />
                                 </Flex>
-                                <CatalogPurchaseWidgetView />
                             </Column>
                         </> }
                 </Column>
-            </Grid>
+            </Flex>
+            { currentOffer &&
+                <Flex gap={ 2 } classNames={ [ 'flex-fill', 'catalog-purchase-widget' ] }>
+                    <CatalogPurchaseWidgetView />
+                </Flex> }
         </>
     );
 }

@@ -1,7 +1,7 @@
 import { CatalogGroupsComposer } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useState } from 'react';
 import { SendMessageComposer } from '../../../../../api';
-import { Base, Column, Flex, Grid, Text } from '../../../../../common';
+import { Base, Column, Flex, Text } from '../../../../../common';
 import { useCatalog } from '../../../../../hooks';
 import { CatalogFirstProductSelectorWidgetView } from '../widgets/CatalogFirstProductSelectorWidgetView';
 import { CatalogGuildSelectorWidgetView } from '../widgets/CatalogGuildSelectorWidgetView';
@@ -21,29 +21,31 @@ export const CatalogLayouGuildForumView: FC<CatalogLayoutProps> = props =>
         SendMessageComposer(new CatalogGroupsComposer());
     }, [ page ]);
     
+    // Same structural fix as CatalogLayoutDefaultView.tsx (2026-09-22/23 pass) - see that file's own comment.
     return (
         <>
             <CatalogFirstProductSelectorWidgetView />
-            <Grid>
+            <Flex fullHeight overflow="hidden">
                 <Column className="bg-muted rounded p-2 text-black" size={ 7 } overflow="hidden">
                     <Base className="overflow-auto" dangerouslySetInnerHTML={ { __html: page.localization.getText(1) } } />
                 </Column>
                 <Column size={ 5 } overflow="hidden" gap={ 1 }>
                     { !!currentOffer &&
-                        <>
-                            <Column grow gap={ 1 }>
-                                <Text truncate>{ currentOffer.localizationName }</Text>
-                                <Base grow>
-                                    <CatalogGuildSelectorWidgetView />
-                                </Base>
-                                <Flex justifyContent="end">
-                                    <CatalogTotalPriceWidget alignItems="end" />
-                                </Flex>
-                                <CatalogPurchaseWidgetView noGiftOption={ true } />
-                            </Column>
-                        </> }
+                        <Column grow gap={ 1 }>
+                            <Text truncate>{ currentOffer.localizationName }</Text>
+                            <Base grow>
+                                <CatalogGuildSelectorWidgetView />
+                            </Base>
+                            <Flex justifyContent="end">
+                                <CatalogTotalPriceWidget alignItems="end" />
+                            </Flex>
+                        </Column> }
                 </Column>
-            </Grid>
+            </Flex>
+            { !!currentOffer &&
+                <Flex gap={ 2 } classNames={ [ 'flex-fill', 'catalog-purchase-widget' ] }>
+                    <CatalogPurchaseWidgetView noGiftOption={ true } />
+                </Flex> }
         </>
     );
 }

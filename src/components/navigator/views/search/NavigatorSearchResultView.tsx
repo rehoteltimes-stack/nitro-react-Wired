@@ -1,6 +1,6 @@
 import { NavigatorSearchComposer, NavigatorSearchResultList } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useState } from 'react';
-import { FaBars, FaMinus, FaPlus, FaWindowMaximize, FaWindowRestore } from 'react-icons/fa';
+import { FaMinus, FaPlus, FaTh, FaWindowMaximize, FaWindowRestore } from 'react-icons/fa';
 import { LocalizeText, NavigatorSearchResultViewDisplayMode, SendMessageComposer } from '../../../../api';
 import { AutoGrid, AutoGridProps, Column, Flex, Grid, Text } from '../../../../common';
 import { useNavigator } from '../../../../hooks';
@@ -9,11 +9,19 @@ import { NavigatorSearchResultItemView } from './NavigatorSearchResultItemView';
 export interface NavigatorSearchResultViewProps extends AutoGridProps
 {
     searchResult: NavigatorSearchResultList;
+    // Real reference props (`fromProfile`/`setCategoryTitle` on `VI` in the minified bundle): the
+    // User Profile's own Rooms tab reuses this exact same component rather than a separate one -
+    // fromProfile disables the collapse/expand toggle entirely (confirmed live: the reference's
+    // profile Rooms-tab header has no +/- icon at all, click on that area does nothing), and
+    // categoryTitle is a literal override string (`Appartements de ${username}`, hardcoded in their
+    // own source, not a LocalizeText key) that bypasses the code->locale-key title lookup below.
+    fromProfile?: boolean;
+    categoryTitle?: string;
 }
 
 export const NavigatorSearchResultView: FC<NavigatorSearchResultViewProps> = props =>
 {
-    const { searchResult = null, ...rest } = props;
+    const { searchResult = null, fromProfile = false, categoryTitle = '', ...rest } = props;
     const [ isExtended, setIsExtended ] = useState(true);
     const [ displayMode, setDisplayMode ] = useState<number>(0);
 
@@ -21,6 +29,8 @@ export const NavigatorSearchResultView: FC<NavigatorSearchResultViewProps> = pro
 
     const getResultTitle = () =>
     {
+        if(categoryTitle) return categoryTitle;
+
         let name = searchResult.code;
 
         if(!name || !name.length || LocalizeText('navigator.searchcode.title.' + name) == ('navigator.searchcode.title.' + name)) return searchResult.data;
@@ -56,13 +66,13 @@ export const NavigatorSearchResultView: FC<NavigatorSearchResultViewProps> = pro
         <Column gap={ 0 }>
             <Flex alignItems="center" className="px-2 py-1" gap={ 1 }>
                 <Flex gap={ 2 } grow>
-                    { (displayMode === NavigatorSearchResultViewDisplayMode.LIST) && <FaBars className="text-secondary fa-icon" onClick={ toggleDisplayMode } /> }
+                    { (displayMode === NavigatorSearchResultViewDisplayMode.LIST) && <FaTh className="text-secondary fa-icon" onClick={ toggleDisplayMode } /> }
                     { (displayMode >= NavigatorSearchResultViewDisplayMode.THUMBNAILS) && <FaMinus className="text-secondary fa-icon" onClick={ toggleDisplayMode } /> }
                     <Text small>{ LocalizeText(getResultTitle()) }</Text>
                 </Flex>
-                <Flex pointer alignItems="center" gap={ 1 } onClick={ event => setIsExtended(prevValue => !prevValue) }>
-                    { isExtended && <FaMinus className="text-secondary fa-icon" /> }
-                    { !isExtended && <FaPlus className="text-secondary fa-icon" /> }
+                <Flex pointer alignItems="center" gap={ 1 } onClick={ event => { if(!fromProfile) setIsExtended(prevValue => !prevValue); } }>
+                    { isExtended && !fromProfile && <FaMinus className="text-secondary fa-icon" /> }
+                    { !isExtended && !fromProfile && <FaPlus className="text-secondary fa-icon" /> }
                     { (searchResult.action > 0) && (searchResult.action === 1) && <FaWindowMaximize className="text-secondary fa-icon" onClick={ showMore } /> }
                     { (searchResult.action > 0) && (searchResult.action !== 1) && <FaWindowRestore className="text-secondary fa-icon" onClick={ showMore } /> }
                 </Flex>

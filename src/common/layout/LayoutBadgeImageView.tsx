@@ -1,7 +1,9 @@
 import { BadgeImageReadyEvent, NitroSprite, TextureUtils } from '@nitrots/nitro-renderer';
-import { CSSProperties, FC, useEffect, useMemo, useState } from 'react';
+import { CSSProperties, FC, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { GetConfiguration, GetSessionDataManager, LocalizeBadgeDescription, LocalizeBadgeName, LocalizeText } from '../../api';
 import { Base, BaseProps } from '../Base';
+import { Column } from '../Column';
 
 export interface LayoutBadgeImageViewProps extends BaseProps<HTMLDivElement>
 {
@@ -17,6 +19,20 @@ export const LayoutBadgeImageView: FC<LayoutBadgeImageViewProps> = props =>
 {
     const { badgeCode = null, isGroup = false, showInfo = false, customTitle = null, isGrayscale = false, scale = 1, classNames = [], style = {}, children = null, ...rest } = props;
     const [ imageElement, setImageElement ] = useState<HTMLImageElement>(null);
+    // Real reference behaviour, confirmed live via CDP hover on a fresh habbocity.fr tab (a static screenshot
+    // could never have caught this - the tooltip is entirely absent from the DOM until hovered): the name/
+    // description popup is NOT a static child of the badge div like this component used to render it - it's a
+    // real, already-ported, previously-unused primitive (.tooltip-c, _26-limited.scss) mounted only while
+    // hovering, portalled to document.body (position:fixed there already accounts for that), with a real
+    // directional arrow (.left/.right modifier + the CSS's own :after clip-path). Confirmed real reference
+    // content structure too: bold name, description, then a `code: <raw badge code>` row this project never had
+    // at all - added below, matching that exactly (plain literal "code:" text, not a locale key - the reference
+    // shows this same untranslated word even on an otherwise fully French account, so it isn't localized there
+    // either).
+    const [ isHovering, setIsHovering ] = useState(false);
+    const [ tooltipStyle, setTooltipStyle ] = useState<CSSProperties>({});
+    const [ tooltipSide, setTooltipSide ] = useState<'left' | 'right'>('right');
+    const elementRef = useRef<HTMLDivElement>(null);
 
     const getClassNames = useMemo(() =>
     {
@@ -90,13 +106,39 @@ export const LayoutBadgeImageView: FC<LayoutBadgeImageViewProps> = props =>
         return () => GetSessionDataManager().events.removeEventListener(BadgeImageReadyEvent.IMAGE_READY, onBadgeImageReadyEvent);
     }, [ badgeCode, isGroup ]);
 
+    // Position/side recomputed every time hover starts, same one-shot-on-open approach CustomSelect.tsx already
+    // uses for its own portalled panel (that one keeps re-placing every frame since its trigger can scroll under
+    // an open panel; a badge tooltip only exists while the pointer stays over a static infostand row, so a single
+    // measurement on hover-start is enough here - no scroll/resize case to track).
+    useEffect(() =>
+    {
+        if(!isHovering || !elementRef.current) return;
+
+        const rect = elementRef.current.getBoundingClientRect();
+        const tooltipWidth = 210;
+        const gap = 8;
+        const side: 'left' | 'right' = ((rect.right + gap + tooltipWidth) > window.innerWidth) ? 'left' : 'right';
+
+        setTooltipSide(side);
+        setTooltipStyle({
+            top: (rect.top + (rect.height / 2) - 16),
+            left: (side === 'right') ? (rect.right + gap) : (rect.left - gap)
+        });
+    }, [ isHovering ]);
+
     return (
-        <Base classNames={ getClassNames } style={ getStyle } { ...rest }>
-            { (showInfo && GetConfiguration<boolean>('badge.descriptions.enabled', true)) &&
-                <Base className="badge-information text-black py-1 px-2 small">
-                    <div className="fw-bold mb-1">{ isGroup ? customTitle : LocalizeBadgeName(badgeCode) }</div>
-                    <div>{ isGroup ? LocalizeText('group.badgepopup.body') : LocalizeBadgeDescription(badgeCode) }</div>
-                </Base> }
+        <Base innerRef={ elementRef } classNames={ getClassNames } style={ getStyle } onMouseEnter={ event => setIsHovering(true) } onMouseLeave={ event => setIsHovering(false) } { ...rest }>
+            { (isHovering && showInfo && GetConfiguration<boolean>('badge.descriptions.enabled', true)) && createPortal(
+                <Column gap={ 2 } className={ `tooltip-c badge-information ${ tooltipSide }` } style={ tooltipStyle }>
+                    <Column gap={ 2 } className="content-area">
+                        <Column gap={ 2 } className="content-area-inner">
+                            <div className="d-inline text-element text-break fw-bold mb-1">{ isGroup ? customTitle : LocalizeBadgeName(badgeCode) }</div>
+                            <div className="d-inline text-element text-break">{ isGroup ? LocalizeText('group.badgepopup.body') : LocalizeBadgeDescription(badgeCode) }</div>
+                            { !isGroup &&
+                                <div className="d-inline text-element text-muted fs-7 small">code: <div className="d-inline text-element text-select-all">{ badgeCode }</div></div> }
+                        </Column>
+                    </Column>
+                </Column>, document.body) }
             { children }
         </Base>
     );

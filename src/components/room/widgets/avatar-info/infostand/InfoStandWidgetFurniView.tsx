@@ -2,8 +2,8 @@ import { CrackableDataType, GroupInformationComposer, GroupInformationEvent, Now
 import { FC, useCallback, useEffect, useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import { AvatarInfoFurni, CreateLinkEvent, GetGroupInformation, GetNitroInstance, GetRoomEngine, GetWiredCreatorToolsSettings, LocalizeText, SendMessageComposer, WIRED_CREATOR_TOOLS_SETTINGS_EVENT } from '../../../../../api';
-import { Base, Button, Column, Flex, LayoutBadgeImageView, LayoutLimitedEditionCompactPlateView, LayoutRarityLevelView, Text, UserProfileIconView } from '../../../../../common';
-import { useMessageEvent, useRoom, useSoundEvent } from '../../../../../hooks';
+import { Base, Button, Column, Flex, LayoutBadgeImageView, LayoutLimitedEditionCompactPlateView, LayoutRareLevelView, LayoutRarityLevelView, Text, UserProfileIconView } from '../../../../../common';
+import { useMessageEvent, useRareLevels, useRoom, useSoundEvent } from '../../../../../hooks';
 import { CatalogIconView } from '../../../../catalog/views/catalog-icon/CatalogIconView';
 
 interface InfoStandWidgetFurniViewProps
@@ -20,6 +20,17 @@ export const InfoStandWidgetFurniView: FC<InfoStandWidgetFurniViewProps> = props
 {
     const { avatarInfo = null, onClose = null } = props;
     const { roomSession = null } = useRoom();
+    const { levels = new Map(), rooms = new Map(), requestRoom = null } = useRareLevels();
+    const rarityCode = (avatarInfo ? (levels.get(avatarInfo.typeId) ?? null) : null);
+    const rareRoom = (avatarInfo ? (rooms.get(avatarInfo.typeId) ?? null) : null);
+
+    // a rare furni also offers a room to go and see it in (asked once per rare while its panel is open)
+    useEffect(() =>
+    {
+        if(!avatarInfo || !rarityCode || rooms.has(avatarInfo.typeId)) return;
+
+        requestRoom(avatarInfo.typeId);
+    }, [ avatarInfo, rarityCode, rooms, requestRoom ]);
     
     const [ pickupMode, setPickupMode ] = useState(0);
     const [ canMove, setCanMove ] = useState(false);
@@ -364,6 +375,10 @@ export const InfoStandWidgetFurniView: FC<InfoStandWidgetFurniViewProps> = props
                                 <div className="position-absolute end-0">
                                     <LayoutRarityLevelView level={ avatarInfo.stuffData.rarityLevel } />
                                 </div> }
+                            { rarityCode &&
+                                <div className="position-absolute end-0">
+                                    <LayoutRareLevelView level={ rarityCode } />
+                                </div> }
                             { avatarInfo.image && avatarInfo.image.src.length && 
                                 <img className="d-block mx-auto" src={ avatarInfo.image.src } alt="" /> }
                         </Flex>
@@ -385,6 +400,12 @@ export const InfoStandWidgetFurniView: FC<InfoStandWidgetFurniViewProps> = props
                                 { LocalizeText('furni.owner', [ 'name' ], [ avatarInfo.ownerName ]) }
                             </Text>
                         </Flex>
+                        { rareRoom &&
+                            <Flex>
+                                <Text variant="white" small underline pointer wrap onClick={ event => CreateLinkEvent(`navigator/goto/${ rareRoom.roomId }`) }>
+                                    See it in { rareRoom.roomName }
+                                </Text>
+                            </Flex> }
                         { (avatarInfo.purchaseOfferId > 0) &&
                             <Flex>
                                 <Text variant="white" small underline pointer onClick={ event => processButtonAction('buy_one') }>

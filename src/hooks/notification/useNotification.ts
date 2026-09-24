@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { useBetween } from 'use-between';
 import { GetConfiguration, GetNitroInstance, GetRoomEngine, GetSessionDataManager, LocalizeBadgeName, LocalizeText, NotificationAlertItem, NotificationAlertType, NotificationBubbleItem, NotificationBubbleType, NotificationConfirmItem, PlaySound, ProductImageUtility, TradingNotificationType } from '../../api';
 import { useMessageEvent } from '../events';
+import { usePurse } from '../purse/usePurse';
 
 const cleanText = (text: string) => (text && text.length) ? text.replace(/\\r/g, '\r') : '';
 
@@ -22,6 +23,7 @@ const useNotificationState = () =>
     const [ confirms, setConfirms ] = useState<NotificationConfirmItem[]>([]);
     const [ bubblesDisabled, setBubblesDisabled ] = useState(false);
     const [ modDisclaimerShown, setModDisclaimerShown ] = useState(false);
+    const { currencyMeta = new Map() } = usePurse();
 
     const getMainNotificationConfig = () => GetConfiguration<{ [key: string]: { delivery?: string, display?: string; title?: string; image?: string }}>('notification', {});
 
@@ -249,15 +251,34 @@ const useNotificationState = () =>
         showModeratorMessage(parser.message, parser.url, false);
     });
 
+    // Real reference behavior, confirmed live against habbocity.fr's own client source: this
+    // notification fires for ANY currency type, in BOTH directions ("Tu as reçu X {name} !" /
+    // "Tu as perdu X {name}.", singular vs plural name depending on the amount) - this file
+    // previously only handled type 5 (a stock-Nitro "loyalty points" convention) and only gains,
+    // silently dropping every other currency's change notification and every loss. Real display
+    // names/colors come from the same new server protocol PurseView now uses (`currencyMeta`) - a
+    // currency with no known metadata (not one of this project's own added currencies) falls back
+    // to a generic "points" wording rather than showing nothing, since the reference's own server
+    // always has a name for every currency it tracks and ours doesn't yet for every stock type.
     useMessageEvent<ActivityPointNotificationMessageEvent>(ActivityPointNotificationMessageEvent, event =>
     {
         const parser = event.getParser();
 
-        if((parser.amountChanged <= 0) || (parser.type !== 5)) return;
+        if(parser.amountChanged === 0) return;
 
         const imageUrl = GetConfiguration<string>('currency.asset.icon.url', '').replace('%type%', parser.type.toString());
+        const meta = currencyMeta.get(parser.type);
+        const absChange = Math.abs(parser.amountChanged);
+        const name = meta ? ((absChange === 1) ? meta.name : meta.pluralName) : 'points';
 
-        showSingleBubble(LocalizeText('notifications.text.loyalty.received', [ 'AMOUNT' ], [ parser.amountChanged.toString() ]), NotificationBubbleType.INFO, imageUrl);
+        if(parser.amountChanged > 0)
+        {
+            showSingleBubble(`You received ${ absChange } ${ name }!`, NotificationBubbleType.INFO, imageUrl);
+        }
+        else
+        {
+            showSingleBubble(`You lost ${ absChange } ${ name }.`, NotificationBubbleType.INFO, imageUrl);
+        }
     });
 
     useMessageEvent<UserBannedMessageEvent>(UserBannedMessageEvent, event =>

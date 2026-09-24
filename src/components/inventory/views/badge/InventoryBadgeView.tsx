@@ -2,7 +2,7 @@ import { FC, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FaTrash } from 'react-icons/fa';
 import { LocalizeBadgeDescription, LocalizeBadgeName, LocalizeText, UnseenItemCategory } from '../../../../api';
-import { AutoGrid, Button, Column, Flex, Grid, LayoutBadgeImageView, Text } from '../../../../common';
+import { AutoGrid, Button, Column, Flex, Grid, LayoutBadgeImageView, LayoutBadgeRackView, Text } from '../../../../common';
 import { useInventoryBadges, useInventoryUnseenTracker } from '../../../../hooks';
 import { InventoryBadgeItemView } from './InventoryBadgeItemView';
 import { InventoryBadgeSearchView } from './InventoryBadgeSearchView';
@@ -19,7 +19,7 @@ export const InventoryBadgeView: FC<InventoryBadgeViewProps> = props =>
     const { searchSlot = null } = props;
     const [ isVisible, setIsVisible ] = useState(false);
     const [ filteredBadgeCodes, setFilteredBadgeCodes ] = useState<string[]>([]);
-    const { badgeCodes = [], activeBadgeCodes = [], selectedBadgeCode = null, isWearingBadge = null, canWearBadges = null, toggleBadge = null, getBadgeId = null, activate = null, deactivate = null } = useInventoryBadges();
+    const { badgeCodes = [], activeBadgeSlots = [], selectedBadgeCode = null, isWearingBadge = null, canWearBadges = null, toggleBadgeAtSlot = null, getBadgeId = null, activate = null, deactivate = null } = useInventoryBadges();
     const { isUnseen = null, removeUnseen = null } = useInventoryUnseenTracker();
 
     // Real, previously-missing feature: this project had no search bar at all for Badges - confirmed live on the
@@ -56,10 +56,45 @@ export const InventoryBadgeView: FC<InventoryBadgeViewProps> = props =>
     // NOT nested inside the right preview column - it's a separate, full-width footer row below the whole Grid,
     // confirmed live via bounding-rect capture (button width 455px, near the card's own full 528px width, not
     // the ~200px the right column alone would give it) - same real structural pattern already fixed for
-    // Furniture's own footer, and already correct from the start in Banners'. Trash icon's real function is
-    // unverified (same reasoning as Furniture's own trash button - no destructive test on the read-only
-    // reference, no dedicated composer for it in this project's own vendored protocol) - added visually, left
-    // unwired.
+    // Furniture's own footer, and already correct from the start in Banners'. Trash icon's real function IS now
+    // understood (found in the minified jy hook: removeBadge() splices the badge out of badgeCodes entirely and
+    // sends a discard composer) but still left unwired - no equivalent composer exists anywhere in this
+    // project's own vendored @nitrots/nitro-renderer package (checked every outgoing inventory/badges composer),
+    // so wiring a fake local-only "delete" would just desync from the server on next reload.
+
+    // Real reference mechanism (confirmed via the minified jy/ED sources, not guessed): badges live in FIXED,
+    // individually-addressable slots (activeBadgeSlots), not a compacting append/remove list - dragging a badge
+    // from the main grid onto a slot (or off the rack entirely) is the real wear/remove interaction, and the
+    // main grid does NOT filter worn badges out at all (confirmed live: a worn badge stays visible there too,
+    // just also shown "active" in the rack). The Wear/Remove button computes the badge's own current slot
+    // itself rather than calling the simple toggleBadge used by double-click.
+    const onSlotDrop = (slotIndex: number, droppedBadgeCode: string) => toggleBadgeAtSlot(slotIndex, droppedBadgeCode);
+
+    // Dragging a worn badge off the rack entirely (dropped somewhere that isn't a valid drop target) unequips
+    // it - confirmed live against the reference by dragging a rack badge out and releasing it over empty space.
+    const onBadgeDragEnd = (slotIndex: number, badgeCode: string, dropEffect: string) =>
+    {
+        if(dropEffect === 'none') toggleBadgeAtSlot(slotIndex, badgeCode);
+    }
+
+    const onWearRemoveClick = () =>
+    {
+        if(!selectedBadgeCode) return;
+
+        if(isWearingBadge(selectedBadgeCode))
+        {
+            const currentSlot = activeBadgeSlots.indexOf(selectedBadgeCode);
+
+            if(currentSlot !== -1) toggleBadgeAtSlot(currentSlot, selectedBadgeCode);
+        }
+        else
+        {
+            const emptySlot = activeBadgeSlots.indexOf('');
+
+            if(emptySlot !== -1) toggleBadgeAtSlot(emptySlot, selectedBadgeCode);
+        }
+    }
+
     return (
         <>
             { searchSlot && createPortal(<InventoryBadgeSearchView badgeCodes={ badgeCodes } setBadgeCodes={ setFilteredBadgeCodes } />, searchSlot) }
@@ -70,12 +105,10 @@ export const InventoryBadgeView: FC<InventoryBadgeViewProps> = props =>
                 <Grid fullHeight overflow="hidden">
                     <Column size={ 7 } overflow="hidden">
                         <AutoGrid columnCount={ 4 }>
-                            { filteredBadgeCodes && (filteredBadgeCodes.length > 0) && filteredBadgeCodes.map((badgeCode, index) =>
-                            {
-                                if(isWearingBadge(badgeCode)) return null;
-
-                                return <InventoryBadgeItemView key={ index } badgeCode={ badgeCode } />
-                            }) }
+                            { /* Real reference: worn badges stay in the main grid too (confirmed live - a worn
+                                 badge is still listed there, just also shown as "active" in the rack via the
+                                 same shared selectedBadgeCode) - it is never filtered out. */ }
+                            { filteredBadgeCodes && (filteredBadgeCodes.length > 0) && filteredBadgeCodes.map((badgeCode, index) => <InventoryBadgeItemView key={ index } badgeCode={ badgeCode } />) }
                         </AutoGrid>
                     </Column>
                     { /* Real reference structure, re-verified live against the actual reference (not the earlier,
@@ -95,35 +128,14 @@ export const InventoryBadgeView: FC<InventoryBadgeViewProps> = props =>
                     <Column justifyContent="center" size={ 5 } overflow="auto">
                         { !!selectedBadgeCode &&
                             <Flex gap={ 2 } alignItems="center">
-                                { /* Real, confirmed cause of inconsistent box sizes: .badge-image's own base CSS
-                                     rule (_24-utilities.scss) sets no width/height at all
-                                     ("position:relative; background-repeat:no-repeat; background-position:center")
-                                     - LayoutBadgeImageView only sets an inline width/height once its own image
-                                     has actually loaded, sized to THAT image's own natural dimensions (varies
-                                     ~39-42px per badge asset). An empty slot with no badgeCode got neither,
-                                     collapsing to 0x0. The reference's own rack cells are a fixed, uniform 42x42
-                                     regardless of content or load state - forced here via each slot's own style
-                                     prop (LayoutBadgeImageView already merges a caller style over its own
-                                     computed one, confirmed by reading its own source) rather than left to vary
-                                     with whatever asset happens to load. */ }
-                                <Column gap={ 1 } alignItems="start" classNames={ [ 'badge-layout' ] }>
-                                    <Flex gap={ 1 } alignItems="end">
-                                        { activeBadgeCodes[0] ? <LayoutBadgeImageView badgeCode={ activeBadgeCodes[0] } style={ { width: 42, height: 42 } } /> : <div className="badge-image" style={ { width: 42, height: 42 } } /> }
-                                        { activeBadgeCodes[0] ? <LayoutBadgeImageView isGroup badgeCode={ activeBadgeCodes[0] } style={ { width: 42, height: 42 } } /> : <div className="badge-image group-badge-image" /> }
-                                    </Flex>
-                                    { [ 1, 3, 5 ].map(rowStart =>
-                                        <Flex key={ rowStart } gap={ 1 } alignItems="center" justifyContent="center">
-                                            { [ rowStart, rowStart + 1 ].map(index =>
-                                            {
-                                                const badgeCode = activeBadgeCodes[index];
-
-                                                return badgeCode
-                                                    ? <LayoutBadgeImageView key={ index } badgeCode={ badgeCode } style={ { width: 42, height: 42 } } />
-                                                    : <div key={ index } className="badge-image" style={ { width: 42, height: 42 } } />;
-                                            }) }
-                                        </Flex>
-                                    ) }
-                                </Column>
+                                { /* Real reference structure (confirmed via the minified ql/jy sources): the rack
+                                     reuses the SAME draggable grid-item component as the main grid for every
+                                     slot (not a bare image) - real drag-and-drop wear/swap/remove, not just a
+                                     click target. Each slot is individually addressable (activeBadgeSlots[i]),
+                                     so removing badge #3 leaves a real gap instead of shifting #4-7 down. Now
+                                     shared with the User Profile's own read-only rack via LayoutBadgeRackView. */ }
+                                <LayoutBadgeRackView badgeCodes={ activeBadgeSlots } canDragAndDrop onSlotDrop={ onSlotDrop } onBadgeDragEnd={ onBadgeDragEnd }
+                                    renderBadge={ (badgeCode, slotIndex) => <InventoryBadgeItemView badgeCode={ badgeCode } style={ { width: 42, height: 42 } } onDragEnd={ event => onBadgeDragEnd(slotIndex, badgeCode, event.dataTransfer.dropEffect) } /> } />
 
                                 <Column gap={ 2 } alignItems="center">
                                     <LayoutBadgeImageView shrink badgeCode={ selectedBadgeCode } />
@@ -137,7 +149,7 @@ export const InventoryBadgeView: FC<InventoryBadgeViewProps> = props =>
 
             { !!selectedBadgeCode &&
                 <Flex fullWidth gap={ 1 }>
-                    <Button fullWidth grow variant={ (isWearingBadge(selectedBadgeCode) ? 'danger' : 'success') } disabled={ !isWearingBadge(selectedBadgeCode) && !canWearBadges() } onClick={ event => toggleBadge(selectedBadgeCode) }>
+                    <Button fullWidth grow variant={ (isWearingBadge(selectedBadgeCode) ? 'danger' : 'success') } disabled={ !isWearingBadge(selectedBadgeCode) && !canWearBadges() } onClick={ onWearRemoveClick }>
                         { LocalizeText(isWearingBadge(selectedBadgeCode) ? 'inventory.badges.clearbadge' : 'inventory.badges.wearbadge') }
                     </Button>
                     <Button variant="danger">

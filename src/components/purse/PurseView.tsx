@@ -7,7 +7,7 @@ import { CurrencyView } from './views/CurrencyView';
 
 export const PurseView: FC<{}> = props =>
 {
-    const { purse = null, hcDisabled = false } = usePurse();
+    const { purse = null, hcDisabled = false, currencyMeta = new Map() } = usePurse();
 
     const displayedCurrencies = useMemo(() => GetConfiguration<number[]>('system.currency.types', []), []);
     const currencyDisplayNumberShort = useMemo(() => GetConfiguration<boolean>('currency.display.number.short', false), []);
@@ -39,8 +39,8 @@ export const PurseView: FC<{}> = props =>
         <Column alignItems="end" className="nitro-purse-container" gap={ 1 }>
             <Flex className="nitro-purse" gap={ 2 }>
                 <Column className="nitro-purse-list" justifyContent="center" gap={ 0 }>
-                    <CurrencyView type={ -1 } amount={ purse.credits } short={ currencyDisplayNumberShort } />
-                    { activityPointTypes.map(type => <CurrencyView key={ type } type={ type } amount={ purse.activityPoints.get(type) } short={ currencyDisplayNumberShort } />) }
+                    <CurrencyView type={ -1 } amount={ purse.credits } short={ currencyDisplayNumberShort } color={ currencyMeta.get(-1)?.color } />
+                    { activityPointTypes.map(type => <CurrencyView key={ type } type={ type } amount={ purse.activityPoints.get(type) } short={ currencyDisplayNumberShort } color={ currencyMeta.get(type)?.color } />) }
                 </Column>
                 { !hcDisabled &&
                     <Column center pointer size={ 4 } gap={ 1 } className="nitro-purse-subscription rounded" onClick={ event => CreateLinkEvent('habboUI/open/hccenter') }>

@@ -1,6 +1,6 @@
 import { DesktopViewEvent, HabboWebTools, ILinkEventTracker, RoomSessionEvent } from '@nitrots/nitro-renderer';
-import { FC, useEffect, useState } from 'react';
-import { AddEventLinkTracker, GetCommunication, GetRoomSession, GetRoomSessionManager, RemoveLinkEventTracker } from '../../api';
+import { FC, useEffect, useRef, useState } from 'react';
+import { AddEventLinkTracker, CreateLinkEvent, GetCommunication, GetRoomSession, GetRoomSessionManager, RemoveLinkEventTracker } from '../../api';
 import { Base, TransitionAnimation, TransitionAnimationTypes } from '../../common';
 import { useMessageEvent, useRoomSessionManagerEvent } from '../../hooks';
 import { AchievementsView } from '../achievements/AchievementsView';
@@ -31,6 +31,7 @@ import { WiredCreatorToolsView } from '../wired-creator-tools-habbo/WiredCreator
 import { ChestView } from '../wired-chests/ChestView';
 import { ContractView } from '../wired-chests/ContractView';
 import { RewardPopupView } from '../wired-chests/RewardPopupView';
+import { UserProfileModerationView } from '../user-profile/UserProfileModerationView';
 import { UserProfileView } from '../user-profile/UserProfileView';
 import { UserSettingsView } from '../user-settings/UserSettingsView';
 import { WiredView } from '../wired/WiredView';
@@ -42,8 +43,21 @@ export const MainView: FC<{}> = props =>
 
     useRoomSessionManagerEvent<RoomSessionEvent>(RoomSessionEvent.CREATED, event => setLandingViewVisible(false));
     useRoomSessionManagerEvent<RoomSessionEvent>(RoomSessionEvent.ENDED, event => setLandingViewVisible(event.openLandingView));
+    const pendingRoomId = useRef<string>(new URLSearchParams(window.location.search).get('room'));
+
+    const openPendingRoom = () =>
+    {
+        const roomId = pendingRoomId.current;
+
+        pendingRoomId.current = null;
+
+        if(roomId && /^\d+$/.test(roomId)) CreateLinkEvent(`navigator/goto/${ roomId }`);
+    }
+
     useMessageEvent<DesktopViewEvent>(DesktopViewEvent, () =>
     {
+        openPendingRoom();
+
         const session = GetRoomSession();
 
         if(session) GetRoomSessionManager().removeSession(session.roomId);
@@ -56,6 +70,11 @@ export const MainView: FC<{}> = props =>
         setIsReady(true);
 
         GetCommunication().connection.onReady();
+
+        // the website's ?room=<id> deep link: the landing view's own DesktopViewEvent normally fires first, this is the fallback
+        const timer = window.setTimeout(openPendingRoom, 4000);
+
+        return () => window.clearTimeout(timer);
     }, []);
 
     useEffect(() =>
@@ -118,6 +137,7 @@ export const MainView: FC<{}> = props =>
             <RightSideView />
             <UserSettingsView />
             <UserProfileView />
+            <UserProfileModerationView />
             <GroupsView />
             <CameraWidgetView />
             <HelpView />

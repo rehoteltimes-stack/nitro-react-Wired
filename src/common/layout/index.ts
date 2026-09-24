@@ -1,6 +1,7 @@
 export * from './LayoutAvatarImageView';
 export * from './LayoutBackgroundImage';
 export * from './LayoutBadgeImageView';
+export * from './LayoutBadgeRackView';
 export * from './LayoutCounterTimeView';
 export * from './LayoutCurrencyIcon';
 export * from './LayoutFurniIconImageView';
@@ -16,6 +17,7 @@ export * from './LayoutNotificationBubbleView';
 export * from './LayoutPetImageView';
 export * from './LayoutProgressBar';
 export * from './LayoutRarityLevelView';
+export * from './LayoutRareLevelView';
 export * from './LayoutRoomPreviewerView';
 export * from './LayoutRoomThumbnailView';
 export * from './LayoutTrophyView';

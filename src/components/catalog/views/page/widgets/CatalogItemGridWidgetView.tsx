@@ -1,6 +1,6 @@
 import { FC, useEffect, useRef } from 'react';
 import { IPurchasableOffer, ProductTypeEnum } from '../../../../../api';
-import { AutoGrid, AutoGridProps } from '../../../../../common';
+import { AutoGrid, AutoGridProps, ScrollContainer } from '../../../../../common';
 import { useCatalog } from '../../../../../hooks';
 import { CatalogGridOfferView } from '../common/CatalogGridOfferView';
 
@@ -43,10 +43,16 @@ export const CatalogItemGridWidgetView: FC<CatalogItemGridWidgetViewProps> = pro
         }
     }
 
+    // Real reference structure (verified via CDP): the furni-icon grid is wrapped in the same
+    // .scroll-container/.scroll-bar custom-scrollbar chrome used elsewhere (Navigator's results list,
+    // Catalog's own nav sidebar) - grid-template-columns 1fr 6px, gap-2, a 6px .scroll-bar track. Plain
+    // AutoGrid's own native overflow:auto left a full-width OS scrollbar and no matching gutter instead.
     return (
-        <AutoGrid innerRef={ elementRef } columnCount={ columnCount } { ...rest }>
-            { currentPage.offers && (currentPage.offers.length > 0) && currentPage.offers.map((offer, index) => <CatalogGridOfferView key={ index } itemActive={ (currentOffer && (currentOffer.offerId === offer.offerId)) } offer={ offer } selectOffer={ selectOffer } />) }
-            { children }
-        </AutoGrid>
+        <ScrollContainer innerRef={ elementRef }>
+            <AutoGrid columnCount={ columnCount } { ...rest }>
+                { currentPage.offers && (currentPage.offers.length > 0) && currentPage.offers.map((offer, index) => <CatalogGridOfferView key={ index } itemActive={ (currentOffer && (currentOffer.offerId === offer.offerId)) } offer={ offer } selectOffer={ selectOffer } />) }
+                { children }
+            </AutoGrid>
+        </ScrollContainer>
     );
 }

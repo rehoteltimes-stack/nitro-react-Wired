@@ -1,8 +1,9 @@
 import { ILinkEventTracker } from '@nitrots/nitro-renderer';
-import { FC, useEffect, useMemo, useState } from 'react';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { AddEventLinkTracker, ClothesShopBuyComposer, ClothesShopDataEvent, ClothesShopItemData, ClothesShopOwnedEvent, ClothesShopRequestComposer, ClothesShopResultCode, ClothesShopResultEvent, FigureData, GetAvatarRenderManager, GetRoomEngine, GetSessionDataManager, LocalizeText, RegisterClothesShopMessages, RemoveLinkEventTracker, SendMessageComposer } from '../../api';
-import { AutoGrid, Button, Column, Flex, Grid, LayoutCurrencyIcon, LayoutGridItem, NitroCardContentView, NitroCardHeaderView, NitroCardTabsItemView, NitroCardTabsView, NitroCardView, Text } from '../../common';
+import { Base, Button, Flex, LayoutCurrencyIcon, LayoutGridItem, NitroCardHeaderView, NitroCardTabsItemView, NitroCardTabsView, NitroCardView, ScrollContainer, Text } from '../../common';
 import { useMessageEvent, useNotification } from '../../hooks';
+import { useAvatarEditorGridColumns } from '../avatar-editor/useAvatarEditorGridColumns';
 import { AvatarEditorFigurePreviewView } from '../avatar-editor/views/AvatarEditorFigurePreviewView';
 
 // Real, deliberate deviation from stock Arcturus (and from habbocity.fr's own real client, which matches stock
@@ -10,14 +11,15 @@ import { AvatarEditorFigurePreviewView } from '../avatar-editor/views/AvatarEdit
 // hcms-emulator-plugin's ClothesShopProtocol.java for the full write-up of why, and ClothesShopService.java for
 // the server-side grant logic this view's Buy button ultimately triggers.
 //
-// Visual/structural shape matched to the real Outfit Changer (AvatarEditorView.tsx) on request - "1:1 like soda
-// in the outfit changer" - rather than to Habz's own bespoke `nitro-clothes-shop` markup: the outfit changer is
-// this same codebase's own real, already-habbocity-styled feature (NitroCardTabsView category tabs, a 9/3 Grid
-// split with AvatarEditorFigurePreviewView as the real rotatable preview panel on the right, the exact same
-// component habbocity's own client already uses), so reusing it here gives genuine 1:1 consistency for free
-// instead of porting a second, parallel set of shop-specific classes. Categories (Face/Head/Torso/Legs) reuse
-// FigureData's own real type constants and this project's own already-correct Head/Torso/LegModel grouping,
-// rather than reversing habbocity/Habz's own type codes from scratch.
+// Structural shape (2026-09-22 rebuild): matched byte-for-byte to the outfit editor's now-corrected real
+// structure (AvatarEditorView.tsx/AvatarEditorModelView.tsx) - .nitro-avatar-editor's own real CSS
+// (_32-nitro-avatar.scss), figure-preview-section, the 40x40px flex-wrap item grid with the same
+// useAvatarEditorGridColumns row-chunking, and the same bottom full-width action-button row - rather than the
+// old col-9/col-3 Grid + 70px AutoGrid tiles this file used before that rebuild (which predated it and was
+// never revisited). No wardrobe sidebar here (nothing analogous to save/load a look exists for a shop), and no
+// colour-picker/palette column (ClothesShopItemData carries no colour/palette concept at all, confirmed in
+// ClothesShopProtocol.ts) - the right column instead shows the currently-focused item's own name/price/action,
+// which is this feature's real equivalent of that space.
 //
 // Known, deliberate scope cut, not an oversight: Habz's own real shop has a SEPARATE checkout confirmation card
 // (a basket review + explicit "Confirm purchase" step) before charging - this view charges directly off the one
@@ -68,6 +70,8 @@ export const ClothesShopView: FC<{}> = props =>
     const [ focusedItem, setFocusedItem ] = useState<ClothesShopItemData>(null);
     const [ previewFigureData ] = useState(() => new FigureData());
     const { simpleAlert = null } = useNotification();
+    const gridRef = useRef<HTMLDivElement>(null);
+    const columnCount = useAvatarEditorGridColumns(gridRef);
 
     useEffect(() => RegisterClothesShopMessages(), []);
 
@@ -159,6 +163,15 @@ export const ClothesShopView: FC<{}> = props =>
 
     const visibleItems = useMemo(() => items.filter(item => (itemCategories.get(item.clothingId) === activeCategory)), [ items, itemCategories, activeCategory ]);
 
+    const rows = useMemo(() =>
+    {
+        const rows: ClothesShopItemData[][] = [];
+
+        for(let i = 0; i < visibleItems.length; i += columnCount) rows.push(visibleItems.slice(i, (i + columnCount)));
+
+        return rows;
+    }, [ visibleItems, columnCount ]);
+
     // live preview: the player's own current look with every basket item's figure parts layered on top - the
     // exact same real merge PurchasableClothingConfirmView/CatalogViewProductWidgetView already use for their own
     // previews, not a separate invented mechanism.
@@ -214,77 +227,110 @@ export const ClothesShopView: FC<{}> = props =>
     if(!isVisible) return null;
 
     return (
-        <NitroCardView uniqueKey="clothes-shop" className="clothes-shop" theme="primary-slim">
+        <NitroCardView uniqueKey="clothes-shop" className="nitro-avatar-editor" overflow="visible" gap={ 3 }>
             <NitroCardHeaderView headerText={ LocalizeText('clothesshop.title') } onCloseClick={ () => setIsVisible(false) } />
-            <NitroCardTabsView>
-                { Object.keys(CATEGORY_TYPES).map(category =>
-                    <NitroCardTabsItemView key={ category } isActive={ activeCategory === category } onClick={ () => setActiveCategory(category) }>
-                        { LocalizeText(`avatareditor.category.${ (category === 'face') ? 'hd' : category }`) }
-                    </NitroCardTabsItemView>) }
-            </NitroCardTabsView>
-            <NitroCardContentView overflow="hidden">
-                <Grid overflow="hidden" fullHeight>
-                    <Column size={ 9 } overflow="hidden" gap={ 2 }>
-                        <AutoGrid columnCount={ 5 } columnMinWidth={ 70 } columnMinHeight={ 70 } overflow="auto" fullHeight>
-                            { visibleItems.map(item =>
-                            {
-                                const isOwned = ownedIds.has(item.clothingId);
-                                const inBasket = basket.has(item.clothingId);
+            <Flex gap={ 3 } classNames={ [ 'nitro-avatar-editor-content' ] }>
+                <Flex column fullWidth gap={ 2 }>
+                    <NitroCardTabsView>
+                        { Object.keys(CATEGORY_TYPES).map(category =>
+                            <NitroCardTabsItemView key={ category } isActive={ activeCategory === category } onClick={ () => setActiveCategory(category) }>
+                                { LocalizeText(`avatareditor.category.${ (category === 'face') ? 'hd' : category }`) }
+                            </NitroCardTabsItemView>) }
+                    </NitroCardTabsView>
+                    <Flex fullWidth fullHeight gap={ 2 } overflow="hidden">
+                        <Flex column fullWidth fullHeight gap={ 2 } grow>
+                            <Flex fullWidth grow style={ { flexBasis: 0 } } classNames={ [ 'figure-preview-section' ] }>
+                                <AvatarEditorFigurePreviewView figureData={ previewFigureData } />
+                            </Flex>
+                            <Flex column overflow="hidden" gap={ 2 } grow style={ { flexBasis: 0 } }>
+                                <ScrollContainer>
+                                    <Flex innerRef={ gridRef } column fullWidth>
+                                        { rows.map((row, rowIndex) =>
+                                            <Flex key={ rowIndex } fullWidth justifyContent="center">
+                                                { row.map(item =>
+                                                {
+                                                    const isOwned = ownedIds.has(item.clothingId);
+                                                    const inBasket = basket.has(item.clothingId);
 
-                                return (
-                                    <LayoutGridItem key={ item.clothingId } itemImage={ GetRoomEngine().getFurnitureFloorIconUrl(item.spriteId) } itemActive={ inBasket } disabled={ isOwned } pointer={ !isOwned } onClick={ () => toggleBasket(item) }>
-                                        { isOwned &&
-                                            <Text center small className="clothes-shop-owned-badge">{ LocalizeText('clothesshop.owned') }</Text> }
-                                        { !isOwned && inBasket &&
-                                            <Text center small className="clothes-shop-basket-badge">{ LocalizeText('clothesshop.in_basket') }</Text> }
-                                    </LayoutGridItem>
-                                );
-                            }) }
-                        </AutoGrid>
-                        { // real habbocity.tel/Habz pattern (confirmed live, not guessed): the grid tiles themselves
-                          // carry no price - a single info bar below shows whichever item was last clicked (name +
-                          // price + a context add/remove button), rather than a price label on every tile.
-                        }
-                        <Flex alignItems="center" justifyContent="between" gap={ 2 } className="clothes-shop-footer">
+                                                    return (
+                                                        <LayoutGridItem key={ item.clothingId } classNames={ [ 'avatar-editor-figure-set-item' ] } itemImage={ GetRoomEngine().getFurnitureFloorIconUrl(item.spriteId) } itemActive={ inBasket } disabled={ isOwned } pointer={ !isOwned } onClick={ () => toggleBasket(item) }>
+                                                            { isOwned &&
+                                                                <Text center small className="clothes-shop-owned-badge">{ LocalizeText('clothesshop.owned') }</Text> }
+                                                            { !isOwned && inBasket &&
+                                                                <Text center small className="clothes-shop-basket-badge">{ LocalizeText('clothesshop.in_basket') }</Text> }
+                                                        </LayoutGridItem>
+                                                    );
+                                                }) }
+                                            </Flex>) }
+                                    </Flex>
+                                </ScrollContainer>
+                            </Flex>
+                        </Flex>
+                        <Flex column fullWidth fullHeight center>
                             { focusedItem &&
                                 <>
-                                    <Flex alignItems="center" gap={ 2 } overflow="hidden">
-                                        <Text truncate>{ focusedItem.publicName || focusedItem.name }</Text>
-                                        { !ownedIds.has(focusedItem.clothingId) &&
-                                            <Flex alignItems="center" gap={ 1 }>
-                                                <Text bold>{ (focusedItem.costCredits > 0) ? focusedItem.costCredits : focusedItem.costPoints }</Text>
-                                                <LayoutCurrencyIcon type={ (focusedItem.costCredits > 0) ? -1 : focusedItem.pointsType } />
-                                            </Flex> }
-                                    </Flex>
+                                    <Text center bold truncate>{ focusedItem.publicName || focusedItem.name }</Text>
+                                    { !ownedIds.has(focusedItem.clothingId) &&
+                                        <Flex center gap={ 1 }>
+                                            <Text bold>{ (focusedItem.costCredits > 0) ? focusedItem.costCredits : focusedItem.costPoints }</Text>
+                                            <LayoutCurrencyIcon type={ (focusedItem.costCredits > 0) ? -1 : focusedItem.pointsType } />
+                                        </Flex> }
+                                    { ownedIds.has(focusedItem.clothingId) &&
+                                        <Text center>{ LocalizeText('clothesshop.owned') }</Text> }
                                     { !ownedIds.has(focusedItem.clothingId) &&
                                         <Button variant={ basket.has(focusedItem.clothingId) ? 'danger' : 'success' } disabled={ isPending } onClick={ () => toggleBasket(focusedItem) }>
                                             { LocalizeText(basket.has(focusedItem.clothingId) ? 'clothesshop.remove' : 'clothesshop.select') }
                                         </Button> }
                                 </> }
                         </Flex>
-                        <Flex alignItems="center" justifyContent="between" gap={ 2 } className="clothes-shop-buy-bar">
-                            <Flex alignItems="center" gap={ 2 }>
-                                { (totalCredits > 0) &&
-                                    <Flex alignItems="center" gap={ 1 }>
-                                        <Text bold>{ totalCredits }</Text>
-                                        <LayoutCurrencyIcon type={ -1 } />
-                                    </Flex> }
-                                { Array.from(totalPoints.entries()).map(([ type, amount ]) =>
-                                    <Flex alignItems="center" gap={ 1 } key={ type }>
-                                        <Text bold>{ amount }</Text>
-                                        <LayoutCurrencyIcon type={ type } />
-                                    </Flex>) }
-                            </Flex>
-                            <Button variant="success" disabled={ isPending || !basket.size } onClick={ buyAll }>
-                                { isPending ? LocalizeText('clothesshop.buying') : LocalizeText('clothesshop.buy', [ 'count' ], [ basket.size.toString() ]) }
-                            </Button>
+                    </Flex>
+                    { /* Real, own-feature adaptation per explicit user direction: "1:1 like the outfit editor,
+                         only where [it] save[s] outfits it should be the list[ing of] which clothes [are]
+                         chosen in [the] basket, all other same like choosing clothes and stuff". The outfit
+                         editor's bottom row ends in one full-width action button (Save); a shop's real
+                         equivalent of "what you're about to commit" isn't a single action, it's the actual
+                         basket contents - so that same full-width slot now lists every basketed item (icon +
+                         name, click to remove) instead of just a plain "Buy (n)" label, while everything else
+                         (grid, tabs, figure preview, per-item selection panel) stays identical to the editor. */ }
+                    <Flex grow gap={ 2 }>
+                        <Flex alignItems="center" gap={ 2 }>
+                            { (totalCredits > 0) &&
+                                <Flex alignItems="center" gap={ 1 }>
+                                    <Text bold>{ totalCredits }</Text>
+                                    <LayoutCurrencyIcon type={ -1 } />
+                                </Flex> }
+                            { Array.from(totalPoints.entries()).map(([ type, amount ]) =>
+                                <Flex alignItems="center" gap={ 1 } key={ type }>
+                                    <Text bold>{ amount }</Text>
+                                    <LayoutCurrencyIcon type={ type } />
+                                </Flex>) }
                         </Flex>
-                    </Column>
-                    <Column size={ 3 } overflow="hidden">
-                        <AvatarEditorFigurePreviewView figureData={ previewFigureData } />
-                    </Column>
-                </Grid>
-            </NitroCardContentView>
+                        <Flex fullWidth grow overflow="auto" alignItems="center" gap={ 1 } classNames={ [ 'flex-nowrap' ] }>
+                            { Array.from(basket).map(clothingId =>
+                            {
+                                const item = items.find(i => (i.clothingId === clothingId));
+
+                                if(!item) return null;
+
+                                return (
+                                    <Flex key={ clothingId } shrink pointer alignItems="center" gap={ 1 } className="btn btn-primary btn-xsm" onClick={ () => toggleBasket(item) }>
+                                        <Base style={ { width: 24, height: 24, backgroundImage: `url(${ GetRoomEngine().getFurnitureFloorIconUrl(item.spriteId) })`, backgroundSize: 'contain', backgroundRepeat: 'no-repeat' } } />
+                                        <Text small truncate>{ item.publicName || item.name }</Text>
+                                    </Flex>
+                                );
+                            }) }
+                            { /* No real locale key exists for this (own-feature basket, not in ExternalTexts.json's
+                                 real clothesshop.* set) - plain literal string, same honest-gap precedent as
+                                 User Settings' Moderate tab. */ }
+                            { !basket.size &&
+                                <Text small>Basket is empty</Text> }
+                        </Flex>
+                        <Button variant="success" disabled={ isPending || !basket.size } onClick={ buyAll }>
+                            { isPending ? LocalizeText('clothesshop.buying') : LocalizeText('clothesshop.buy', [ 'count' ], [ basket.size.toString() ]) }
+                        </Button>
+                    </Flex>
+                </Flex>
+            </Flex>
         </NitroCardView>
     );
 }

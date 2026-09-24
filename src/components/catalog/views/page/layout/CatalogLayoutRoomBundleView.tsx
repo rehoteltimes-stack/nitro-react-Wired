@@ -1,6 +1,6 @@
 import { FC } from 'react';
 import { Column } from '../../../../../common/Column';
-import { Grid } from '../../../../../common/Grid';
+import { Flex } from '../../../../../common/Flex';
 import { Text } from '../../../../../common/Text';
 import { CatalogAddOnBadgeWidgetView } from '../widgets/CatalogAddOnBadgeWidgetView';
 import { CatalogBundleGridWidgetView } from '../widgets/CatalogBundleGridWidgetView';
@@ -9,6 +9,8 @@ import { CatalogPurchaseWidgetView } from '../widgets/CatalogPurchaseWidgetView'
 import { CatalogSimplePriceWidgetView } from '../widgets/CatalogSimplePriceWidgetView';
 import { CatalogLayoutProps } from './CatalogLayout.types';
 
+// Same structural fix as CatalogLayoutDefaultView.tsx / CatalogLayoutSingleBundleView.tsx (identical layout
+// shape) - see CatalogLayoutSingleBundleView.tsx's own comment for the full rationale and verification caveat.
 export const CatalogLayoutRoomBundleView: FC<CatalogLayoutProps> = props =>
 {
     const { page = null } = props;
@@ -16,7 +18,7 @@ export const CatalogLayoutRoomBundleView: FC<CatalogLayoutProps> = props =>
     return (
         <>
             <CatalogFirstProductSelectorWidgetView />
-            <Grid>
+            <Flex fullHeight overflow="hidden">
                 <Column size={ 7 } overflow="hidden">
                     { !!page.localization.getText(2) &&
                         <Text dangerouslySetInnerHTML={ { __html: page.localization.getText(2) } } /> }
@@ -33,11 +35,11 @@ export const CatalogLayoutRoomBundleView: FC<CatalogLayoutProps> = props =>
                         <CatalogAddOnBadgeWidgetView position="absolute" className="bg-muted rounded bottom-0 start-0" />
                         <CatalogSimplePriceWidgetView position="absolute" className="bottom-0 end-0" />
                     </Column>
-                    <Column gap={ 1 }>
-                        <CatalogPurchaseWidgetView />
-                    </Column>
                 </Column>
-            </Grid>
+            </Flex>
+            <Flex gap={ 2 } classNames={ [ 'flex-fill', 'catalog-purchase-widget' ] }>
+                <CatalogPurchaseWidgetView />
+            </Flex>
         </>
     );
 }

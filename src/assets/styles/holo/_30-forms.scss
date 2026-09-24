@@ -65,6 +65,19 @@
   position: relative;
   width: var(--fill-input-range);
   height: var(--height);
+  // Own addition, not a reference-captured value: fixes a real bug found live (computed height
+  // resolved to a sub-pixel value even with an inline height:6px override) - this element has no
+  // intrinsic content, so nested in a flex-column next to sibling text lines (which have a real
+  // min-content line-height and resist shrinking), flexbox crushed it to make room for them. An
+  // explicit height alone is only a flex-basis hint, not a hard floor, without this.
+  //
+  // min-height, NOT flex-shrink:0 - a first version of this fix used flex-shrink:0, which also
+  // disabled the slider's real WIDTH-shrink-to-fit behavior in the volume row (a flex ROW context,
+  // where the main axis is width, not height) - confirmed live against the reference: its own
+  // slider has flex-shrink:1 and shrinks to exactly the row's remaining space after its sibling
+  // icons+gaps (176px of a 230px row, not the full 230px). min-height only floors the axis that
+  // was actually being crushed (height, in the Floor tab's column layout) without touching width.
+  min-height: var(--height);
 }
 
 .custom-input-range.disabled {

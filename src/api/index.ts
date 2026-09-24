@@ -1,5 +1,7 @@
 export * from './achievements';
 export * from './avatar';
+export * from './build-mode';
+export * from './rarity';
 export * from './builder-mode';
 export * from './camera';
 export * from './campaign';

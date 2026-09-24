@@ -153,6 +153,7 @@ export class AvatarInfoUtilities
         furniInfo.isRoomOwner = roomSession.isRoomOwner;
         furniInfo.roomControllerLevel = roomSession.controllerLevel;
         furniInfo.isAnyRoomController = GetSessionDataManager().isModerator;
+        furniInfo.typeId = model.getValue<number>(RoomObjectVariable.FURNITURE_TYPE_ID);
         furniInfo.ownerId = model.getValue<number>(RoomObjectVariable.FURNITURE_OWNER_ID);
         furniInfo.ownerName = model.getValue<string>(RoomObjectVariable.FURNITURE_OWNER_NAME);
         furniInfo.usagePolicy = model.getValue<number>(RoomObjectVariable.FURNITURE_USAGE_POLICY);

@@ -1,3 +1,245 @@
+# 🚨 EXECUTION CONTROLLER — MANDATORY
+
+Before touching code, read this controller AND the rest of this `CLAUDE.md`.
+
+## NEVER GUESS
+
+This is a reverse-engineering task, not a design task.
+
+Never invent or assume:
+
+* DOM structure
+* wrappers
+* classnames
+* IDs
+* CSS values
+* spacing
+* breakpoints
+* icons
+* component behavior
+* states
+* interactions
+* JavaScript logic
+* feature behavior
+
+If you don't know → **investigate the real HabboCity client.**
+
+If you cannot verify it → **mark it UNVERIFIED and do not implement it as fact.**
+
+---
+
+## DO NOT IMPLEMENT BEFORE INVESTIGATING
+
+Never:
+
+```text
+assume → code → open reference → discover it was wrong
+```
+
+Always:
+
+```text
+HabboCity
+→ inspect
+→ interact
+→ inspect DOM
+→ inspect computed styles
+→ inspect CSS
+→ inspect JS
+→ understand state/behavior
+→ inspect our implementation
+→ identify exact divergence
+→ implement
+→ verify again
+```
+
+Do not build an interpretation first and reverse-engineer the reference afterward.
+
+---
+
+## MANDATORY ORDER FOR EVERY COMPONENT
+
+1. **Live DOM via CDP**
+2. **DevTools Styles / Computed**
+3. **Real loaded CSS**
+4. **Real loaded/minified JS**
+5. **Reference interactions and states**
+6. **Our DOM**
+7. **Our computed styles**
+8. **Our source/state**
+9. **Identify the FIRST real divergence**
+10. **Fix that divergence**
+11. **Re-test**
+12. **Regression-check the component and its siblings**
+
+Never skip directly to CSS changes.
+
+---
+
+## IF OUR IMPLEMENTATION USES THE WRONG MECHANISM
+
+Do not patch it until it visually resembles the reference.
+
+First determine how the reference actually works.
+
+Example:
+
+```text
+REFERENCE:
+resize/move crop rectangle with 8 handles
+
+OURS:
+pan image inside fixed frame
+```
+
+Do NOT make the pan widget look similar with CSS.
+
+Reverse-engineer the reference mechanism and reproduce that mechanism.
+
+---
+
+## STATE COVERAGE IS REQUIRED
+
+Never verify only the first state you see.
+
+Where applicable, test:
+
+* empty
+* loading
+* populated
+* selected
+* unselected
+* hover
+* focus
+* active
+* disabled
+* open
+* closed
+* expanded
+* collapsed
+* error
+* success
+* min/max
+* landing
+* in-room
+* narrow viewport
+* desktop
+
+Also test features that only appear after clicking, hovering, opening, selecting, scrolling, filtering, resizing, etc.
+
+---
+
+## NO CSS BAND-AIDS
+
+If something is positioned incorrectly, trace:
+
+```text
+element
+→ parent
+→ container
+→ root
+```
+
+Compare the DOM hierarchy and computed layout with the reference.
+
+Do not solve a wrong hierarchy with:
+
+```css
+top: ...
+left: ...
+margin: ...
+transform: ...
+!important
+```
+
+unless the reference itself demonstrably uses that mechanism.
+
+Fix the real cause.
+
+---
+
+## SEARCH OUR PROJECT BEFORE CREATING ANYTHING
+
+Before creating a component, hook, primitive, wrapper or CSS rule, search:
+
+* `common/`
+* sibling components
+* existing hooks
+* existing primitives
+* existing styles
+* existing implementations
+
+If the project already has the correct primitive, use it.
+
+Do not create duplicate systems.
+
+---
+
+## REQUIRED COMPARISON
+
+Before a substantial change, determine:
+
+```text
+REFERENCE:
+DOM:
+CLASSNAMES:
+CSS:
+COMPUTED:
+JS:
+STATE:
+INTERACTION:
+
+OURS:
+DOM:
+CLASSNAMES:
+CSS:
+COMPUTED:
+JS:
+STATE:
+INTERACTION:
+
+FIRST DIVERGENCE:
+ROOT CAUSE:
+REQUIRED CHANGE:
+```
+
+Only then modify code.
+
+---
+
+## AFTER FIXING SOMETHING
+
+A symptom disappearing does NOT mean the component is finished.
+
+Run the verification chain again:
+
+```text
+DOM
+→ computed
+→ CSS
+→ JS
+→ states
+→ interactions
+→ our client
+→ regression
+```
+
+---
+
+## FINAL RULE
+
+Ask before every implementation decision:
+
+> **Did I observe this, or did I invent it?**
+
+If it was invented, stop and investigate.
+
+**OBSERVE → UNDERSTAND → IMPLEMENT → VERIFY**
+
+Never:
+
+## **ASSUME → IMPLEMENT → PATCH**
+
 # nitro-react-Wired — CLAUDE.md
 
 > ## CURRENT STATE (2026-09-22, branch `habbocity-rebuild`) — read this first
@@ -75,8 +317,69 @@ prompted it.
    duplicated/racy local copy of state a parent already owns correctly is a signal to check for the same pattern
    in sibling components, not a closed, one-off fix.
 
-See also `memory/feedback_side_by_side_property_comparison.md` and
-`memory/feedback_dom_js_css_cross_reference.md` for the earlier, narrower versions of this same discipline this
+6. **A component is not done after its first working state — enumerate every real state on the reference before
+   calling it finished, and check for an existing shared primitive before writing new markup for a solved
+   problem.** Case study, 2026-09-22: fixing Catalog's purchase-widget footer (buttons wrongly nested in the
+   preview column instead of a full-width footer row) was treated as complete after verifying only the
+   one-item-selected state. Three more real, confirmed gaps in the exact same component surfaced only because
+   the user separately had to ask about each one:
+   - The quantity spinner's own sub-markup (minus/plus buttons, input) had never been captured from the real
+     DOM/JS at all — it was built from a guessed icon set (`FaCaretLeft`/`FaCaretRight` + a native number
+     input) that doesn't exist on the reference (real: `FaMinus`/`FaPlus` in colored `.btn-xsm` buttons around
+     a `.custom-input-number`). "The container class is right" is not the same as "the contents are verified."
+   - The furni-icon grid used a plain native `overflow: auto` scrollbar instead of this project's own
+     already-built `ScrollContainer` component (used correctly elsewhere in this same file's nav sidebar) —
+     a shared primitive that already existed in the codebase went unused because nobody checked for one before
+     writing `<AutoGrid>` directly.
+   - The **empty/no-selection state** of the footer (nothing picked yet) was never checked at all — the
+     reference always renders the footer, showing a full-width disabled "no selection" button instead of
+     nothing. Only the happy-path (item selected) state had been interacted with on the reference.
+   None of these three needed a new investigation technique — the existing DOM/CSS/JS chain in rule 2 would
+   have caught every one of them. They were missed because the *state coverage* was incomplete, not because the
+   *method* was wrong. Concretely, before calling any component/interaction done:
+   - **List every real state it can be in** (empty/no-selection, loading, error, disabled, min/max boundary,
+     hover/focus/active/open/closed) by actually driving the reference into each one via CDP interaction — not
+     just whichever state happened to render first — and verify each one, not only the one that prompted the
+     fix.
+   - **Before writing any new sub-markup** (a control, an icon, a spinner, a scrollbar, a dropdown), search this
+     project's own `common/` and the component's siblings for an existing shared primitive built for that exact
+     pattern first. Reaching for a plain native element or a guessed icon when a verified, already-built
+     equivalent exists elsewhere in the codebase is itself a bug, not a neutral choice.
+   - This extends rule 5 (audit for the same bug in *sibling components*) to also cover *sibling states of the
+     same component* — a fix scoped to only the state that was reported is exactly as incomplete as a fix
+     scoped to only the component that was reported.
+
+7. **A symptom clearing up is not the same as a fix being complete — go back through the DOM/CSS/JS chain even
+   after the obvious bug resolves.** Given verbatim, 2026-09-23, after the Photos tab's stuck-loading-spinner
+   bug was fixed (a real hook-ordering issue, see the case study below) and reported as done: *"no check in
+   minified js css"* — the user rejected "the spinner resolves, therefore this is fixed" outright. Root-causing
+   *why* something is broken does not excuse skipping rule 2's own chain for verifying *what it should actually
+   look like* once it works. Going back through the chain on the now-working Photos tab immediately surfaced
+   three more real, independently-confirmed bugs a "spinner cleared, ship it" stop would have missed entirely:
+   a missing `ScrollContainer` wrapper, an image `src` built from the raw un-prefixed server value instead of
+   the real `${camera.url}/${id}.png` construction (would have rendered broken images for every real photo),
+   and a guessed empty-state string instead of the real locale key. **Concretely: finding and fixing the root
+   cause of a broken interaction is the START of verification, not the end of it** — once the mechanism works,
+   still walk it through Live DOM → Computed Styles → Minified CSS → Minified JS → compare ours, exactly as if
+   nothing had been fixed yet, because the original broken state usually prevented any of that comparison from
+   being meaningful in the first place.
+
+   **Case study — the hook-ordering registration bug class**, first documented in
+   `hooks/inventory/useInventoryBanner.ts`, confirmed as a recurring, real pattern (not a one-off) when the
+   exact same bug caused the Photos tab's stuck spinner and, separately, was pre-empted while building the
+   Wealth tab: any component that calls `RegisterXMessages()` inside a `useEffect` *after* a `useMessageEvent`
+   hook is declared will silently drop the real server response. React commits effects in hook-declaration
+   order — `useMessageEvent`'s own internal subscription effect resolves the real network header via
+   `getEventId()` at subscribe time; if the message class isn't registered yet when that runs, `getEventId()`
+   returns -1, the subscription silently no-ops, and the real response arrives with zero live listeners. No
+   client or server error is ever raised — the only visible symptom is data that never arrives (a spinner that
+   never resolves, a tab that never populates). **The fix is always the same shape: call `RegisterXMessages()`
+   synchronously in the component body, before any `useMessageEvent` hook for that same message class** — never
+   from inside a `useEffect`, regardless of how natural that placement looks. Check this specifically whenever
+   a brand-new request/response pair is wired into a component for the first time.
+
+See also `memory/feedback_side_by_side_property_comparison.md`, `memory/feedback_dom_js_css_cross_reference.md`,
+and `memory/feedback_component_state_coverage.md` for the earlier, narrower versions of this same discipline this
 section supersedes/generalizes.
 
 Persistent state doc for this project, same convention as `hCMS/CLAUDE.md`,
@@ -1396,6 +1699,102 @@ server (most likely because neither is a real account here, not because of a cli
 exception was thrown either time). Do not treat the add/remove flow as fully proven end-to-end;
 treat it as "wired correctly, structurally verified, one hop from the server unconfirmed."
 
+## Catalog purchase-widget + Outfit editor + Clothes shop pass (2026-09-22/23)
+
+**Catalog purchase widget fixed** (`CatalogLayoutDefaultView.tsx`, `CatalogPurchaseWidgetView.tsx`,
+`CatalogSpinnerWidgetView.tsx`, `CatalogItemGridWidgetView.tsx`): the default page layout used
+`<Grid>` (CSS grid, `g-col-7`/`g-col-5`) instead of the real `d-flex` `col-7`/`col-5`, and nested the
+Buy/Gift buttons + quantity spinner inside the ~200px col-5 preview column instead of the real
+full-width `catalog-purchase-widget` footer row below the whole grid — same class of bug as
+Inventory's Furniture/Badges tabs earlier. Fixed the layout, reordered Gift→spinner→Buy (verified via
+CDP: 150px/166px/150px, byte-identical to the reference), rebuilt the spinner as the real
+`.controls-input-number` box (`FaMinus`/`FaPlus` in `.btn-xsm` buttons, not the guessed
+`FaCaretLeft`/`Right`), and wrapped the furni-icon grid in the existing `ScrollContainer` primitive
+(was plain `overflow:auto` AutoGrid).
+
+**Outfit editor (`AvatarEditorView.tsx` family) — full structural rebuild**, since it turned out to
+still be the pre-rebuild stock layout (`Grid`/`col-9`/`col-3`), not the real habbocity structure
+despite older notes above claiming it was "already a careful, verified port" (that note predates the
+`habbocity-rebuild` reset). Real structure verified via CDP: `.nitro-avatar-editor-content` holds an
+**always-visible wardrobe sidebar** (not a 5th tab that replaces the model view — this was the single
+biggest structural miss) beside a main column (4 category tabs, then a row split into a LEFT column
+— figure-preview + rotate arrows + gender/category icon row, then the item grid — and a RIGHT column
+— a real 3-slider HSL `.input-color-picker` + a `.color-preview` toggle swatch, then the palette
+grid). Real, confirmed-and-fixed bugs along the way, roughly in the order found:
+- Wardrobe rebuilt to the real always-visible sidebar (5 rows × 2 slots, empty slot = `FaPlusCircle`
+  save button, filled slot = avatar render + hover-reveal Wear/Overwrite buttons) instead of a
+  tab-gated `AutoGrid`. Real crash found switching it: `savedFigures` starts as a **sparse**
+  `new Array(maxWardrobeSlots)` until the real `UserWardrobePageEvent` arrives; the old code iterated
+  with `.forEach()` (which skips holes), the rewrite used a `for` loop (which doesn't) — fixed with
+  `savedFigures[index] || [null, null]`. Gender-mismatch dimming (`pointer-events:none` +
+  `gender-mismatch` class on a saved look whose gender differs from the active one) added, verified
+  against the reference's own minified source; the wear action's head-strip-on-wear toggle left
+  unreplicated (real, unresolved gating flag in their source).
+- Real, cascading flex-sizing bugs, all the same root shape (a sibling with no matching
+  `flexBasis:0`/`grow` claims 100% of its neighbour's space): figure-preview-section collapsing to 0
+  height, then 0 width; the category-icon row squeezing the 90px-wide avatar preview down to 30px on
+  the 5-icon HEAD tab; the 3 colour-picker slider bars themselves rendering at 0px height (their own
+  CSS has no explicit height, same shape as `.figure-preview-section`'s own `height:0`-as-flex-basis
+  contract) — every one confirmed by measuring the real reference's own computed rects first, never
+  guessed. `AvatarEditorFigurePreviewView`'s leftover `scale={2}` (from the old, differently-sized
+  layout) also fixed — real avatar-image is a plain unscaled 90×130px, not 180×260.
+- Real feature-set/palette grid columns: was `AutoGrid` (CSS-grid auto-fill, `columnMinWidth`),
+  producing 7 columns at 32px instead of the real 5 columns at 40px
+  (`.avatar-editor-figure-set-item`/`.avatar-editor-palette-set-item`'s own real CSS is fixed
+  40×40px + margin, confirmed in `_32-nitro-avatar.scss`). Replaced with a new shared hook,
+  `useAvatarEditorGridColumns.ts` (`ResizeObserver`-driven `Math.floor((width+14)/47.5)`, the +14
+  compensating for the real ScrollContainer scrollbar gutter this grid always sits inside — matches
+  the reference's own real column count exactly, verified on all 4 tabs incl. HEAD's 5-icon case).
+- **Colour picker's real function, resolved by direct interaction, not by reading source alone**: an
+  early pass added a CIE-Lab colour-distance palette filter based on a minified function that looked
+  like the mechanism; live-dragging the reference's own hue slider through 5 different positions
+  disproved that (palette count identical every time) and the filter was removed - then the user
+  asked for it back (their own explicit call, palette usefulness over strict fidelity to an
+  under-populated dev palette), so it's back, gated so it only filters once a slider is actually
+  adjusted (confirmed via CDP: enabling the picker alone does not filter; the first real drag does).
+  Running the **identical drag on both clients** confirmed the filter math itself is byte-correct —
+  our 5 matches for a fixed target hue were an exact, in-order subset of the reference's 55 matches
+  for the same hue — the gap was `FigureData.json` itself (see below), not the component.
+- Bottom action row (`ButtonGroup` + a new own-feature `FaShoppingBag` "open the shop" button + Save)
+  had `grow`; since `AvatarEditorModelView` (the real space-filling middle section) is conditionally
+  rendered and briefly absent on a cold mount before `model.init()`/`selectCategory()` resolve, that
+  row became the only growing flex child and expanded to fill the whole card - "buttons show huge
+  first, then the boxes appear," reported after a real cache-cleared load. Fixed by removing the
+  unneeded `grow` (the model view's own `fullHeight` already claims the space once it mounts).
+
+**`hCMS/public/cdn/gamedata/FigureData.json` merged with HabboCity's real colour palettes**
+(separate repo, real production game data — not a client-code fix). Confirmed via a direct
+side-by-side drag test that our palette 2/3 had far fewer colours than habbocity's (218/229 vs.
+850/872) — this, not a filtering bug, was why the colour picker looked so much less useful on our
+side. Backed up the original file, then did an **additive-only merge** (new HabboCity colours not
+already present by hex code get appended with brand-new, non-colliding ids; every existing colour
+id/hex/club/selectable value stays byte-identical) rather than a wholesale replace, since a straight
+replace risks silently reassigning existing colour ids to different hexes and changing already-worn
+outfits site-wide. Result: palette 1 136→162, palette 2 218→761, palette 3 229→824. Verified:
+`setTypes` untouched, every original colour preserved byte-for-byte, no id collisions (1747 unique
+ids for 1747 colours), and a live re-test of the same drag now returns 56 matches (vs. the
+reference's 55 for the same hue) with a newly-added colour confirmed clickable and applying to the
+avatar. Backup at `FigureData.json.bak-<timestamp>` in that same directory if this ever needs
+reverting.
+
+**Clothes shop (`ClothesShopView.tsx`) rebuilt 1:1 to this now-fixed outfit editor's real structure**,
+per explicit user direction — this is hCMS's own instant-grant clothing shop, not a HabboCity
+feature, so "1:1" here means matching our own now-corrected reference implementation rather than a
+second, independent habbocity capture. Reuses `.nitro-avatar-editor`'s real CSS, `AvatarEditorFigurePreviewView`
+directly, and the same `useAvatarEditorGridColumns` 40×40px row-chunked grid. No wardrobe sidebar
+(no save/load-look concept in a shop) and no colour-picker/palette (`ClothesShopItemData` carries no
+colour data at all, confirmed in `ClothesShopProtocol.ts`) - the right column instead shows the
+focused item's name/price/basket-toggle. Per explicit follow-up direction, the bottom full-width
+slot that's a plain "Save" button in the outfit editor is instead the actual basket contents here
+(scrollable row of small icon+name tags, click to remove) next to the credit/point totals and the
+Buy button - "where it saves outfits, list what's in the basket instead; everything else (choosing
+clothes) stays the same." A real bug found while wiring the new outfit-editor→shop button: clicking
+it left the outfit editor open underneath the shop (both default to the same centred position) -
+fixed by closing the editor (`setIsVisible(false)`) before firing `CreateLinkEvent('clothes-shop/toggle')`.
+Verified end-to-end: opening the shop, adding a real unowned item to the basket, seeing it listed
+with its price, removing it via the basket entry, and the empty-basket state ("Basket is empty",
+"BUY (0)" disabled) all confirmed via CDP on the dev client.
+
 ## Full feature inventory — still not done
 
 Per the extension mandate, the following real HabboCity UI surfaces have **not** been scanned at
@@ -1403,25 +1802,761 @@ all yet: dialogs/popups in general, notifications, tooltips, context menus (foun
 already has a full, seemingly well-built `ContextMenuView` component family with position-tracking/
 fade/collapse logic and matching ported CSS — not live-verified since triggering a real one needs an
 actual in-room avatar/furniture click, more setup than a quick check afforded this session),
-pagination, and every loading/empty/error state across all of the above. Navigator, Catalog,
-Inventory, and User Settings all got first real passes this session (see their own sections above)
-but none is fully done — Navigator's Room Creator carousel/custom-selects, Catalog's entire content
-area beyond the shell, Inventory's per-tab vs. shared search-bar position, and User Settings' Floor
-tab (deliberately unbuilt) are all still open. **Do not report the full mandate as complete** — only
-the toolbar family (purse/room-tools/chat-style/Me-panel/friend-bar), the outfit editor, Navigator's
-browse/search shell (not its Room Creator), Catalog's card shell (not its actual content),
-Inventory's search-bar markup (not its position, not its content), and now User Settings (General +
-the new Moderate/ignore-list tab, not Floor) have had a real pass.
+pagination, and every loading/empty/error state across all of the above.
+
+**Updated status (2026-09-23):** Navigator, Catalog, Inventory, User Settings, and the Outfit editor
+have all had real passes (see their own sections above), plus the own-feature Clothes shop — but
+**none of these is fully done**:
+- Navigator: browse/search shell only — Room Creator carousel/custom-selects still stock.
+- Catalog: card shell, the default page layout's purchase widget, **and (2026-09-23) all 9 of the
+  other layout types** (`CatalogLayoutBadgeDisplayView`, `ColorGroupingView`, `GuildCustomFurniView`,
+  `GuildForumView`, `RoomBundleView`, `SingleBundleView`, `SoundMachineView`, `SpacesView`,
+  `TrophiesView`, plus `pets/CatalogLayoutPetView`) checked directly in source and confirmed to have
+  the exact same two bugs as the pre-fix default layout: root `<Grid>` (CSS grid `g-col-7`/`g-col-5`)
+  instead of the real `d-flex` `col-7`/`col-5`, and `CatalogPurchaseWidgetView`/`CatalogSpinnerWidgetView`
+  nested inside the narrow col-5 column instead of the real full-width `catalog-purchase-widget`
+  footer sibling — none had inherited the default layout's fix for free, contrary to the "likely
+  inherited" guess this note previously made. All 9 fixed the same way (`tsc` clean across all),
+  but **not individually CDP-verified against a live reference page for each of the 9 real
+  layoutCodes** (`badge_display`/`default_3x3_color_grouping`/`guild_custom_furni`/`guild_forum`/
+  `room_bundle`/`single_bundle`/`soundmachine`/`spaces_new`/`trophies`/`pets`) - only the mechanism
+  (shared component, shared real CSS class) was confirmed, not each page's own unique content
+  (bundle grids, guild widgets, pet colour/name flow, etc.). Flag for a real per-type verification
+  pass if any of these looks wrong on a live page.
+- Inventory: search-bar markup only, not its shared-vs-per-tab position.
+- User Settings: General + Moderate tabs, not Floor (deliberately unbuilt).
+- **Outfit editor: now a real, deep, structural pass** (wardrobe sidebar, figure-preview/category-icon
+  sizing, item/palette grid columns, colour-picker mechanics, bottom-row cold-mount race) — see the
+  dedicated section above. Not yet checked: the colour-picker's own gradient-stop generation for
+  canal-b/c (ours computes them from HSL math; the reference's own exact per-drag gradient formula
+  wasn't traced, only the static default-state values were confirmed to match), and full interaction
+  parity for every one of the 4 category tabs' item-set edge cases (only Face&Body/Head/Torso/Legs
+  base structure was checked, not e.g. HC-gated parts or the football-gate variant referenced in the
+  reference's own `isFromFootballGate` prop, never investigated).
+- **Clothes shop: real, own-feature-adapted pass complete** for its scope (grid, tabs, figure
+  preview, basket) — see its own section above. Its own bottom-row cold-mount behaviour (does it
+  have the same race the outfit editor had?) was not separately re-tested after the fix.
+- **`FigureData.json` colour palettes** (hCMS repo, not this one) now much closer to habbocity's real
+  counts (761/824 vs. 850/872 for palettes 2/3) but not byte-identical — the additive merge only adds
+  colours habbocity has that we don't; it doesn't reconcile ordering/index groupings, which may still
+  differ from the reference's own real layout within the palette grid.
+
+**Do not report the full mandate as complete.**
+
+## Badges + User Profile pass (2026-09-23)
+
+**Badge wear/remove parity + 7-slot cap fixed.** Root cause of "wearing 7 badges only shows 5": a
+hardcoded `for(int i=0;i<5;i++)`/`slot<1||slot>5` loop bound in Arcturus core's own
+`UserWearBadgeEvent.java` (a genuine stock-emulator limitation, not a client bug) - fixed to `7`
+directly in core (the one exception to the "extend via the plugin, not core" rule, explicitly
+approved). Client-side: `useInventoryBadges.ts` rewritten from a compacting `activeBadgeCodes[]` to
+a fixed-size `activeBadgeSlots[]` with real slot-swap logic (`toggleBadgeAtSlot`), matching the
+reference's actual drag-to-slot mechanism (new `draggable`/`onDragStart` on
+`InventoryBadgeItemView.tsx`, new shared `common/layout/LayoutBadgeRackView.tsx` reused by both
+Inventory's own rack and the Me-panel/infostand badge display). Also fixed: `InfoStandWidgetUserView`
+never requested another player's current badges on open (only listened for the change broadcast) -
+added the missing `UserCurrentBadgesComposer` request, same pattern `UserProfileView` already used.
+
+**User Profile: Banner/Stats/Cover/Pictures protocols added end-to-end**, all via
+`hcms-emulator-plugin` (never core), mirroring the project's established custom-protocol pattern
+(opcode consts, `RegisterXMessages()`, composer/parser pairs on the client; `XProtocol.java`,
+`MessageHandler`/`MessageComposer` pairs registered in `HcmsPlugin.onEmulatorLoaded` on the server).
+Real bug fixed along the way: the equippable "player banner" (`.body-image`) and the user-uploaded
+profile cover (`.profile-banner`) are two separate real fields/elements - an early pass wired the
+wrong one onto `.profile-banner`, caught by comparing computed styles on the live reference (no
+image on `.profile-banner` for the test account vs. a real `background-image` on `.body-image`).
+
+**Cover-crop widget rebuilt from the real reference mechanism, not guessed.** First implementation
+was a "pan image inside a fixed frame" widget built without checking the real minified source first
+- explicitly stopped and redone per the OBSERVE-FIRST/IMPLEMENT-SECOND protocol. The real reference
+(`sO` in the minified bundle) is a resize/move rectangle with 8 drag handles, aspect-ratio-locked to
+`wantedSize`, drawn over a letterboxed (never-cropped) source image, dimmed via an SVG `<mask>` (a
+white full-rect plus a black rounded-rect cutout). Rebuilt as `common/profile/
+ProfileCoverCropWidgetView.tsx` and live-verified byte-identical against the reference via simulated
+CDP drag tests (settled rect position/size and post-drag deltas matched exactly on both clients).
+
+**Photos tab: built, found broken, root-caused via the mandated JS/CSS cross-reference, fixed.**
+Symptom: the tab's loading spinner never resolved, with no client or server error. Root cause was a
+**hook-ordering bug**, same class already documented in `hooks/inventory/useInventoryBanner.ts`'s own
+comment: `UserProfilePicturesTabView.tsx` called `useMessageEvent<ProfilePicturesDataEvent>` *before*
+the `useEffect` that called `RegisterProfilePicturesMessages()`. React commits effects in
+hook-declaration order, so `useMessageEvent`'s own subscription effect (which resolves the real
+network header via `getEventId()`) ran first, while the message class was still unregistered -
+`getEventId()` returned -1, the subscription silently no-opped, and the real 9536 response had zero
+live listeners. Fixed by moving `RegisterProfilePicturesMessages()` to run synchronously in the
+component body, before the `useMessageEvent` hook - the same fix shape as `useInventoryBanner.ts`.
+
+**Per the user's explicit correction mid-fix ("check in minified js css") - did not stop at "spinner
+resolves," went back through the mandated chain against the live reference and found two more real
+bugs the original build had guessed wrong:**
+- The furni-icon-grid-style `.scroll-container`/`ScrollContainer` wrapper (used identically by
+  Catalog's item grid, Navigator's results list) was missing entirely - confirmed via live DOM
+  capture of the reference's own Photos panel (`.scroll-container.h-100...grid...` wrapping a
+  `.scroll-content.vertical` wrapping the AutoGrid). Added.
+- **Image `src` was wired directly to the raw server value** (`picture.url`), but the reference
+  builds it as `` `${camera.url config}/${a.url}.png` `` (confirmed via the real minified bundle:
+  `src:`${pe("camera.url")}/${a.url}.png`` ``) - the stored `camera_web.url` value (traced through
+  Arcturus core's own `CameraPublishToWebEvent`/`CameraResultURLEvent`) is a bare render-server id
+  with no host or extension, same convention this project's own `CameraWidgetCheckoutView.tsx`
+  already uses for a different camera flow. Passing it raw would have rendered a broken path for
+  every real photo. Fixed to `` `${GetConfiguration('camera.url')}/${picture.url}.png` ``.
+- Empty-state text was a guessed English string; the real bundle showed the actual title/desc pair
+  ("Pas de photos!" / "Cet utilisateur ne possède pas encore de photos."). No confirmed locale key
+  exists for the title specifically, but `avatar.profile.photos.empty` (found in hCMS's own
+  `ExternalTexts.json`) matches the desc's real meaning - swapped the hardcoded desc string for
+  `LocalizeText('avatar.profile.photos.empty')`, left the title as an honest plain-string
+  translation since no distinct key was found for it.
+- Also confirmed via the same minified-bundle read, **not yet built, flagged not guessed**: the
+  reference has a distinct `isPrivate` empty state ("Photos privées!") with no backing anywhere in
+  this project's stack (no privacy-toggle column found, same documented gap as before - the gallery
+  stays always-public, matching real data honestly).
+- **Click-to-view (`profile-picture/<username>/<id>/<index>`) investigated live, found non-
+  functional on the reference itself - not built.** The minified source calls an internal router
+  function (`Ce(...)`) on click, so a follow-up pass tested it directly on `habbocity.fr` (own
+  account, own profile, the one real published photo, fresh tab to rule out stale state): recorded
+  the iframe's `window.location.href` and the full CDP tab list before clicking, clicked the real
+  `.profile-picture-entry` image, then rechecked both. Result: **no observable effect at all** -
+  frame URL unchanged (no hash change either), no new browser tab opened, no new
+  `.draggable-window` card appeared, outer `habbocity.fr/hotel` tab URL unchanged. Same class of
+  finding as `.icon.icon-rooms` and the outfit editor's `FaRecycle` button elsewhere in this file -
+  a real, present click handler that produces zero confirmed effect on the live reference right
+  now. Per the "don't implement unverified behavior" rule, left the `<img>` non-interactive rather
+  than wire a click handler to a route with no confirmed real destination.
+
+**Still fully unbuilt**: the Wealth tab (real historical wealth-over-time chart - diamonds/badges/
+items/total/classics; no backing anywhere in the stack, not attempted this session).
+
+**Rooms tab fixed** (user report: "rooms is wrong"). Root cause traced via the minified bundle:
+`UserProfileRoomsTabView.tsx` reused `NavigatorSearchResultView` with its plain defaults, but the
+real reference (`VI` in the minified bundle) passes two extra props into this exact same shared
+component rather than using a separate one - `fromProfile:!0` (confirmed live: disables the
+collapse/expand toggle entirely, the reference's profile Rooms-tab header has no +/- icon and
+clicking that area does nothing) and `setCategoryTitle:` \`Appartements de ${username}\` `` (a
+literal override string hardcoded in their own source, not a LocalizeText key - bypasses the
+`searchResult.code` locale-key lookup, which was falling through to the server's own literal
+`searchResult.data` echo since `"profile_view"` isn't a real navigator code, producing a
+wrong-looking "Text Search" header). Added both props to `NavigatorSearchResultView.tsx` itself
+(optional, default off/empty, so the main Navigator's own usage is unaffected) and wired them from
+`UserProfileRoomsTabView.tsx`. Also fixed in the same pass: the shared component's list-mode toggle
+icon was `FaBars`; the real icon (confirmed by exact SVG path match against `node_modules/
+react-icons/fa/index.js`) is `FaTh` - a real bug in the shared component affecting the main
+Navigator too, not profile-specific. Added the missing `.scroll-container` wrapper (same recurring
+gap as everywhere else this session). Verified live on the dev client: header now reads "Phi's
+Rooms", the toggle area has zero children (matches reference exactly), `.scroll-container` present.
+
+**Profile header structure fixed** (user report: "why overall profile structure layout is not
+right"). Traced upward through the DOM per rule 3 rather than patched: the header block's real
+reference structure is `.content-area-inner`'s first child, a plain `flex-column` wrapping
+`.profile-banner` (full-width, 452x115, ITS OWN sibling row) directly above `.profile-data` (a row
+containing `.profile-infostand` + a second flex-COLUMN of button-group/`.profile-stats`/motto-row) -
+confirmed via `getBoundingClientRect` on both: `.profile-banner` at (494,127,452x115),
+`.profile-data` at (494,246,452 wide) directly below it (same x, same width, stacked not
+side-by-side), and the three children of the bottom block all sharing x=673 at increasing y
+(246/291/340, i.e. also stacked). This file had `.profile-banner` and `.profile-data` as two
+children of one `Flex` **row** (banner squeezed beside the avatar/data column instead of a full-
+width strip on top), and the bottom block as a `Flex` **row** justified `between` (button-group and
+the stats+motto Column side by side) instead of a column - both wrong container directions, not a
+CSS issue (the real `.profile-banner`/`.profile-infostand`/`.profile-stats` rules were already
+correctly ported in `_59-user-profile.scss`, confirmed before touching anything). Also added two
+real, previously-missing classnames found in the same DOM capture: `.profile-stats` (own real
+`font-size:13px` rule, already in the SCSS, just never applied) wrapping the created/lastlogin and
+achievement/respects columns with a real `.vertical-separator` between them, and
+`.profile-stats-online-icon` on the online/offline `<i>`. Fixed `UserProfileView.tsx`'s JSX to the
+real column/row nesting; verified live on the dev client - every rect now byte-identical to the
+reference's own captured values (banner 494,127,452x115; data 494,246,452w; button-group/stats/
+motto at x=673, y=246/292/340).
+
+**Rooms tab, second bug fixed: rooms genuinely not showing (server-side, not the client fix above).**
+After the header/toggle/icon fix, the account's own real Rooms tab still showed 0 rooms despite the
+account genuinely owning 2 (confirmed via the toolbar's own separate "My Rooms" shortcut,
+`icon-me-rooms` -> `navigator/search/myworld_view`, an independent code path that correctly showed
+both). Traced server-side rather than assumed a data gap: `NavigatorSearchComposer('profile_view',
+'owner:'+username)` - `'profile_view'` is confirmed real (byte-identical to HabboCity's own minified
+source), but stock Arcturus's `RequestNewNavigatorRoomsEvent.handle()` only strips the `"owner:"`
+query prefix **inside an `if (filter != null)` block**, and `NavigatorManager.filters` (a real
+`THashMap<String,NavigatorFilter>`) has no `"profile_view"` entry in stock Arcturus - so `filter`
+stays `null`, the prefix-stripping is skipped entirely, and the request falls through to the
+`"hotel_view"` fallback filter searching room NAMES for the literal, still-prefixed text
+`"owner:xPhi"` - which obviously never matches. A genuine stock-emulator routing gap, not a client
+bug and not a real "this account has no rooms" case. Fixed via the plugin, not core (`filters` is a
+public field `Emulator.getGameEnvironment().getNavigatorManager().filters`, mutable from outside):
+new `hcms-emulator-plugin/profile/NavigatorProfileViewFilter.java` registers `"profile_view"`,
+delegating to the already-existing, already-correct `RoomManager.getRoomsForHabbo(String username)`
+(handles both online and offline owners). One real trap found and avoided while writing it: the
+returned `SearchResultList`'s own `filter` flag (8th constructor arg) must be `false`, not `true` -
+`RequestNewNavigatorRoomsEvent` unconditionally re-runs a generic reflection-based field match
+(`filter.filter(field.field, part, resultLists)`) after `getResult()` returns, and `true` there
+would re-filter the already-correct, already owner-scoped room list against the bare username as a
+room-NAME match, wiping out every real room again. Registered in `HcmsPlugin.onEmulatorLoaded`,
+built, deployed (stop/copy/start, user-approved), verified live: boot log shows
+`"NavigatorProfileViewFilter registered (profile_view)"`, no errors, and the dev client's own
+profile Rooms tab now shows both real rooms ("Habbo", "Hix") - matching the toolbar's own
+independent "My Rooms" count exactly.
+
+**Motto editing investigated (user report: "cant edit motto") - confirmed already correctly built,
+in its real location, not the profile card.** Traced the real mechanism via the minified bundle
+first, per rule 2 (not guessed): the reference's own profile-card motto (`.profile-stats-motto`)
+has `pointer:!0`/`select:"text"` but **no `onClick` at all** in its own source - confirmed live too
+(clicking it on the reference produces zero DOM change). Motto editing is a **different, real
+feature entirely**: the in-room infostand for your OWN avatar (`e.type===$t.OWN_USER` in the
+minified bundle) - a pencil icon, click-to-edit `Text`->`<input type="text" className="motto-input"
+maxLength={motto.max.length}>` swap, save on blur/Enter. This project's own
+`InfoStandWidgetUserView.tsx` **already implements this exactly**, byte-for-byte matching what was
+just independently decompiled (same `FaPencilAlt` icon, same click-to-edit swap, same
+`motto.max.length` config key, `roomSession.sendMottoMessage(motto)` -> real `UserMottoComposer` ->
+Arcturus core's own `SaveMottoEvent` handler, confirmed registered in `PacketManager.java`) - this
+was already a real, verified pass from earlier in this project's history, not new work. No bug
+found; the likely explanation is the report came from testing the profile card specifically (the
+surface being actively worked on this session), which was never supposed to be editable there
+either - the reference confirms the exact same non-interactive-on-the-profile-card behavior.
+
+## Wealth tab built (2026-09-23) - real backing data found in a third repo, not "no data anywhere"
+
+Corrects an earlier, wrong claim in this same file (now removed from `UserProfileView.tsx`'s own
+comment): "Richesse... has NO backing anywhere in this project's stack" was asserted without
+checking hCMS (the separate Laravel website repo, same shared MySQL database) - it does. hCMS
+already has a complete wealth-snapshot system built specifically for this exact chart concept:
+`hcms_wealth_snapshots` (one row per player per day: diamonds/rares/badges/total, upserted daily),
+`hcms_values_rares`/`hcms_values_badges` (diamond-value catalogs), `WealthSnapshotService.php`/
+`WealthCalculator.php` (the real source of truth), already powering hCMS's own Center > Inventory >
+Richesse chart and confirmed, via `InventoryController::richessChart()`'s own real JSON field names
+(`diamants`/`patrimoine`/`classiques`/`badges`), to be the same French-key-naming reference family
+as HabboCity's own client. Exposed via a new `hcms-emulator-plugin` protocol (9528 out / 9537 in,
+`ProfileWealthProtocol`/`Repository`/`RequestEvent`/`DataComposer`, all in `profile/`), mirroring
+hCMS's own SQL in Java (JDBC has no way to call PHP) rather than adding anything to Arcturus core.
+
+**Real reference structure, CDP-verified against the live profile card (own account)**: `.profile-
+wealth-tab` > `.nitro-graph-view.profile-wealth-graph.rounded` (an SVG multi-series smoothed line+
+area chart, `viewBox 0 0 800 350`, a clip-path'd plot area x:[60,750] y:[0,290], one semi-transparent
+filled area path + one solid line path per active series) + `.profile-wealth-curve-button-container`
+(5 real toggle buttons: **Diamants** `#00BFFF`, **Badges** `#E967C6`, **Mobis** `#FFA66A`, **Total**
+`#54DE7D` - all active by default - then a `.vertical-separator`, then **Classiques** `#FFA66A`
+(same color as Mobis), inactive by default) + `.profile-wealth-details` (two real detail rows:
+`icon-pf-rare` + "X rares différents", `icon-pf-badge` + "X badges différents"). "Mobis" confirmed to
+mean the diamond VALUE of owned rares via hCMS's own blade partial literally labelling the same
+number "wealth in furni" (`inventory-richess.blade.php`). Built `UserProfileWealthTabView.tsx` +
+`api/user/ProfileWealthProtocol.ts` to this structure: 4 real chart series (toggleable, each showing
+its own current value formatted with a real k-suffix, e.g. "3.5k"), plus the Classiques button and
+the details row. Registration ordering follows rule 7's own hook-ordering fix (`RegisterProfileWealth
+Messages()` called synchronously in the component body, avoided the bug pre-emptively rather than
+hitting it and fixing it after).
+
+**Real, honest gaps, flagged not guessed:**
+- The curve-smoothing math (Catmull-Rom -> cubic Bezier, producing the same "M x,y C x,y x,y x,y..."
+  path shape seen in the reference's own SVG) is a standard technique, not the reference's own traced
+  internal formula - same acceptable-approximation precedent as the outfit editor's own colour-picker
+  gradient stops elsewhere in this file.
+- **"Classiques" shows a real number (`uniqueRareCount`) and toggles its own active state, but adds
+  no 5th chart line** - `hcms_wealth_snapshots` only tracks the daily diamond VALUE of owned rares
+  (the "Mobis" series), never a daily COUNT of distinct rares owned, so there is no real time-series
+  to draw for it. Wiring a line here would mean fabricating history that doesn't exist.
+- **Cross-profile privacy is a deliberate, mirrored policy choice, not a confirmed reference
+  behaviour**: hCMS's own `richessChart()` endpoint only ever serves the logged-in player's own
+  history (explicitly documented there as an undecided product question for cross-profile access) -
+  mirrored the same restriction server-side (a non-own `targetUserId` gets an honest empty history
+  back) for consistency within this project, since HabboCity's own live cross-profile behaviour was
+  never actually tested (would need a second real account).
+- Chart shown with real snapshot data only when `history.length >= 2` (matching hCMS's own
+  `richess.js` "hide chart below 2 points" convention) - a brand-new account's single same-day
+  snapshot shows an honest "not enough history yet" state instead.
+
+**Deployed and boot-verified** (`"ProfileWealthProtocol registered (9528/9537)"`, no errors,
+user-approved stop/copy/start), **then live-CDP-verified on the dev client - three real bugs found
+and fixed** (user report: "its not the same 1:1"):
+- **Missing `<clipPath>` entirely.** The reference's own SVG clips every series to the plot area
+  (`<defs><clipPath><rect x="60" y="0" width="740" height="290"/></clipPath>`, every
+  `<g clip-path="url(#...)">`) - this file had neither, so a Catmull-Rom curve overshooting between
+  two data points (a real risk with real, jagged wealth data) rendered outside the chart box instead
+  of being cut off cleanly. Added the real `<defs>`/`clipPath`/`clip-path` structure.
+- **Labels were French, matching the reference's own French-locale capture verbatim** (Diamants/
+  Mobis/Classiques) - per direct correction, this project's own UI language is English throughout
+  (every other tab/locale key already is), the French was only ever an artifact of which locale
+  build of habbocity.fr got captured. Renamed to Diamonds/Furni ("Mobis" is Habbo slang for
+  furniture, confirmed via hCMS's own "wealth in furni" label for that exact number)/Classics.
+- **A value over a million formatted wrong** ("1049.02k" instead of "1.05M") - found live on this
+  dev account's own real (large, dev-scale) diamond balance. `formatK` only had a k-suffix tier;
+  added an M-suffix tier for values >= 1,000,000.
+
+All three verified live via CDP: button text now reads "Diamonds 1.05M / Badges 30k / Furni 86.07k /
+Total 1.17M / Classics 41", `svg.querySelector('clipPath')` exists, every `<g>` carries
+`clip-path="url(#profile-wealth-plot-clip)"`.
+
+**Still "not the same 1:1" after those three fixes - the real, much bigger gap was the chart's
+entire axis system, found by pulling the reference's FULL live SVG markup instead of re-checking
+only the specific attributes already fixed.** The earlier three fixes were real but minor; the
+reference chart is a fully labeled axis chart and this file's version was two bare curves floating
+in empty space with no labels, no gridlines, no data-point markers, and a half-width line stroke.
+Confirmed via a complete `outerHTML` dump of the reference's own chart SVG (not just the clipPath
+attribute check from before):
+- **Y-axis: 8 real value-tick labels** (`0`/`600`/`1.2k`/.../`4.2k` on the captured reference),
+  each a `<g transform="translate(60, y)">` with a left tick mark (`<line x1="-6" x2="0">`) and a
+  right-aligned `<text x="-10" dy="0.32em" font-size="20">`. The step (600) is NOT a raw
+  `max/7` - it's rounded up to a clean number first. Reverse-engineered the rounding (round the raw
+  step up to 2 significant figures, i.e. `Math.ceil(rawStep / (magnitude/10)) * (magnitude/10)`),
+  confirmed it reproduces the one real captured step (600 for a raw max/7 of ~598) - not the
+  reference's own traced source formula, an acceptable approximation like the Catmull-Rom smoothing.
+  **This also means the axis max has real headroom above the actual data max** (`step * 7`, not
+  clamped to the peak value) - a real, visible difference from the old "highest point always touches
+  the very top" behavior.
+- **X-axis: one real date-tick label per data point** (`DD-MM-YYYY`, formatted from the raw
+  `YYYY-MM-DD` snapshot date), staggered alternately above/below (`tick length 26/label y:44` on
+  even indices, `tick length 6/label y:22` on odd) specifically so adjacent short-interval date
+  labels don't overlap each other - entirely absent before.
+- **A real solid axis frame** (left vertical `x=60` from `y:25` to `y:290`, bottom horizontal `y:290`
+  from `x:60` to `x:750`, `stroke-width:3`) - was completely unrendered; the plot area had no visible
+  boundary at all.
+- **A filled circle + an invisible larger hit-circle at every single data point**
+  (`<circle r="8" fill="{series-color}">` + `<circle r="12" fill="transparent">`, the second one
+  presumably for hover/tooltip - tried to confirm via a dispatched `mouseenter`/`mouseover` on the
+  live reference and got no observable tooltip or radius change, so this stays UNVERIFIED behavior,
+  same class of finding as `.icon-rooms`/`FaRecycle` elsewhere in this file - the DOM structure
+  (both circles) was added for 1:1 fidelity, no hover logic was invented on top of it).
+- **Line `stroke-width` was `2`, reference is `4`.**
+- **The plot's actual scale top is `y:25`, not `y:0`** (the clip rect's own top is genuinely `y:0` -
+  confirmed both values live, they're deliberately different: the clip rect gives the topmost
+  circle's own radius some headroom, while `y:25` is where the axis/ticks/scale math actually starts).
+
+Rebuilt `UserProfileWealthTabView.tsx`'s chart to this real structure. Verified live on our own dev
+client (not just re-reading the code): `circleCount:20` (4 series x 5 dev-data points),
+`lineCount:15` (5 X-ticks + 8 Y-ticks + 2 axis-frame lines), `lineStrokeWidths:["4"]`, Y-axis text
+labels reading real formatted values across both k and M ranges
+(`"0","230k","460k","690k","920k","1.15M","1.38M","1.61M"`) - confirming `formatK`'s M-suffix fix
+from earlier in this same pass also works correctly when reused for axis labels, not just the
+button row.
+
+**Wealth chart hover tooltip + dot-grow animation built (2026-09-24).** Pulled the reference's
+complete live SVG (not just re-checking the earlier clip-path fix) and found a real hover feature
+entirely missing: hovering a data point's dot (1) grows it from `r=8` to `r=12` with a smooth
+`transition: r 0.1s ease-in-out` (already present as an inline style on the reference's own dot,
+confirmed real via a genuine CDP `Input.dispatchMouseEvent` mouse move - a page-JS `dispatchEvent`
+does NOT trigger this, only real pointer movement does, which cost real debugging time before
+realizing it), and (2) shows a `.nitro-graph-tooltip` box (real CSS pulled verbatim from the
+reference bundle - it didn't exist anywhere in this project's own SCSS yet, added to
+`_59-user-profile.scss`) reading `<strong>date</strong><br>Label: value` with the series' own color
+via a `--holo-text-primary` CSS var, flipped left/right (`transform`+arrow direction) based on which
+half of the plot the point falls in so it never overflows the card edge (confirmed via testing both
+the leftmost and rightmost data points). Tooltip values use a plain space-separated-thousands format
+(`"3 917"`), NOT the k/M abbreviation used on the buttons/axis - two genuinely different real formats,
+not an inconsistency. Implemented via an invisible `r=12` hit-circle per point (matching the
+reference's own two-circles-per-point structure) with `onMouseEnter`/`onMouseLeave`, positioned with
+viewBox percentages rather than measured pixel rects (valid since the SVG's `width:100%` always keeps
+the container at the exact 800:350 aspect ratio).
+
+**Classics button: real interaction model found, backing data built (2026-09-24).** A first click
+test (checking DOM state synchronously right after `.click()`, in the same tick) wrongly concluded
+Classics does nothing at all - the real bug was the test itself, not the button: React defers
+re-rendering past the current synchronous tick, so *every* button looked inert in that test,
+including the 4 already-known-real ones. Redone with a proper `await wait(200)` between each click
+and its snapshot, the real model is: **the 4 money series (Diamonds/Badges/Furni/Total) toggle
+independently in their own Set (unchanged from the original build), but Classics is a mutually
+exclusive solo-select** - clicking it clears all 4 money series and activates only itself; clicking
+any money series while Classics is active clears Classics back. Comparing the raw SVG path
+coordinates of a Classics-solo line against a Furni-solo line proved this isn't a shared/aliased
+series (same color #FFA66A is coincidental) - both change on the same real day (acquiring a rare
+touches both metrics at once) but at different step heights, meaning Classics is a real, distinct
+daily unique-rares-**count** history, not the same data re-labeled.
+
+No retroactive backfill was possible - a subagent confirmed the stock Arcturus `items` table has
+**no acquisition-timestamp column at all** (only `user_id`/`room_id`/`x`/`y`/`z`/`rot`/`extra_data`/
+`limited_data`), so historical counts genuinely cannot be reconstructed. Built as a new tracked
+column instead, same "starts from today, existing rows read 0" shape as every other similar honest
+gap in this project: `hcms_wealth_snapshots.rares_count` (new hCMS migration, run live via
+`php artisan migrate`), `ProfileWealthRepository.java`'s `Snapshot`/`recordTodaySnapshot`/
+`getHistory` all updated to read/write it, `ProfileWealthDataComposer.java` serializes it per
+snapshot, and the client (`ProfileWealthProtocol.ts`'s `ProfileWealthSnapshot.raresCount`,
+`UserProfileWealthTabView.tsx`'s `CLASSICS_SERIES`/`activateClassics`/`visibleSeriesList`) wires it
+as a genuine 5th toggleable series sharing the exact same chart/tooltip/hover machinery as the other
+4. Deployed (stop/copy/start, user-approved) and boot-verified
+(`"ProfileWealthProtocol registered (9528/9537)"`, no new errors). Live-verified on the dev client
+via a delay-aware click test replicating the reference's exact exclusive-toggle behavior
+(`Diamonds/Badges/Furni/Total` all deactivate the instant `Classics` is clicked, and clicking a money
+series afterward deactivates `Classics` back) - hover/tooltip specifically on the Classics line
+wasn't successfully reproduced via CDP's synthetic mouse simulation (kept landing on the right
+target element per `elementFromPoint` but never triggering the React handler, unlike the same
+mechanism working correctly for the money series), but the user confirmed via real interaction that
+hover works correctly there too - trusting real human interaction over an inconclusive automation
+quirk, since the exact same tooltip/hover code path is shared with the already-CDP-verified money
+series and nothing in the Classics-specific code differs from that shared path.
+
+**Profile cover upload fixed (2026-09-24) - real off-by-4-bytes wire bug, found via a full CDP-driven
+end-to-end test, not guessed.** User report: "profile banner upload not showing." Confirmed first
+via direct DB/filesystem inspection (PHP PDO + `ls`) that `hcms_users_profile_banners` had 0 rows and
+`public/assets/img/center/profile-banners/` was empty despite the feature being built and deployed
+earlier - meaning no upload had ever actually persisted. Reproduced the full flow live using CDP's
+`DOM.setFileInputFiles` on the real hidden `<input type="file">` (not a mocked event) to drive an
+actual pick -> crop -> confirm cycle on the dev client, which showed the client-side "Cover sent to
+the server!" message every time - but the server logs showed the true story:
+`WARN ... ProfileCoverUploadEvent - rejected profile cover upload from user 1 (2747 bytes,
+validPng=false)`. **The client's own success message is purely optimistic** (fires immediately after
+`SendMessageComposer`, before any server response) - a real, separate UX inaccuracy flagged here but
+not yet fixed (still shows "success" even when the server silently rejects the upload).
+
+Root cause: `ProfileCoverUploadComposer`'s data array was `[ imageBytes.byteLength, imageBytes.buffer ]`
+- copying a `push(byteLength, arrayBuffer)` shape seen elsewhere in this project without checking
+whether it actually applied here. Read the real serializer instead of assuming
+(`node_modules/@nitrots/nitro-renderer/core/communication/codec/evawire/EvaWireFormat.ts`'s own
+`encode()`): an `ArrayBuffer` element in a composer's data array is written via
+`writer.writeBytes(value)` with **no per-field length prefix of its own** - only the whole encoded
+packet gets one length prefix, at the transport layer. So the leading `byteLength` int became 4 real
+stray bytes on the wire ahead of the actual PNG data; the server's own handler reads "all remaining
+bytes in the packet" as the image, so those 4 bytes shifted the real `\x89PNG\r\n\x1a\n` magic bytes
+out of position, failing the format check on every single upload, silently (client never learns).
+Fixed by sending only `[ imageBytes.buffer ]`. Verified end-to-end on the dev client via the same real
+CDP file-input-injection test: after the fix, `hcms_users_profile_banners` gained a real row, the
+real PNG file appeared on disk, no rejection warning in the log, and the profile card's
+`.profile-banner` div picked up the correct real `background-image` URL and rendered it. (A test PNG
+was left in place on the dev account from this verification - real proof the fix works, not left
+accidentally; replace/delete it via the real upload/delete flow whenever convenient.)
+
+**User Settings: full 1:1 pass (2026-09-24) - Floor tab built, real custom slider primitive built,
+two real bugs fixed, one deliberate divergence made and flagged.** Pulled the reference's complete
+live DOM for all 3 tabs plus its own minified JS source (not just DOM/CSS this time - needed the JS
+to get the Floor sliders' real min/max/default numbers, which aren't derivable from a single static
+DOM snapshot).
+
+- **General tab had 5 checkboxes, the reference has exactly 3** (confirmed via both live DOM and the
+  minified source: `darkMode`/`roomInvites`/`cameraFollow`, in that order). This file previously had
+  an extra "prefer old chat" checkbox (a stock-Nitro-only concept, not read anywhere else in this
+  project either - dead even before this pass) and two catalog-preference checkboxes
+  (place-multiple-objects/skip-purchase-confirmation) that ARE real reference hooks (confirmed
+  `CATALOG_PLACE_MULTIPLE_OBJECTS`/`CATALOG_SKIP_PURCHASE_CONFIRMATION` exist in their own bundle,
+  localStorage-backed) but are surfaced elsewhere on the reference (the Catalog purchase flow
+  itself), never as a Settings checkbox - removed both from here. Neither hook is currently wired
+  into this project's own Catalog purchase flow either (confirmed via a project-wide grep - only this
+  file referenced them) - a real, separate, out-of-scope gap for whoever picks up the Catalog
+  purchase widget next.
+- **Added the real, previously entirely-missing "Dark theme" checkbox** - a genuine reference
+  feature this file had no equivalent for at all. Traced the wire protocol before wiring it: the
+  reference's own `dark_mode` checkbox sends the exact same composer opcode slot (0) this project's
+  stock Nitro build uses for `UserSettingsOldChatComposer` - HabboCity's own custom server fork
+  reinterprets that slot as dark-mode, but this project runs its own Arcturus emulator, which almost
+  certainly stores/reads that slot with the STOCK meaning (prefer-old-chat). Sending it here would
+  silently flip an unrelated server-side preference with no way to know from the client alone.
+  Deliberately wired as a **client-only** toggle instead, reusing this project's own already-real
+  dark-mode mechanism (`src/index.tsx`'s `body.dark-mode` class + `localStorage['dark-mode']`,
+  already driven by hCMS's own `?theme=` on initial load) - a real, flagged divergence from the
+  reference's own wire behavior, not a silent guess.
+- **Built the real, previously-deliberately-unbuilt Floor tab** ("Paramètres anti lag de floor").
+  Pulled exact real values from the minified source, not guessed: 3 sliders (max staircases/max
+  rectangles/max room width-length), ranges `[0, threshold+1]` where `threshold+1` displays as
+  "Infinite" (2048/4096/256 thresholds → slider max 2049/4097/257), reset defaults 512/1024/256,
+  persisted to the reference's own exact real localStorage keys (`nitro.floorStairsTreshold` etc,
+  their own spelling, confirmed via their own `localStorage.setItem` calls - purely client-side,
+  never sent to their server either). **Real, honest gap, flagged not guessed**: this project's
+  vendored `@nitrots/nitro-renderer` package has no equivalent floor-complexity-limiting hook at all
+  (confirmed via search) - the UI and the persisted value are both real, but nothing yet actually
+  caps room-floor rendering complexity when a threshold is exceeded; wiring real enforcement means
+  patching the vendored renderer package itself, out of scope for a Settings-UI pass.
+- **Built the missing shared primitive this all depends on**: `common/CustomInputRange.tsx`. Live DOM
+  proved every slider in this window (volume x3, now Floor x3) uses a fully custom drag/click track
+  (`.custom-input-range > .custom-range-track > .custom-range-fill + .custom-range-thumb`), NOT a
+  native `<input type="range">` - this file previously used native range inputs for the volume
+  sliders, styled via a `.custom-range` class that doesn't even match the real primitive's own
+  classname. The CSS for the real primitive was already bulk-extracted (`_30-forms.scss`) but had no
+  component using it until now.
+- **Corrected mid-pass, given verbatim by the user ("why you build from scratch read claude.md again
+  and check the rules"): the FIRST version of `CustomInputRange` hand-rolled its own mousedown/
+  mousemove/mouseup drag math from scratch, without first checking `package.json` for an existing
+  slider dependency.** `react-slider` was already there, and already used the same way in 4 other
+  real components in this project (`CameraWidgetEditorView`, `FurnitureDimmerView`, `WiredControls`,
+  `FloorplanOptionsView`) - a real, already-verified "existing implementation" this file's own
+  mandatory rule ("SEARCH OUR PROJECT BEFORE CREATING ANYTHING... If the project already has the
+  correct primitive, use it. Do not create duplicate systems") exists specifically to catch, and
+  which a `common/`-only search missed because the existing usage was in `components/`, not `common/`
+  - **the search has to cover actual usages project-wide, and dependencies in `package.json`, not
+  just the `common/` folder.** Rebuilt as a thin wrapper around `react-slider`'s own `renderTrack`/
+  `renderThumb` API (index 0 = filled portion, index 1 = empty remainder, mapped onto the real
+  reference's own `.custom-range-fill`/`.custom-range-track`/`.custom-range-thumb` classnames -
+  confirmed CSS descendant selectors still match correctly even though react-slider's own DOM is a
+  flat sibling structure, not literally nested the way a byte-for-byte reference capture would show;
+  reuse of an already-tested primitive took priority over exact DOM-nesting once the two goals
+  genuinely conflicted, consistent with this project's own already-established acceptable-
+  approximation precedents elsewhere). Confirmed byte-identical fill percentages against the
+  reference's own live capture either way (`24.9878%`/`24.9939%`/`99.6109%` for 512/2048, 1024/4096,
+  256/256) - the visual/behavioral correctness was never in question, only the implementation
+  strategy. Replaced all 3 volume sliders with this component too, not just used it for Floor.
+- **Two more real bugs found and fixed while verifying it, both via computed-style inspection, not
+  visually**:
+  1. The track computed to `height: 0.796875px` instead of the real `6px`, even with an inline
+     `height:6px` override (ruling out a CSS specificity/cascade issue outright, confirmed by testing
+     it) - the real cause was a flexbox min-content-size interaction: nested in a flex-column next to
+     sibling `<Text>` lines (which have a real, non-zero min-content line-height and resist
+     shrinking), this element's own empty-div zero min-content size let the flexbox algorithm crush
+     it to near-nothing so the text siblings could fit. `height` alone is only a flex-basis hint, not
+     a hard floor. Fixed with `flex-shrink: 0` added directly to `.custom-input-range`'s own rule in
+     `_30-forms.scss` (a project-added fix, not a reference-captured value - flagged as such in the
+     file itself).
+  2. The first (since-replaced) hand-rolled version used React `onPointerDown`/native
+     `PointerEvent`s - worked with real mouse hardware but a CDP-simulated `Input.dispatchMouseEvent`
+     drag test never triggered it at all (same class of CDP-simulation gap already hit once this
+     session with the Wealth chart's dot hover, where `MouseEvent`s worked reliably but synthetic
+     pointer dispatch didn't). Moot once rebuilt on `react-slider` (which handles this correctly
+     already), but worth remembering for any future custom drag/pointer component in this project:
+     verify with `Input.dispatchMouseEvent`, not `PointerEvent`-only handlers, or CDP verification
+     will silently give false negatives.
+- Also fixed a smaller, real divergence: "Change profile cover"'s own size hint was a guessed plain
+  text label (`"452x115"`) where the reference actually shows a real `.icon-navigator-info` icon
+  (confirmed live) - swapped to the real icon with a native `title` tooltip standing in for their own
+  tooltip mechanism (not traced - same acceptable-approximation precedent as elsewhere in this file).
+
+Deployed: none of this needed a server change (dark mode and floor thresholds are both client-only,
+volume sliders reuse the exact same existing composers, checkbox removal touches no wire protocol) -
+verified entirely via HMR + live CDP against the dev client.
+
+**Layout/order bug fixed after user report (2026-09-24): "layout spacing order and all is still
+wrong".** Traced the whole General tab against a fresh live DOM capture of the reference instead of
+re-checking only what was already "verified" - two real, previously-missed structural bugs:
+- **The whole General tab content was missing its `.scroll-container`/`.scroll-content` wrapper
+  entirely** (confirmed on the reference: title/checkboxes/cover/volume all live inside the same
+  real scroll primitive already used elsewhere in this project) - added via `ScrollContainer`, plus
+  the real outer `gap-3` (16px) between the 3 top-level groups (was un-wrapped, no gap at all). Fixed
+  the Floor tab identically (its own title+content were also missing this wrapper).
+- **Cover-upload and Volume sections were in the wrong order.** Confirmed by reading each group's own
+  first text content live, in DOM order: "Thème sombre" (checkboxes) → "Changer la couverture de
+  profil" (cover) → "Régler le son" (volume) - this file had volume rendering BEFORE cover, a real
+  ordering bug, not just a missing wrapper.
+
+**Two more real bugs found and fixed after further reports ("the sliders are broken",
+"slider width is too long"), both root-caused via live interaction testing, not assumed fixed from a
+structural check alone**:
+- **Pointer-events on a fully-filled slider silently ate every click.** `renderTrack`'s first version
+  added the real `.custom-range-fill` classname directly onto the SAME div `react-slider` uses as the
+  clickable "before thumb" track segment - `.custom-range-fill`'s own real CSS rule sets
+  `pointer-events:none` (correct for the reference's own structure, where fill is a separate,
+  decorative child nested INSIDE the clickable track, not a dual-role element). Confirmed live via
+  `document.elementFromPoint()` resolving to an ancestor container instead of the track whenever the
+  click landed in an already-filled region - meaning a maxed-out slider (the common real case: system
+  volume defaults to 100) failed 100% of the time, while a partially-filled one worked inconsistently
+  depending on exactly where the click landed. Fixed by nesting a separate, purely decorative fill
+  child instead of merging the two roles onto one element.
+- **The earlier `flex-shrink: 0` height fix (see the Floor-tab section above) broke the sliders' own
+  real width-shrink-to-fit behavior.** That fix was correct for the Floor tab's flex-COLUMN context
+  (main axis = height) but the exact same class is also used inside the Volume row's flex-ROW context
+  (main axis = width there) - `flex-shrink:0` there blocked the slider from shrinking down to make
+  room for its sibling icons, so it overflowed past its real width. Confirmed on the reference: its
+  own slider has `flex-shrink:1` and shrinks to exactly the row's remaining space (176px of a 230px
+  row, after subtracting sibling icons + gaps) - never the full row width. Replaced `flex-shrink:0`
+  with `min-height: var(--height)` instead - a hard floor on the specific axis that was actually being
+  crushed (height), without touching width/shrink behavior on the other axis at all.
+
+**A real process lesson from this same pass, worth remembering going forward**: after a syntax-error
+state occurred mid-edit (a JSX tag-balance mistake while restructuring the General tab), the
+dev-client browser tab's own Vite HMR runtime got stuck in a permanently-failed state - the file
+compiled successfully again moments later (confirmed via a clean `tsc` and successful subsequent HMR
+log lines), but THIS SPECIFIC TAB kept silently running the last-successfully-compiled (i.e., broken)
+version of the component, logging `[hmr] Failed to reload ... could be due to syntax errors` once and
+then never recovering on its own. Every "still broken" report after that point was 100% real and
+reproducible - not user error, not a flaky test - because the live tab genuinely was running stale,
+broken code while the source file itself was already fixed. **Whenever a fix is verified as compiling
+clean but a live CDP recheck still shows the old broken behavior, check the vite dev log for a
+"Failed to reload" line before concluding the fix itself is wrong** - the fix might be correct and
+the browser tab might just need a full reload (fresh SSO ticket + fresh tab, per this file's own
+established tooling section) to actually pick it up.
+
+**Thumb-overflow bug fixed (2026-09-24), after a further user report ("still overlapping to
+right").** A near-max-value slider's thumb extended ~6px past its own column's right edge. Root
+cause: the reference's real fix for this is `.user-settings-input-range { padding: 0 8px }`
+(confirmed live) - but `react-slider` positions the thumb using its own root's `clientWidth`, and
+`clientWidth` **includes padding** (padding never reduces it) - so putting that padding directly on
+`react-slider`'s own root (as this file did, matching the reference's literal single-element
+structure) has zero effect on the actual computed drag range: the thumb still gets positioned across
+the full, unreduced width and poked out past the padded box's own edge exactly as if the padding
+weren't there at all. Fixed by moving the padding to a **wrapping** element instead, giving
+`react-slider` a genuinely narrower box to measure - its 0%/100% positions then correctly land
+inside the reserved overhang room. This introduced two further regressions along the way, both
+caught and fixed in the same pass before landing:
+- The new wrapper had no explicit width, creating a circular sizing dependency (a flex item with no
+  width shrinks-to-fit its child; the child wants 100% of a not-yet-determined parent width) that
+  resolved to **zero width** for both elements - fixed by giving the wrapper `width: 100%` (mirroring
+  the width rule `.custom-input-range` itself already carried before this wrapper existed).
+- A first attempt used `flexShrink: 0` on the new wrapper for crush-protection, which would have
+  reintroduced the exact row-context width-overflow bug from the section above - corrected to
+  `minHeight` only (matching `_30-forms.scss`'s own established reasoning: floor only the specific
+  axis that's actually at risk of being crushed, never disable shrink wholesale).
+
+**A further "still broken"/"overlapping" report after this, root-caused to a test-only false
+negative, not a real product bug** - worth documenting since it looked exactly like a regression at
+first: re-verifying via CDP showed a drag on the very first (topmost) volume slider silently failing
+again. Full diagnosis (`elementsFromPoint`, not just `elementFromPoint`) showed the click coordinate
+resolved to an ancestor several levels up, with `.scroll-container` and everything inside it entirely
+absent from the hit-test stack - not covered by anything, genuinely not there at that screen
+position. Checked `.scroll-content.scrollHeight` vs `.clientHeight`: 321 vs 224, a real 97px
+overflow, `scrollTop: 0` - the general tab's own content is taller than its visible scroll window,
+and the "first" volume slider sits only ~2px below the visible fold. `getBoundingClientRect()` still
+reports its real laid-out position regardless of whether that position is currently scrolled into
+view, so a test script blindly computing coordinates from it without scrolling first will click a
+point that's genuinely off-screen (covered by nothing, since overflow:hidden content past the fold
+isn't painted at all) - this is completely correct, expected scrollable-container behavior, not a
+bug. Confirmed two ways before concluding this: (1) calling `.scrollIntoView()` on the exact same
+slider first, then re-running the exact same drag test, produced a clean success (100 -> 60 as
+intended); (2) checked the reference's own live `scrollHeight`/`clientHeight` at the same card size
+and found an even larger real overflow (107px) - HabboCity's own General tab needs the same scrolling
+to reach its lower controls. **Lesson for future CDP interaction tests in this project: always call
+`.scrollIntoView()` (or otherwise confirm the target is actually within its scrollable ancestor's
+visible bounds) before computing click coordinates from `getBoundingClientRect()` - a stale/off-screen
+rect produces a silent, convincing-looking false negative that's easy to mistake for a real
+regression**, exactly what happened here.
+
+**`CustomInputRange` rebuilt custom (2026-09-24, final), after `react-slider` proved to be the wrong
+tool for this specific requirement - given verbatim by the user ("maybe need custom slider") after
+several rounds of increasingly fragile workarounds around the same root incompatibility.** The
+reference's own real overhang-reservation mechanism is plain CSS: `.user-settings-input-range
+{ padding: 0 8px }` on `.custom-input-range` itself, relying on the browser's normal box model (an
+absolutely-positioned child's percentage position resolves against its parent's padding box, which
+correctly excludes padding automatically - no library involved). `react-slider` doesn't use that
+mechanism - it computes thumb position from its own root's `clientWidth` in JS, and `clientWidth`
+**includes** padding, so the padding-based technique the reference itself depends on had no way to
+actually take effect through that library, regardless of which element the padding/width fixes were
+moved onto (tried on the slider root directly, then a wrapping element - the wrapper approach fixed
+the overflow but needed extra `width`/`minHeight` workarounds and briefly introduced a real
+zero-width regression along the way, both documented in earlier passes above and now moot).
+
+Rebuilt as a plain hand-rolled implementation, single-level structure exactly matching the reference
+(`.custom-input-range` carrying the real padding class directly, `.custom-range-track` as an
+ordinary child, no extra wrapper needed) - `getBoundingClientRect()` on the TRACK element (not the
+padded root) naturally already reflects the parent's padding-box-inset position via normal DOM
+layout, so drag/click math needs zero padding-awareness of its own; this is the same real mechanism
+the reference's own CSS depends on, not an approximation of it. Applies every lesson learned across
+the earlier attempts in this same pass: `MouseEvent` handlers (not `PointerEvent` - confirmed
+unreliable under this project's own CDP-driven verification, same gap hit with the Wealth chart's
+dot hover), `min-height` for crush-protection (not `flex-shrink:0`, which would block the volume
+row's real width-shrink-to-fit behavior - see the dedicated section above for the full reasoning).
+
+Verified end-to-end via a single atomic CDP test covering everything reported broken across this
+whole pass: opened Settings fresh, scrolled the first General-tab volume slider into view (the
+earlier "still broken" report turned out to be a scroll-position test artifact, not a real bug - see
+the dedicated section above), confirmed the click landed directly on `.custom-range-track` (no
+occlusion), dragged it from 20% to 60% and got exactly `fillWidth:"60%"`/`thumbLeft:"60%"` back, then
+switched to the Floor tab's near-max (99.6%-filled) size-threshold slider and confirmed its thumb
+overflows neither its own track nor the card - the exact failure mode originally reported ("still
+overlapping to right"). All three real, distinct bugs from this whole pass - pointer-events blocking
+clicks on a filled region, thumb overhang past the container edge, and the underlying react-slider/
+padding incompatibility that made both hard to fix cleanly - are resolved by this rebuild in one
+consistent, reference-matching mechanism.
+
+**Two smaller real bugs fixed in the same pass (2026-09-24):**
+- **Volume row gap was wrong** (`gap={1}`/4px instead of the reference's real `gap-3`/16px),
+  confirmed via a direct width comparison against the reference in an identical 230px-wide row - the
+  smaller gap let the slider (which fills whatever space its sibling icons don't) claim 12px more
+  than it should have (197px vs the reference's real 176px). Fixed to `gap={3}` on all three volume
+  rows; slider width now reads exactly `175.96875px`, byte-identical to the reference's own live
+  capture.
+- **The "Change profile cover" info icon's `title` tooltip was an invented behavior - corrected
+  twice.** First pass: guessed a native `title` attribute. Second pass: two live interaction tests (a
+  real click, then a real CDP mouse-move hover) both came back with zero observable effect, so the
+  `title` was removed entirely, wrongly concluding this icon was inert like `.icon-rooms`/the outfit
+  editor's `FaRecycle`. **Both tests were wrong** - the real mechanism only surfaced by reading the
+  component's own source directly (`"BU"` in the minified bundle): a real `onMouseOver`/`onMouseLeave`
+  state toggle driving a `react-bootstrap` `Overlay`/`Popover` (`show`/`target`/`placement="right"`),
+  the exact same already-established pattern this project already uses for the same `icon-navigator-
+  info` class in a different context (`NavigatorSearchResultItemInfoView.tsx`, byte-identical prop
+  shape). Real content, previously entirely unknown: a bold "Ideal size:" label next to the plain
+  size value, then a second bold line about animated images ("Only the first frame of an animated
+  image is used.") that no earlier pass had ever found. Built `UserSettingsCoverInfoView.tsx` reusing
+  the exact established `Overlay`/`Popover` pattern (an already-vendored `react-bootstrap` dependency,
+  not new) - verified live via a real CDP hover: `.popover` appears with the exact real text
+  (`"Ideal size: 452x115Only the first frame of an animated image is used."`).
+
+## Friends List pass (2026-09-24) — real mechanism was wrong, full rebuild
+
+`FriendsListView.tsx` used an **accordion** (`NitroCardAccordionView`/`NitroCardAccordionSetView` -
+expandable stacked sections for Online/Offline/Requests/Search) - a fundamentally different real UI
+mechanism than the reference, confirmed via live DOM + the minified source together (the exact "wrong
+mechanism entirely" case this file's own rules call out: don't CSS-patch a wrong structure, reverse-
+engineer the real one). The reference's real "Amis" window is a top search bar (the same
+`.holo-main-search-bar-input-element` primitive already used elsewhere) plus **4 real tabs** ("En
+ligne"/"Hors ligne"/"Requêtes"/"Rechercher", `nitro-card-tabs small`) sharing one scrollable content
+area below - confirmed both live and via the minified source's own tab-index switch
+(`m===0`..`m===3`).
+
+**Real findings, not guessed:**
+- `SearchBar` (`common/SearchBar.tsx`) already exists in this project and is already byte-identical
+  to the reference's own real search-bar component (`iconClass`/`color`/`value`/`onChange` props,
+  same `.holo-main-search-bar-input-element` markup) - just never wired into this feature. No new
+  primitive needed.
+- The Online/Offline tabs and the Search tab **share the same top search bar value** - confirmed via
+  the minified source (`m===3&&t(gL,{searchValue:g})`, the identical `g` state used to filter the
+  friend lists). This file previously had a second, independent search input duplicated inside the
+  Search tab's own accordion section - removed; `FriendsSearchView` now takes `searchValue` as a
+  prop from its parent instead.
+- Real per-friend row (`.nitro-friend-list-entry`) has a **genuine full character avatar render**
+  (`.avatar-image-container > .avatar-image`) next to the name, not just the small
+  `icon-profile-sm` sprite button this file already had correctly - that sprite is a separate
+  click-to-view-profile button alongside chat/relationship icons, not a replacement for the avatar.
+  Added via `LayoutAvatarImageView` (already used elsewhere in this project, e.g. the Wealth tab's
+  cover-crop preview), rendering `friend.figure` (a real field `MessengerFriend` already exposed,
+  just never rendered here).
+- Row selection is click-anywhere-on-the-row (a `bg-primary text-white` highlight), not a checkbox -
+  this file's own pre-existing `selectFriend`/`selectedFriendsIds` logic already matched this exactly
+  (only the wrapping wrapper element - `NitroCardAccordionItemView` swapped for a plain `Flex` with
+  the real `nitro-friend-list-entry` classname - needed to change, confirming the underlying
+  selection/room-invite/remove-friend logic in this file was already correct and didn't need
+  rewriting, only its container).
+- Real root theme is `theme-primary-slim` (this file previously had a non-existent
+  `theme="friends"`, which would have resolved to a dead `theme-friends` CSS class with no matching
+  rule) with `resize="both"` (confirmed via the live `.resize-handler` present on the reference's own
+  window - this project's own `NitroCardView` already supports both, just wasn't passed here).
+
+Applied the same fix to `FriendsListRequestItemView.tsx` (rule 5 - same class of accordion-wrapper
+bug in a sibling component) and rebuilt `FriendsListRequestView.tsx`/`FriendsListSearchView.tsx` to
+take their data as plain props from the new tab-based parent instead of rendering themselves as
+accordion sections. `FriendsListGroupView.tsx`/`FriendsListGroupItemView.tsx`'s own internal
+selection/follow/relationship-picker logic was left untouched - only the outer wrapper changed.
+
+Verified live on the dev client: real search bar renders with the correct theme color
+(`rgb(145,128,255)` = `#9180FF` = `--holo-friends-color-theme-primary`, confirmed against this
+file's own already-captured dark-mode token sheet), all 4 tabs switch correctly, a real friend entry
+renders with a genuine avatar image, and no console errors during the full interaction (tab
+switching, opening each tab). **Not yet done**: the Messenger/private chat window - a separate,
+larger investigation, next up per the user's own explicit request for both in the same pass.
+
+## Purse currencies (2026-09-24) — attempted, reverted per user ("leave it just keep credits for now")
+
+User asked to add hCMS's own real currencies (beyond stock HabboCity's activity points) to the
+purse - real registry found in `hCMS/app/Domain/Economy/Support/CurrencyType.php`
+(`Duckets=0`/`Diamonds=5`/`CityCash=12`/`GamePoints=101`/`NftPoints=104`; `RewardType.php` confirms
+"Emeralds" is the real display name for `GamePoints`). Added `5`/`12`/`101` to
+`system.currency.types` plus real icon assets reused from hCMS's own existing art
+(`icon_emeraude.png`/`money_citycash_25.png`) copied into the `wallet/` icon folder.
+
+**Live-verified real bug found before the revert**: Diamonds and Emeralds displayed correctly with
+real live balances, but **CityCash (type 12) never appeared at all, despite the account genuinely
+holding 776,386 of it** (confirmed directly in `users_currency`) - types 1/2/3 (zero rows for this
+account) still rendered as "0", so this wasn't "no data shows nothing" - type 12 specifically drops
+somewhere in the sync chain despite real data existing for it. A background investigation into the
+root cause was started then abandoned per the user's own explicit call to stop and revert instead of
+chasing it now - **the CityCash-specific sync gap is real and still unresolved**, flagged here for
+whenever this is picked up again.
+
+**First reverted to just the original `[1,2,3]` stock types, then corrected again per direct
+follow-up ("no keep diamomdf emeralds credits"): final state is `system.currency.types: [5, 101]`**
+(Diamonds + Emeralds only - "credits" itself is always shown separately, hardcoded outside this
+config array in `PurseView.tsx`). CityCash stays excluded given its real, unresolved sync bug above.
+Re-added the Emerald wallet icon (`wallet/101.png`) that had been deleted during the brief full
+revert. Live-verified on the dev client: purse shows exactly 3 entries - Credits (2,485), Diamonds
+(1,049,020), Emeralds (998,226) - nothing else.
+
+**Do not report the full mandate as complete.**
 
 ## Reusable prompt — hand this to a fresh session to continue correctly
 
 > Read `nitro-react-Wired/CLAUDE.md` in full before doing anything else — it has the exact strict
 > protocol you must follow (HabboCity is read-only, DOM/computed-style-verified component-by-
 > component work only, full feature parity not just CSS, no bulk/mechanical rewrites, no
-> duplicate systems), the tooling that actually works on this box (`eval-in-iframe.js` for reading
-> the real client DOM through its cross-origin iframe, the `yarn start` + HMR dev loop, SSO-ticket
-> minting, `yarn deploy` for anything going live), and a precise account of what's already been
+> duplicate systems, rule 7's hook-ordering-registration bug class and "a symptom clearing up is
+> not a finished fix" discipline), the tooling that actually works on this box (`eval-in-iframe.js`
+> for reading the real client DOM through its cross-origin iframe, the `yarn start` + HMR dev loop,
+> SSO-ticket minting, `dump-network-body.js` for pulling the reference's own minified bundle,
+> `yarn deploy` for anything going live), and a precise account of what's already been
 > verified-and-fixed vs. what's still an unverified assumption. Do not skip straight to writing
 > code — inventory the real reference component first, exactly as the protocol demands, even
-> under time pressure. Pick up from "Full feature inventory — still not done" for the next real
-> chunk of work, or ask the user which surface to prioritize.
+> under time pressure. **As of 2026-09-23: User Profile now has all 4 real tabs built** (Groups,
+> Rooms - fixed twice this session (header/toggle structure, then a real server-side navigator-
+> filter routing gap), Photos - fixed (hook-ordering bug, then three more real bugs found by going
+> back through the chain per rule 7), Wealth - just built, deployed, boot-verified, but **not yet
+> live-CDP-verified on the dev client and the user has already flagged it as not matching 1:1** -
+> this is the immediate next step, not a finished feature. Also fixed this session: the profile
+> header's own container-direction bug (banner/data were a row, should be a column - see "Profile
+> header structure fixed" above). Read every "Real, honest gaps, flagged not guessed" callout before
+> assuming any of the above is complete. Past that, pick up from "Full feature inventory — still not
+> done" for the next real chunk of work, or ask the user which surface to prioritize.

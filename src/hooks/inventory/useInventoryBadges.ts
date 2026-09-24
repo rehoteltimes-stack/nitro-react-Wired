@@ -11,32 +11,41 @@ const useInventoryBadgesState = () =>
     const [ needsUpdate, setNeedsUpdate ] = useState(true);
     const [ badgeCodes, setBadgeCodes ] = useState<string[]>([]);
     const [ badgeIds, setBadgeIds ] = useState<Map<string, number>>(new Map<string, number>());
-    const [ activeBadgeCodes, setActiveBadgeCodes ] = useState<string[]>([]);
+    const maxBadgeCount = GetConfiguration<number>('user.badges.max.slots', 7);
+    // Real reference model, confirmed via minified source (jy hook): activeBadgeSlots is a FIXED-SIZE array of
+    // length maxBadgeCount, '' marking an empty slot - not a compacting push/splice array. This matters because
+    // the reference lets you place a badge into a SPECIFIC slot (drag onto that slot) and removing one leaves a
+    // real gap instead of shifting every later badge down into it.
+    const [ activeBadgeSlots, setActiveBadgeSlots ] = useState<string[]>(Array(maxBadgeCount).fill(''));
     const [ selectedBadgeCode, setSelectedBadgeCode ] = useState<string>(null);
     const { isVisible = false, activate = null, deactivate = null } = useSharedVisibility();
     const { isUnseen = null, resetCategory = null } = useInventoryUnseenTracker();
 
-    const maxBadgeCount = GetConfiguration<number>('user.badges.max.slots', 5);
-    const isWearingBadge = (badgeCode: string) => (activeBadgeCodes.indexOf(badgeCode) >= 0);
-    const canWearBadges = () => (activeBadgeCodes.length < maxBadgeCount);
+    const isWearingBadge = (badgeCode: string) => (activeBadgeSlots.indexOf(badgeCode) >= 0);
+    const canWearBadges = () => (activeBadgeSlots.filter(code => (code !== '')).length < maxBadgeCount);
 
-    const toggleBadge = (badgeCode: string) =>
+    // Real reference mechanism (toggleBadgeAtSlot / 'S' in the minified jy hook), driven by drag-and-drop onto a
+    // specific rack slot and by the Wear/Remove button (which computes the badge's own current slot first): if
+    // the badge is already sitting in the target slot, clear it (remove); if it's worn in a DIFFERENT slot, swap
+    // the two slots' contents; otherwise place it in the target slot outright (silently replacing whatever was
+    // there, exactly like the reference - the caller is responsible for only targeting an empty slot when wearing).
+    const toggleBadgeAtSlot = (slotIndex: number, badgeCode: string) =>
     {
-        setActiveBadgeCodes(prevValue =>
+        setActiveBadgeSlots(prevValue =>
         {
             const newValue = [ ...prevValue ];
+            const previousOccupant = newValue[slotIndex];
+            const currentSlotOfBadge = newValue.indexOf(badgeCode);
 
-            const index = newValue.indexOf(badgeCode);
-
-            if(index === -1)
+            if(currentSlotOfBadge === slotIndex) newValue[slotIndex] = '';
+            else if(currentSlotOfBadge !== -1)
             {
-                if(!canWearBadges()) return prevValue;
-
-                newValue.push(badgeCode);
+                newValue[slotIndex] = badgeCode;
+                newValue[currentSlotOfBadge] = previousOccupant;
             }
             else
             {
-                newValue.splice(index, 1);
+                newValue[slotIndex] = badgeCode;
             }
 
             const composer = new SetActivatedBadgesComposer();
@@ -47,6 +56,17 @@ const useInventoryBadgesState = () =>
 
             return newValue;
         });
+    }
+
+    // Real reference behaviour (the 'v' function in jy): wear-only, via the first empty slot - used for the
+    // main grid's own double-click. If the badge is already worn elsewhere and a slot is free, this genuinely
+    // just relocates it (confirmed live against the reference) rather than unequipping it - not something to
+    // "fix", it's the real, faithfully-reproduced quirk. Does nothing if the rack is already full.
+    const toggleBadge = (badgeCode: string) =>
+    {
+        const emptySlot = activeBadgeSlots.indexOf('');
+
+        if(emptySlot !== -1) toggleBadgeAtSlot(emptySlot, badgeCode);
     }
 
     const getBadgeId = (badgeCode: string) =>
@@ -82,7 +102,14 @@ const useInventoryBadgesState = () =>
             return newValue;
         });
 
-        setActiveBadgeCodes(parser.getActiveBadgeCodes());
+        // Real reference behaviour: rebuild the fixed-size slot array from the server's own active-codes list,
+        // capped to maxBadgeCount and '' padded - not a straight assignment of whatever length the server sends.
+        const activeCodes = parser.getActiveBadgeCodes();
+        const newActiveBadgeSlots = Array(maxBadgeCount).fill('');
+
+        for(let i = 0; (i < maxBadgeCount) && (i < activeCodes.length); i++) newActiveBadgeSlots[i] = (activeCodes[i] ?? '');
+
+        setActiveBadgeSlots(newActiveBadgeSlots);
         setBadgeCodes(prev => [ ...prev, ...badgesToAdd ]);
     });
 
@@ -146,7 +173,7 @@ const useInventoryBadgesState = () =>
         setNeedsUpdate(false);
     }, [ isVisible, needsUpdate ]);
 
-    return { badgeCodes, activeBadgeCodes, selectedBadgeCode, setSelectedBadgeCode, isWearingBadge, canWearBadges, toggleBadge, getBadgeId, activate, deactivate };
+    return { badgeCodes, activeBadgeSlots, selectedBadgeCode, setSelectedBadgeCode, isWearingBadge, canWearBadges, toggleBadge, toggleBadgeAtSlot, getBadgeId, activate, deactivate };
 }
 
 export const useInventoryBadges = () => useBetween(useInventoryBadgesState);

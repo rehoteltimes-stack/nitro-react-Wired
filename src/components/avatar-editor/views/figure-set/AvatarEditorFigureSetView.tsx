@@ -1,6 +1,7 @@
-import { Dispatch, FC, SetStateAction, useCallback, useEffect, useRef } from 'react';
+import { Dispatch, FC, SetStateAction, useCallback, useEffect, useMemo, useRef } from 'react';
 import { AvatarEditorGridPartItem, CategoryData, IAvatarEditorCategoryModel } from '../../../../api';
-import { AutoGrid } from '../../../../common';
+import { Flex } from '../../../../common';
+import { useAvatarEditorGridColumns } from '../../useAvatarEditorGridColumns';
 import { AvatarEditorFigureSetItemView } from './AvatarEditorFigureSetItemView';
 
 export interface AvatarEditorFigureSetViewProps
@@ -14,6 +15,7 @@ export const AvatarEditorFigureSetView: FC<AvatarEditorFigureSetViewProps> = pro
 {
     const { model = null, category = null, setMaxPaletteCount = null } = props;
     const elementRef = useRef<HTMLDivElement>(null);
+    const columnCount = useAvatarEditorGridColumns(elementRef);
 
     const selectPart = useCallback((item: AvatarEditorGridPartItem) =>
     {
@@ -35,10 +37,25 @@ export const AvatarEditorFigureSetView: FC<AvatarEditorFigureSetViewProps> = pro
         elementRef.current.scrollTop = 0;
     }, [ model, category ]);
 
+    // Same real fixed-size/margin/row-chunking layout as AvatarEditorPaletteSetView - see useAvatarEditorGridColumns.
+    const rows = useMemo(() =>
+    {
+        const rows: AvatarEditorGridPartItem[][] = [];
+
+        for(let i = 0; i < category.parts.length; i += columnCount) rows.push(category.parts.slice(i, (i + columnCount)));
+
+        return rows;
+    }, [ category, columnCount ]);
+
+    // fullWidth required, not cosmetic - see AvatarEditorPaletteSetView's own comment on the exact same pattern
+    // (a sparse category with few parts would otherwise shrink this whole grid down to its own content width).
     return (
-        <AutoGrid innerRef={ elementRef } columnCount={ 3 } columnMinHeight={ 50 }>
-            { (category.parts.length > 0) && category.parts.map((item, index) =>
-                <AvatarEditorFigureSetItemView key={ index } partItem={ item } onClick={ event => selectPart(item) } />) }
-        </AutoGrid>
+        <Flex innerRef={ elementRef } column fullWidth>
+            { rows.map((row, rowIndex) =>
+                <Flex key={ rowIndex } fullWidth justifyContent="center">
+                    { row.map((item, index) =>
+                        <AvatarEditorFigureSetItemView key={ ((rowIndex * columnCount) + index) } partItem={ item } onClick={ event => selectPart(item) } />) }
+                </Flex>) }
+        </Flex>
     );
 }

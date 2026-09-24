@@ -1,6 +1,6 @@
 import { FC, MouseEvent, useState } from 'react';
 import { LocalizeText, MessengerFriend, OpenMessengerChat } from '../../../../../api';
-import { Base, Flex, NitroCardAccordionItemView, UserProfileIconView } from '../../../../../common';
+import { Base, Flex, LayoutAvatarImageView, UserProfileIconView } from '../../../../../common';
 import { useFriends } from '../../../../../hooks';
 
 export const FriendsListGroupItemView: FC<{ friend: MessengerFriend, selected: boolean, selectFriend: (userId: number) => void }> = props =>
@@ -54,15 +54,21 @@ export const FriendsListGroupItemView: FC<{ friend: MessengerFriend, selected: b
 
     if(!friend) return null;
 
+    // Real reference row structure ("nitro-friend-list-entry"), confirmed live: a real character
+    // avatar render (.avatar-image-container > .avatar-image) next to the name, not just the small
+    // profile-icon sprite this file already had - that sprite is still real too, it's a separate
+    // click-to-view-profile button alongside chat/relationship, not a replacement for the avatar.
     return (
-        <NitroCardAccordionItemView justifyContent="between" className={ `px-2 py-1 ${ selected && 'bg-primary text-white' }` } onClick={ event => selectFriend(friend.id) }>
-            <Flex alignItems="center" gap={ 1 }>
-                <Base onClick={ event => event.stopPropagation() }>
-                    <UserProfileIconView userId={ friend.id } />
+        <Flex justifyContent="between" pointer className={ `nitro-friend-list-entry px-2 py-1 ${ selected ? 'bg-primary text-white' : '' }` } onClick={ event => selectFriend(friend.id) }>
+            <Flex alignItems="center" gap={ 3 }>
+                <Base className="avatar-image-container">
+                    <LayoutAvatarImageView figure={ friend.figure } direction={ 2 } />
                 </Base>
-                <div>{ friend.name }</div>
+                <div className="friend-name">{ friend.name }</div>
             </Flex>
             <Flex alignItems="center" gap={ 1 }>
+                <Base onClick={ event => event.stopPropagation() }>
+                    <UserProfileIconView userId={ friend.id } /></Base>
                 { !isRelationshipOpen &&
                     <>
                         { friend.followingAllowed &&
@@ -80,6 +86,6 @@ export const FriendsListGroupItemView: FC<{ friend: MessengerFriend, selected: b
                         <Base pointer className="nitro-friends-spritesheet icon-none" onClick={ event => clickUpdateRelationship(event, MessengerFriend.RELATIONSHIP_NONE) } />
                     </> }
             </Flex>
-        </NitroCardAccordionItemView>
+        </Flex>
     );
 }

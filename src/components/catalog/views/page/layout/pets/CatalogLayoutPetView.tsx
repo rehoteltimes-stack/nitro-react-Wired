@@ -2,7 +2,7 @@ import { ApproveNameMessageComposer, ApproveNameMessageEvent, ColorConverter, Ge
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { FaFillDrip } from 'react-icons/fa';
 import { DispatchUiEvent, GetPetAvailableColors, GetPetIndexFromLocalization, LocalizeText, SendMessageComposer } from '../../../../../../api';
-import { AutoGrid, Base, Button, Column, Flex, Grid, LayoutGridItem, LayoutPetImageView, Text } from '../../../../../../common';
+import { AutoGrid, Base, Button, Column, Flex, LayoutGridItem, LayoutPetImageView, Text } from '../../../../../../common';
 import { CatalogPurchaseFailureEvent } from '../../../../../../events';
 import { useCatalog, useMessageEvent } from '../../../../../../hooks';
 import { CatalogAddOnBadgeWidgetView } from '../../widgets/CatalogAddOnBadgeWidgetView';
@@ -193,51 +193,57 @@ export const CatalogLayoutPetView: FC<CatalogLayoutProps> = props =>
 
     if(!currentOffer) return null;
 
+    // Same structural fix as CatalogLayoutDefaultView.tsx (2026-09-22/23 pass) - see that file's own comment.
     return (
-        <Grid>
-            <Column size={ 7 } overflow="hidden">
-                <AutoGrid columnCount={ 5 }>
-                    { !colorsShowing && (sellablePalettes.length > 0) && sellablePalettes.map((palette, index) =>
-                    {
-                        return (
-                            <LayoutGridItem key={ index } itemActive={ (selectedPaletteIndex === index) } onClick={ event => setSelectedPaletteIndex(index) }>
-                                <LayoutPetImageView typeId={ petIndex } paletteId={ palette.paletteId } direction={ 2 } headOnly={ true } />
-                            </LayoutGridItem>
-                        );
-                    }) }
-                    { colorsShowing && (sellableColors.length > 0) && sellableColors.map((colorSet, index) => <LayoutGridItem itemHighlight key={ index } itemActive={ (selectedColorIndex === index) } itemColor={ ColorConverter.int2rgb(colorSet[0]) } className="clear-bg" onClick={ event => setSelectedColorIndex(index) } />) }
-                </AutoGrid>
-            </Column>
-            <Column center={ !currentOffer } size={ 5 } overflow="hidden">
-                { !currentOffer &&
-                    <>
-                        { !!page.localization.getImage(1) && <img alt="" src={ page.localization.getImage(1) } /> }
-                        <Text center dangerouslySetInnerHTML={ { __html: page.localization.getText(0) } } />
-                    </> }
-                { currentOffer &&
-                    <>
-                        <Base position="relative" overflow="hidden">
-                            <CatalogViewProductWidgetView />
-                            <CatalogAddOnBadgeWidgetView position="absolute" className="bg-muted rounded bottom-1 end-1" />
-                            { ((petIndex > -1) && (petIndex <= 7)) &&
-                                <Button position="absolute" className="bottom-1 start-1" onClick={ event => setColorsShowing(!colorsShowing) }>
-                                    <FaFillDrip className="fa-icon" />
-                                </Button> }
-                        </Base>
-                        <Column grow gap={ 1 }>
-                            <Text truncate>{ petBreedName }</Text>
+        <>
+            <Flex fullHeight overflow="hidden">
+                <Column size={ 7 } overflow="hidden">
+                    <AutoGrid columnCount={ 5 }>
+                        { !colorsShowing && (sellablePalettes.length > 0) && sellablePalettes.map((palette, index) =>
+                        {
+                            return (
+                                <LayoutGridItem key={ index } itemActive={ (selectedPaletteIndex === index) } onClick={ event => setSelectedPaletteIndex(index) }>
+                                    <LayoutPetImageView typeId={ petIndex } paletteId={ palette.paletteId } direction={ 2 } headOnly={ true } />
+                                </LayoutGridItem>
+                            );
+                        }) }
+                        { colorsShowing && (sellableColors.length > 0) && sellableColors.map((colorSet, index) => <LayoutGridItem itemHighlight key={ index } itemActive={ (selectedColorIndex === index) } itemColor={ ColorConverter.int2rgb(colorSet[0]) } className="clear-bg" onClick={ event => setSelectedColorIndex(index) } />) }
+                    </AutoGrid>
+                </Column>
+                <Column center={ !currentOffer } size={ 5 } overflow="hidden">
+                    { !currentOffer &&
+                        <>
+                            { !!page.localization.getImage(1) && <img alt="" src={ page.localization.getImage(1) } /> }
+                            <Text center dangerouslySetInnerHTML={ { __html: page.localization.getText(0) } } />
+                        </> }
+                    { currentOffer &&
+                        <>
+                            <Base position="relative" overflow="hidden">
+                                <CatalogViewProductWidgetView />
+                                <CatalogAddOnBadgeWidgetView position="absolute" className="bg-muted rounded bottom-1 end-1" />
+                                { ((petIndex > -1) && (petIndex <= 7)) &&
+                                    <Button position="absolute" className="bottom-1 start-1" onClick={ event => setColorsShowing(!colorsShowing) }>
+                                        <FaFillDrip className="fa-icon" />
+                                    </Button> }
+                            </Base>
                             <Column grow gap={ 1 }>
-                                <input type="text" className="form-control form-control-sm w-100" placeholder={ LocalizeText('widgets.petpackage.name.title') } value={ petName } onChange={ event => setPetName(event.target.value) } />
-                                { (approvalResult > 0) &&
-                                    <Base className="invalid-feedback d-block m-0">{ validationErrorMessage }</Base> }
+                                <Text truncate>{ petBreedName }</Text>
+                                <Column grow gap={ 1 }>
+                                    <input type="text" className="form-control form-control-sm w-100" placeholder={ LocalizeText('widgets.petpackage.name.title') } value={ petName } onChange={ event => setPetName(event.target.value) } />
+                                    { (approvalResult > 0) &&
+                                        <Base className="invalid-feedback d-block m-0">{ validationErrorMessage }</Base> }
+                                </Column>
+                                <Flex justifyContent="end">
+                                    <CatalogTotalPriceWidget justifyContent="end" alignItems="end" />
+                                </Flex>
                             </Column>
-                            <Flex justifyContent="end">
-                                <CatalogTotalPriceWidget justifyContent="end" alignItems="end" />
-                            </Flex>
-                            <CatalogPurchaseWidgetView purchaseCallback={ purchasePet } />
-                        </Column>
-                    </> }
-            </Column>
-        </Grid>
+                        </> }
+                </Column>
+            </Flex>
+            { currentOffer &&
+                <Flex gap={ 2 } classNames={ [ 'flex-fill', 'catalog-purchase-widget' ] }>
+                    <CatalogPurchaseWidgetView purchaseCallback={ purchasePet } />
+                </Flex> }
+        </>
     );
 }

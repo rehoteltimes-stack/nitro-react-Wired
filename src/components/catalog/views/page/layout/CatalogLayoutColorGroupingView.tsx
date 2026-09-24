@@ -2,7 +2,7 @@ import { ColorConverter } from '@nitrots/nitro-renderer';
 import { FC, useMemo, useState } from 'react';
 import { FaFillDrip } from 'react-icons/fa';
 import { IPurchasableOffer } from '../../../../../api';
-import { AutoGrid, Base, Button, Column, Flex, Grid, LayoutGridItem, Text } from '../../../../../common';
+import { AutoGrid, Base, Button, Column, Flex, LayoutGridItem, Text } from '../../../../../common';
 import { useCatalog } from '../../../../../hooks';
 import { CatalogGridOfferView } from '../common/CatalogGridOfferView';
 import { CatalogAddOnBadgeWidgetView } from '../widgets/CatalogAddOnBadgeWidgetView';
@@ -130,47 +130,52 @@ export const CatalogLayoutColorGroupingView : FC<CatalogLayoutColorGroupViewProp
         return offers;
     }, [ page.offers ]);
 
+    // Same structural fix as CatalogLayoutDefaultView.tsx (2026-09-22/23 pass) - see that file's own comment
+    // for the full rationale. <Grid> replaced with the real d-flex col-7/col-5 row, and the spinner+purchase
+    // widgets pulled out of the narrow col-5 column into the real full-width catalog-purchase-widget footer.
     return (
-        <Grid>
-            <Column size={ 7 } overflow="hidden">
-                <AutoGrid columnCount={ 5 }>
-                    { (!colorsShowing || !currentOffer || !colorableItems.has(currentOffer.product.furnitureData.className)) &&
-                        offers.map((offer, index) => <CatalogGridOfferView key={ index } itemActive={ (currentOffer && (currentOffer.product.furnitureData.hasIndexedColor ? currentOffer.product.furnitureData.className === offer.product.furnitureData.className : currentOffer.offerId === offer.offerId)) } offer={ offer } selectOffer={ selectOffer }/>)
-                    }
-                    { (colorsShowing && currentOffer && colorableItems.has(currentOffer.product.furnitureData.className)) &&
-                        colorableItems.get(currentOffer.product.furnitureData.className).map((color, index) => <LayoutGridItem itemHighlight key={ index } itemActive={ (currentOffer.product.furnitureData.colorIndex === index) } itemColor={ ColorConverter.int2rgb(color) } className="clear-bg" onClick={ event => selectColor(index, currentOffer.product.furnitureData.className) } />)
-                    }
-                </AutoGrid>
-            </Column>
-            <Column center={ !currentOffer } size={ 5 } overflow="hidden">
-                { !currentOffer &&
-                    <>
-                        { !!page.localization.getImage(1) && <img alt="" src={ page.localization.getImage(1) } /> }
-                        <Text center dangerouslySetInnerHTML={ { __html: page.localization.getText(0) } } />
-                    </> }
-                { currentOffer &&
-                    <>
-                        <Base position="relative" overflow="hidden">
-                            <CatalogViewProductWidgetView />
-                            <CatalogAddOnBadgeWidgetView position="absolute" className="bg-muted rounded bottom-1 end-1" />
-                            { currentOffer.product.furnitureData.hasIndexedColor &&
-                                <Button position="absolute" className="bottom-1 start-1" onClick={ event =>setColorsShowing(prev => !prev) }>
-                                    <FaFillDrip className="fa-icon" />
-                                </Button> }
-                        </Base>
-                        <Column grow gap={ 1 }>
-                            <CatalogLimitedItemWidgetView fullWidth />
-                            <Text grow truncate>{ currentOffer.localizationName }</Text>
-                            <Flex justifyContent="between">
-                                <Column gap={ 1 }>
-                                    <CatalogSpinnerWidgetView />
-                                </Column>
-                                <CatalogTotalPriceWidget justifyContent="end" alignItems="end" />
-                            </Flex>
-                            <CatalogPurchaseWidgetView />
-                        </Column>
-                    </> }
-            </Column>
-        </Grid>
+        <>
+            <Flex fullHeight overflow="hidden">
+                <Column size={ 7 } overflow="hidden">
+                    <AutoGrid columnCount={ 5 }>
+                        { (!colorsShowing || !currentOffer || !colorableItems.has(currentOffer.product.furnitureData.className)) &&
+                            offers.map((offer, index) => <CatalogGridOfferView key={ index } itemActive={ (currentOffer && (currentOffer.product.furnitureData.hasIndexedColor ? currentOffer.product.furnitureData.className === offer.product.furnitureData.className : currentOffer.offerId === offer.offerId)) } offer={ offer } selectOffer={ selectOffer }/>)
+                        }
+                        { (colorsShowing && currentOffer && colorableItems.has(currentOffer.product.furnitureData.className)) &&
+                            colorableItems.get(currentOffer.product.furnitureData.className).map((color, index) => <LayoutGridItem itemHighlight key={ index } itemActive={ (currentOffer.product.furnitureData.colorIndex === index) } itemColor={ ColorConverter.int2rgb(color) } className="clear-bg" onClick={ event => selectColor(index, currentOffer.product.furnitureData.className) } />)
+                        }
+                    </AutoGrid>
+                </Column>
+                <Column center={ !currentOffer } size={ 5 } overflow="hidden">
+                    { !currentOffer &&
+                        <>
+                            { !!page.localization.getImage(1) && <img alt="" src={ page.localization.getImage(1) } /> }
+                            <Text center dangerouslySetInnerHTML={ { __html: page.localization.getText(0) } } />
+                        </> }
+                    { currentOffer &&
+                        <>
+                            <Base position="relative" overflow="hidden">
+                                <CatalogViewProductWidgetView />
+                                <CatalogAddOnBadgeWidgetView position="absolute" className="bg-muted rounded bottom-1 end-1" />
+                                { currentOffer.product.furnitureData.hasIndexedColor &&
+                                    <Button position="absolute" className="bottom-1 start-1" onClick={ event =>setColorsShowing(prev => !prev) }>
+                                        <FaFillDrip className="fa-icon" />
+                                    </Button> }
+                            </Base>
+                            <Column grow gap={ 1 }>
+                                <CatalogLimitedItemWidgetView fullWidth />
+                                <Text grow truncate>{ currentOffer.localizationName }</Text>
+                                <CatalogTotalPriceWidget />
+                            </Column>
+                        </> }
+                </Column>
+            </Flex>
+            { currentOffer &&
+                <Flex gap={ 2 } classNames={ [ 'flex-fill', 'catalog-purchase-widget' ] }>
+                    <CatalogPurchaseWidgetView>
+                        <CatalogSpinnerWidgetView />
+                    </CatalogPurchaseWidgetView>
+                </Flex> }
+        </>
     );
 }

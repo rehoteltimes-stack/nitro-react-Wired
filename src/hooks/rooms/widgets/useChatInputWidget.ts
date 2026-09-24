@@ -1,6 +1,6 @@
 import { AvatarExpressionEnum, GetTicker, HabboClubLevelEnum, RoomControllerLevel, RoomEngineObjectEvent, RoomObjectCategory, RoomRotatingEffect, RoomSessionChatEvent, RoomSettingsComposer, RoomShakingEffect, RoomZoomEvent, TextureUtils } from '@nitrots/nitro-renderer';
 import { useEffect, useState } from 'react';
-import { ChatMessageTypeEnum, CreateLinkEvent, GetClubMemberLevel, GetConfiguration, GetRoomEngine, GetSessionDataManager, LocalizeText, SendMessageComposer } from '../../../api';
+import { ChatMessageTypeEnum, CreateLinkEvent, NotificationBubbleType, GetClubMemberLevel, GetConfiguration, GetRoomEngine, GetSessionDataManager, LocalizeText, SendMessageComposer } from '../../../api';
 import { useRoomEngineEvent, useRoomSessionManagerEvent } from '../../events';
 import { useNotification } from '../../notification';
 import { useObjectSelectedEvent } from '../engine';
@@ -14,7 +14,7 @@ const useChatInputWidgetState = () =>
     const [ isIdle, setIsIdle ] = useState(false);
     const [ floodBlocked, setFloodBlocked ] = useState(false);
     const [ floodBlockedSeconds, setFloodBlockedSeconds ] = useState(0);
-    const { showNitroAlert = null, showConfirm = null } = useNotification();
+    const { showNitroAlert = null, showConfirm = null, showSingleBubble = null } = useNotification();
     const { roomSession = null } = useRoom();
 
     const sendChat = (text: string, chatType: number, recipientName: string = '', styleId: number = 0) =>
@@ -142,6 +142,47 @@ const useChatInputWidgetState = () =>
                         null, null, null, LocalizeText('generic.alert.title'));
                     }
                     return null;
+                case ':build':
+                case ':buildmode':
+                    if(roomSession.controllerLevel >= RoomControllerLevel.GUEST) CreateLinkEvent('build-mode/toggle/' + ((secondPart.toLowerCase() === 'reset') ? 'reset' : ''));
+
+                    return null;
+                case ':setz':
+                case ':forceact':
+                case ':forcerot':
+                {
+                    if(roomSession.controllerLevel < RoomControllerLevel.GUEST) return null;
+
+                    const command = firstPart.toLowerCase().slice(1);
+
+                    if(secondPart.toLowerCase() === 'stop')
+                    {
+                        CreateLinkEvent('build-mode/' + command + '/stop');
+
+                        return null;
+                    }
+
+                    const value = (command === 'setz') ? parseFloat(secondPart) : parseInt(secondPart, 10);
+                    const limit = (command === 'forceact') ? 2147483647 : 7;
+
+                    if(isNaN(value) || !isFinite(value))
+                    {
+                        showSingleBubble(('Bad command format!\n:' + command + ' value or :' + command + ' stop'), NotificationBubbleType.INFO);
+
+                        return null;
+                    }
+
+                    if(((value < 0) || (value > limit)) && (command !== 'setz'))
+                    {
+                        showSingleBubble(('The value must be between 0 and ' + limit + '\nExample: :' + command + ' 2'), NotificationBubbleType.INFO);
+
+                        return null;
+                    }
+
+                    CreateLinkEvent('build-mode/' + command + '/' + value);
+
+                    return null;
+                }
                 case ':furni':
                     CreateLinkEvent('furni-chooser/');
                     return null;

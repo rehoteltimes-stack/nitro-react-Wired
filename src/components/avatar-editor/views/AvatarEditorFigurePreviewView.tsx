@@ -42,8 +42,12 @@ export const AvatarEditorFigurePreviewView: FC<AvatarEditorFigurePreviewViewProp
     }, [ figureData ] );
 
     return (
-        <Column className="figure-preview-container" overflow="hidden" position="relative">
-            <LayoutAvatarImageView figure={ figureData.getFigureString() } direction={ figureData.direction } scale={ 2 } />
+        <Column grow className="figure-preview-container" overflow="hidden" position="relative">
+            { /* scale=2 was leftover from the old layout, where this component sat alone in a much bigger
+                 dedicated column - inside its real container (~123x146px, see AvatarEditorModelView) a 2x
+                 transform overflowed it badly (180x260 rendered into a 162x150 box). The reference's own real
+                 avatar-image is a plain, unscaled 90x130px render. */ }
+            <LayoutAvatarImageView figure={ figureData.getFigureString() } direction={ figureData.direction } />
             <AvatarEditorIcon className="avatar-spotlight" icon="spotlight" />
             <Base className="avatar-shadow" />
             <Base className="arrow-container">

@@ -1,6 +1,6 @@
 import { NitroPoint } from '@nitrots/nitro-renderer';
 import { FC, useEffect } from 'react';
-import { Base, Column, Flex, Grid, Text } from '../../../../../common';
+import { Base, Column, Flex, Text } from '../../../../../common';
 import { useCatalog } from '../../../../../hooks';
 import { CatalogPurchaseWidgetView } from '../widgets/CatalogPurchaseWidgetView';
 import { CatalogSpacesWidgetView } from '../widgets/CatalogSpacesWidgetView';
@@ -18,31 +18,37 @@ export const CatalogLayoutSpacesView: FC<CatalogLayoutProps> = props =>
         roomPreviewer.updatePreviewObjectBoundingRectangle(new NitroPoint());
     }, [ roomPreviewer ]);
 
+    // Same structural fix as CatalogLayoutDefaultView.tsx (2026-09-22/23 pass) - see that file's own comment.
     return (
-        <Grid>
-            <Column size={ 7 } overflow="hidden">
-                <CatalogSpacesWidgetView />
-            </Column>
-            <Column center={ !currentOffer } size={ 5 } overflow="hidden">
-                { !currentOffer &&
-                    <>
-                        { !!page.localization.getImage(1) && <img alt="" src={ page.localization.getImage(1) } /> }
-                        <Text center dangerouslySetInnerHTML={ { __html: page.localization.getText(0) } } />
-                    </> }
-                { currentOffer &&
-                    <>
-                        <Base position="relative" overflow="hidden">
-                            <CatalogViewProductWidgetView />
-                        </Base>
-                        <Column grow gap={ 1 }>
-                            <Text grow truncate>{ currentOffer.localizationName }</Text>
-                            <Flex justifyContent="end">
-                                <CatalogTotalPriceWidget alignItems="end" />
-                            </Flex>
-                            <CatalogPurchaseWidgetView />
-                        </Column>
-                    </> }
-            </Column>
-        </Grid>
+        <>
+            <Flex fullHeight overflow="hidden">
+                <Column size={ 7 } overflow="hidden">
+                    <CatalogSpacesWidgetView />
+                </Column>
+                <Column center={ !currentOffer } size={ 5 } overflow="hidden">
+                    { !currentOffer &&
+                        <>
+                            { !!page.localization.getImage(1) && <img alt="" src={ page.localization.getImage(1) } /> }
+                            <Text center dangerouslySetInnerHTML={ { __html: page.localization.getText(0) } } />
+                        </> }
+                    { currentOffer &&
+                        <>
+                            <Base position="relative" overflow="hidden">
+                                <CatalogViewProductWidgetView />
+                            </Base>
+                            <Column grow gap={ 1 }>
+                                <Text grow truncate>{ currentOffer.localizationName }</Text>
+                                <Flex justifyContent="end">
+                                    <CatalogTotalPriceWidget alignItems="end" />
+                                </Flex>
+                            </Column>
+                        </> }
+                </Column>
+            </Flex>
+            { currentOffer &&
+                <Flex gap={ 2 } classNames={ [ 'flex-fill', 'catalog-purchase-widget' ] }>
+                    <CatalogPurchaseWidgetView />
+                </Flex> }
+        </>
     );
 }

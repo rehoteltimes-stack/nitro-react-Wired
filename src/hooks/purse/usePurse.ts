@@ -1,13 +1,25 @@
 import { ActivityPointNotificationMessageEvent, UserCreditsEvent, UserCurrencyComposer, UserCurrencyEvent, UserSubscriptionComposer, UserSubscriptionEvent, UserSubscriptionParser } from '@nitrots/nitro-renderer';
 import { useEffect, useMemo, useState } from 'react';
 import { useBetween } from 'use-between';
-import { CloneObject, ClubStatus, GetConfiguration, IPurse, PlaySound, Purse, SendMessageComposer, SoundNames } from '../../api';
+import { CloneObject, ClubStatus, GetConfiguration, IPurse, PlaySound, Purse, PurseCurrencyColorDataEvent, PurseCurrencyColorRequestComposer, PurseCurrencyMeta, RegisterPurseCurrencyColorMessages, SendMessageComposer, SoundNames } from '../../api';
 import { useMessageEvent } from '../events';
 
 const usePurseState = () =>
 {
+    // Real reference feature (see PurseCurrencyColorProtocol.ts's own comment): must run
+    // synchronously in the hook body, before the useMessageEvent below, or the real 9539 response
+    // arrives with zero live listeners (the same hook-ordering bug class documented elsewhere in
+    // this project).
+    RegisterPurseCurrencyColorMessages();
+
     const [ purse, setPurse ] = useState<IPurse>(new Purse());
+    const [ currencyMeta, setCurrencyMeta ] = useState<Map<number, PurseCurrencyMeta>>(new Map());
     const hcDisabled = useMemo(() => GetConfiguration<boolean>('hc.disabled', false), []);
+
+    useMessageEvent<PurseCurrencyColorDataEvent>(PurseCurrencyColorDataEvent, event =>
+    {
+        setCurrencyMeta(event.getParser().meta);
+    });
 
     const clubStatus = useMemo(() =>
     {
@@ -118,9 +130,10 @@ const usePurseState = () =>
     useEffect(() =>
     {
         SendMessageComposer(new UserCurrencyComposer());
+        SendMessageComposer(new PurseCurrencyColorRequestComposer());
     }, []);
 
-    return { purse, hcDisabled, clubStatus, getCurrencyAmount };
+    return { purse, hcDisabled, clubStatus, getCurrencyAmount, currencyMeta };
 }
 
 export const usePurse = () => useBetween(usePurseState);

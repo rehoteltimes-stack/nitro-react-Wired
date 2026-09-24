@@ -275,6 +275,56 @@
   height: auto;
 }
 
+// Real reference primitive (unscoped in their own stylesheet too, not user-profile-specific) -
+// the Wealth chart's hover tooltip. Pulled verbatim from the live reference CSS bundle, not
+// invented: a small dark box anchored to the hovered data point's own real screen position via an
+// inline left/top style, flipped left/right (translate direction + arrow side) depending on which
+// half of the chart the point falls in so it never overflows the card edge.
+.nitro-graph-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, .9);
+  border: 1px solid gray;
+  border-radius: 5px;
+  padding: 7px;
+  font-size: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.nitro-graph-tooltip.left {
+  transform: translate(calc(-100% - 10px), -50%);
+}
+
+.nitro-graph-tooltip.right {
+  transform: translate(10px, -50%);
+}
+
+.nitro-graph-tooltip .nitro-graph-tooltip-inner {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+
+.nitro-graph-tooltip .nitro-graph-tooltip-inner.left {
+  right: -6px;
+  border-left: 6px solid rgba(0, 0, 0, .9);
+}
+
+.nitro-graph-tooltip .nitro-graph-tooltip-inner.right {
+  left: -6px;
+  border-right: 6px solid rgba(0, 0, 0, .9);
+}
+
+.nitro-graph-tooltip .graph-view-tooltip-text {
+  font-family: var(--holo-font);
+  text-shadow: var(--holo-text-shadow);
+  color: var(--holo-text-primary) !important;
+}
+
 .user-profile .spinner {
   background: #1A617F;
 }
