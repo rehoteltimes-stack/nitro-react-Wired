@@ -1,4 +1,4 @@
-import { cloneElement, FC, MouseEvent, ReactElement, useMemo } from 'react';
+import { cloneElement, FC, MouseEvent, ReactElement, useMemo, ReactNode } from 'react';
 import { FaFlag, FaTimes } from 'react-icons/fa';
 import { Column, ColumnProps, Flex } from '..';
 
@@ -10,7 +10,7 @@ export interface NitroCardHeaderButton
 
 interface NitroCardHeaderViewProps extends ColumnProps
 {
-    headerText: string;
+    headerText: ReactNode;
     isGalleryPhoto?: boolean;
     noCloseButton?: boolean;
     buttonList?: NitroCardHeaderButton[];

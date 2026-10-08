@@ -1,7 +1,8 @@
-import { Dispose, DropBounce, EaseOut, JumpBy, Motions, NitroToolbarAnimateIconEvent, PerkAllowancesMessageEvent, PerkEnum, Queue, RoomControllerLevel, RoomSessionEvent, Wait } from '@nitrots/nitro-renderer';
-import { FC, useEffect, useState } from 'react';
-import { CreateLinkEvent, GetConfiguration, GetSessionDataManager, GetWiredCreatorToolsSettings, MessengerIconState, OpenMessengerChat, VisitDesktop, WIRED_CREATOR_TOOLS_SETTINGS_EVENT } from '../../api';
+import { Dispose, DropBounce, EaseOut, JumpBy, Motions, NitroToolbarAnimateIconEvent, PerkAllowancesMessageEvent, PerkEnum, Queue, RoomSessionEvent, Wait } from '@nitrots/nitro-renderer';
+import { FC, useState } from 'react';
+import { CreateLinkEvent, GetConfiguration, GetSessionDataManager, MessengerIconState, OpenMessengerChat, VisitDesktop } from '../../api';
 import { Base, Flex, LayoutAvatarImageView, LayoutItemCountView } from '../../common';
+import { useStaffFeedCard } from '../../api/stafffeed/StaffFeedCardStore';
 import { useAchievements, useFriends, useInventoryUnseenTracker, useMessageEvent, useMessenger, useRoom, useRoomEngineEvent, useRoomSessionManagerEvent, useSessionInfo } from '../../hooks';
 import { ToolbarMeView } from './ToolbarMeView';
 
@@ -11,24 +12,15 @@ export const ToolbarView: FC<{ isInRoom: boolean }> = props =>
     const [ isMeExpanded, setMeExpanded ] = useState(false);
     const [ isLandingView, setLandingView ] = useState(true);
     const [ useGuideTool, setUseGuideTool ] = useState(false);
-    const [ showWiredToolbar, setShowWiredToolbar ] = useState(() => GetWiredCreatorToolsSettings().showToolbar);
     const { userFigure = null } = useSessionInfo();
     const { getFullCount = 0 } = useInventoryUnseenTracker();
+    // Staff feed lines that came in while the Staff feed card was closed (only staff get any)
+    const { unread: feedUnread } = useStaffFeedCard();
     const { getTotalUnseen = 0 } = useAchievements();
     const { requests = [] } = useFriends();
     const { iconState = MessengerIconState.HIDDEN } = useMessenger();
     const isMod = GetSessionDataManager().isModerator;
     const { roomSession = null } = useRoom();
-    const canOpenWiredTools = isInRoom && !!roomSession && (roomSession.isRoomOwner || roomSession.controllerLevel >= RoomControllerLevel.GUEST || isMod);
-
-    useEffect(() =>
-    {
-        const updateSettings = () => setShowWiredToolbar(GetWiredCreatorToolsSettings().showToolbar);
-
-        window.addEventListener(WIRED_CREATOR_TOOLS_SETTINGS_EVENT, updateSettings);
-
-        return () => window.removeEventListener(WIRED_CREATOR_TOOLS_SETTINGS_EVENT, updateSettings);
-    }, []);
 
     useRoomSessionManagerEvent<RoomSessionEvent>(RoomSessionEvent.CREATED, event => setLandingView(false));
     useRoomSessionManagerEvent<RoomSessionEvent>(RoomSessionEvent.ENDED, event => setLandingView(event.openLandingView));
@@ -79,13 +71,15 @@ export const ToolbarView: FC<{ isInRoom: boolean }> = props =>
         animationIconToToolbar('icon-inventory', event.image, event.x, event.y);
     });
 
+    const logoSeason = GetConfiguration<string>('hotel.logo.season', '');
+
     return (
         <Flex alignItems="center" justifyContent="between" gap={ 2 } className="nitro-toolbar">
             <Flex className="nitro-toolbar-container left" gap={ 2 } alignItems="center">
                 { isLandingView &&
                     <Base pointer className="navigation-item icon icon-house" onClick={ event => CreateLinkEvent('navigator/goto/home') } /> }
                 { !isLandingView &&
-                    <Base pointer className="navigation-item icon icon-habbo" onClick={ event => VisitDesktop() } /> }
+                    <Base pointer className={ 'navigation-item icon icon-habbo' + (logoSeason ? ` season-${ logoSeason }` : '') } onClick={ event => VisitDesktop() } /> }
                 <Flex center pointer className={ 'navigation-item item-avatar ' + (isMeExpanded ? 'active ' : '') } onClick={ event => setMeExpanded(value => !value) }>
                     <LayoutAvatarImageView figure={ userFigure } direction={ 2 } position="absolute" />
                     { (getTotalUnseen > 0) &&
@@ -99,8 +93,6 @@ export const ToolbarView: FC<{ isInRoom: boolean }> = props =>
                         { GetConfiguration('game.center.enabled') &&
                             <Base pointer className="navigation-item icon icon-game" onClick={ event => CreateLinkEvent('games/toggle') } /> }
                         <Base pointer className="navigation-item icon icon-catalog" onClick={ event => CreateLinkEvent('catalog/toggle') } />
-                        { canOpenWiredTools && showWiredToolbar &&
-                            <Base pointer className="navigation-item icon icon-wired-tools" onClick={ event => CreateLinkEvent('wired-tools/toggle') } /> }
                         <Base pointer className="navigation-item icon icon-inventory" onClick={ event => CreateLinkEvent('inventory/toggle') }>
                             { (getFullCount > 0) &&
                                 <LayoutItemCountView count={ getFullCount } /> }
@@ -109,9 +101,13 @@ export const ToolbarView: FC<{ isInRoom: boolean }> = props =>
                             <Base pointer className="navigation-item icon icon-camera" onClick={ event => CreateLinkEvent('camera/toggle') } /> }
                     </> }
                 { isMod &&
-                    <Base pointer className="navigation-item icon icon-modtools" onClick={ event => CreateLinkEvent('mod-tools/toggle') } /> }
+                    <Base pointer className="navigation-item icon icon-modtools" onClick={ event => CreateLinkEvent('mod-tools/toggle') }>
+                        { (feedUnread > 0) &&
+                            <LayoutItemCountView count={ feedUnread } /> }
+                    </Base> }
             </Flex>
-            <Flex className={ `nitro-toolbar-container center ${ (!roomSession || roomSession.isSpectator) ? 'inactive' : '' }` } gap={ 2 }>
+            { /* isInRoom (MainView's landingViewVisible) as well: roomSession can stay stale on the landing view (CLAUDE.md rule 4) */ }
+            <Flex className={ `nitro-toolbar-container center ${ (!isInRoom || !roomSession || roomSession.isSpectator) ? 'inactive' : '' }` } gap={ 2 }>
                 <Flex alignItems="center" id="toolbar-chat-input-container" />
             </Flex>
             <Flex className="nitro-toolbar-container right" alignItems="center" gap={ 2 }>

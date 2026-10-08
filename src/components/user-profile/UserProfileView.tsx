@@ -1,8 +1,10 @@
 import { ExtendedProfileChangedMessageEvent, FriendlyTime, RequestFriendComposer, RoomEngineObjectEvent, RoomObjectCategory, RoomObjectType, UserCurrentBadgesComposer, UserCurrentBadgesEvent, UserProfileEvent, UserProfileParser } from '@nitrots/nitro-renderer';
-import { FC, useState } from 'react';
-import { CreateLinkEvent, GetConfiguration, GetRoomSession, GetSessionDataManager, GetUserProfile, LocalizeText, OpenMessengerChat, ProfileBannerDataEvent, ProfileBannerRequestComposer, ProfileCoverDataEvent, ProfileCoverRequestComposer, ProfileStatsDataEvent, ProfileStatsRequestComposer, RegisterProfileBannerMessages, RegisterProfileCoverMessages, RegisterProfileStatsMessages, SendMessageComposer } from '../../api';
+import { FC, useEffect, useState } from 'react';
+import { AddEventLinkTracker, CreateLinkEvent, GetConfiguration, IsCoverDeletePending, GetRoomSession, GetSessionDataManager, GetUsernameStyle, GetUserProfile, LocalizeText, OpenMessengerChat, ProfileBannerDataEvent, ProfileBannerRequestComposer, ProfileCoverDataEvent, ProfileCoverRequestComposer, ProfileStatsDataEvent, ProfileStatsRequestComposer, RegisterProfileBannerMessages, RegisterProfileCoverMessages, RegisterProfileStatsMessages, RemoveLinkEventTracker, SendMessageComposer } from '../../api';
 import { Button, Column, Flex, LayoutAvatarImageView, LayoutBadgeRackView, NitroCardContentView, NitroCardHeaderView, NitroCardTabsItemView, NitroCardTabsView, NitroCardView, Text } from '../../common';
 import { useMessageEvent, useRoomEngineEvent } from '../../hooks';
+import { ShopInfostandBorder } from '../shop/ShopInfostandBorder';
+import { ShopStyledName } from '../shop/ShopStyledName';
 import { GroupsContainerView } from './views/GroupsContainerView';
 import { UserProfilePicturesTabView } from './views/UserProfilePicturesTabView';
 import { UserProfileRoomsTabView } from './views/UserProfileRoomsTabView';
@@ -46,7 +48,16 @@ export const UserProfileView: FC<{}> = props =>
     const [ requestSent, setRequestSent ] = useState(false);
     const [ playerBannerUrl, setPlayerBannerUrl ] = useState<string>(null);
     const [ respectsReceived, setRespectsReceived ] = useState(0);
+    const [ identity, setIdentity ] = useState<{ staffColor: string, staffBackground: string, isVip: boolean }>({ staffColor: '', staffBackground: '', isVip: false });
     const [ profileCoverUrl, setProfileCoverUrl ] = useState<string>(null);
+    // Real, pre-existing bug fixed here: the "Moderate" link used to embed the full, already-built cover URL
+    // (domain + path, e.g. "https://.../profile-banners/xyz.png") as one of the "/"-delimited segments of the
+    // CreateLinkEvent string itself - since that URL has its own real slashes, UserProfileModerationView's own
+    // `url.split('/')` / `parts.length === 7` check silently never matched whenever a target had a real cover
+    // set, so the whole Moderate panel (Report AND the newer Delete buttons) never opened at all. Keeping the
+    // bare filename separately (matching the real reference's own `l.banner` field, confirmed via its bundle -
+    // never a full URL) and using that in the link instead fixes it.
+    const [ profileCoverFilename, setProfileCoverFilename ] = useState<string>(null);
 
     const onClose = () =>
     {
@@ -55,8 +66,29 @@ export const UserProfileView: FC<{}> = props =>
         setPlayerBannerUrl(null);
         setRespectsReceived(0);
         setProfileCoverUrl(null);
+        setProfileCoverFilename(null);
         setActiveTab(TABS[0].key);
     }
+
+    useEffect(() =>
+    {
+        const linkTracker = {
+            linkReceived: (url: string) =>
+            {
+                if(url !== 'user-profile/cover-removed') return;
+
+                if(!userProfile || (userProfile.id !== GetSessionDataManager().userId)) return;
+
+                setProfileCoverUrl('');
+                setProfileCoverFilename('');
+            },
+            eventUrlPrefix: 'user-profile/'
+        };
+
+        AddEventLinkTracker(linkTracker);
+
+        return () => RemoveLinkEventTracker(linkTracker);
+    }, [ userProfile ]);
 
     useMessageEvent<UserCurrentBadgesEvent>(UserCurrentBadgesEvent, event =>
     {
@@ -89,6 +121,7 @@ export const UserProfileView: FC<{}> = props =>
         if(!userProfile || (parser.userId !== userProfile.id)) return;
 
         setRespectsReceived(parser.respectsReceived);
+        setIdentity({ staffColor: parser.staffColor, staffBackground: parser.staffBackground, isVip: parser.isVip });
     });
 
     useMessageEvent<ProfileCoverDataEvent>(ProfileCoverDataEvent, event =>
@@ -97,7 +130,10 @@ export const UserProfileView: FC<{}> = props =>
 
         if(!userProfile || (parser.userId !== userProfile.id)) return;
 
+        if(parser.filename && IsCoverDeletePending() && (parser.userId === GetSessionDataManager().userId)) return;
+
         setProfileCoverUrl(parser.filename ? `${ GetConfiguration<string>('profile.banner.url') }/${ parser.filename }` : '');
+        setProfileCoverFilename(parser.filename ?? '');
     });
 
     useMessageEvent<UserProfileEvent>(UserProfileEvent, event =>
@@ -119,6 +155,7 @@ export const UserProfileView: FC<{}> = props =>
             setPlayerBannerUrl(null);
             setRespectsReceived(0);
             setProfileCoverUrl(null);
+            setProfileCoverFilename(null);
             setActiveTab(TABS[0].key);
         }
 
@@ -171,7 +208,7 @@ export const UserProfileView: FC<{}> = props =>
 
     return (
         <NitroCardView uniqueKey="nitro-user-profile" theme="primary-slim" className="user-profile">
-            <NitroCardHeaderView headerText={ `${ LocalizeText('extendedprofile.caption') } - ${ userProfile.username }` } onCloseClick={ onClose } />
+            <NitroCardHeaderView headerText={ <>Profile of <ShopStyledName className="profile-username" userId={ userProfile.id } name={ userProfile.username } baseStyle={ GetUsernameStyle(identity) } /></> } onCloseClick={ onClose } />
             <NitroCardContentView overflow="hidden">
                 { /* Real reference structure, corrected after a full live DOM-hierarchy trace (user report:
                      "overall profile structure layout is not right" - traced upward per the mandated
@@ -197,6 +234,8 @@ export const UserProfileView: FC<{}> = props =>
                     <div className="profile-banner" style={ profileCoverUrl ? { backgroundImage: `url(${ profileCoverUrl })` } : undefined } />
                     <Flex className="profile-data" gap={ 1 }>
                         <Flex className="profile-infostand" gap={ 1 }>
+                            { /* Style Lab (own feature): the player's border around their avatar stand, like on the room infostand */ }
+                            <ShopInfostandBorder userId={ userProfile.id } scale={ 0.55 } outset={ 4 } centered />
                             { /* Real reference: clicking this opens an external website profile page
                                  (`${pe("profile.url")}/${username}`). No matching hCMS route/config key
                                  exists yet (checked routes/web.php and ui-config.json - genuinely
@@ -222,36 +261,43 @@ export const UserProfileView: FC<{}> = props =>
                                 { isOwnProfile &&
                                     <Button onClick={ event => CreateLinkEvent('user-settings/toggle') }>Settings</Button> }
                                 { !isOwnProfile &&
-                                    <Button onClick={ event => CreateLinkEvent(`user-profile-moderation/open/${ userProfile.username }/${ userProfile.id }/${ userProfile.figure }/${ userProfile.motto }/${ profileCoverUrl ?? '' }`) }>Moderate</Button> }
+                                    <Button onClick={ event => CreateLinkEvent(`user-profile-moderation/open/${ userProfile.username }/${ userProfile.id }/${ userProfile.figure }/${ userProfile.motto }/${ profileCoverFilename ?? '' }`) }>Moderate</Button> }
                             </Flex>
                             { /* Real classname (.profile-stats, with its own real font-size:13px rule
                                  already in _59-user-profile.scss) plus a real .vertical-separator between
                                  the two columns - both confirmed via live outerHTML capture, neither was in
                                  this file before. */ }
                             <Flex className="profile-stats" justifyContent="between">
+                                { /* Real reference (minified bundle, verbatim structure): every stat is a
+                                     Flex gap:1 of two noWrap Texts - bold label + plain value - with NO
+                                     `small`; the size comes from .profile-stats' own font-size:13px. The
+                                     reference uses FriendlyTime.shortFormat(..., '.ago'), but our
+                                     ExternalTexts.json has no friendlytime.*.short.ago keys (it renders the
+                                     raw key) - kept format() until the real key values are captured. */ }
                                 <Column gap={ 1 }>
-                                    { /* Real keys, used correctly: both carry their own embedded <b> label
-                                         and %placeholder% (confirmed in ExternalTexts.json) - the OLD code
-                                         wrapped the label in ANOTHER <b> and appended the value as a
-                                         sibling, which both double-bolded the label and left the real
-                                         %created%/%lastlogin% token substituted by nothing. */ }
-                                    <Text small dangerouslySetInnerHTML={ { __html: LocalizeText('extendedprofile.created', [ 'created' ], [ userProfile.registration ]) } } />
-                                    <Text small dangerouslySetInnerHTML={ { __html: userProfile.isOnline ? `<b>Online since:</b> ${ FriendlyTime.format(userProfile.secondsSinceLastVisit, '.ago', 2) }` : LocalizeText('extendedprofile.last.login', [ 'lastlogin' ], [ FriendlyTime.format(userProfile.secondsSinceLastVisit, '.ago', 2) ]) } } />
+                                    <Flex gap={ 1 }>
+                                        <Text noWrap bold>Created:</Text>
+                                        <Text noWrap>{ userProfile.registration }</Text>
+                                    </Flex>
+                                    <Flex gap={ 1 }>
+                                        <Text noWrap bold>Last login:</Text>
+                                        <Text noWrap>{ FriendlyTime.format(userProfile.secondsSinceLastVisit, '.ago', 2) }</Text>
+                                    </Flex>
                                 </Column>
                                 <div className="vertical-separator" />
                                 <Column gap={ 1 }>
                                     <Flex gap={ 1 }>
-                                        <Text bold small>{ LocalizeText('extendedprofile.achievementscore') }</Text>
-                                        <Text small>{ formatThousands(userProfile.achievementPoints) }</Text>
+                                        <Text noWrap bold>{ LocalizeText('extendedprofile.achievementscore') }</Text>
+                                        <Text noWrap>{ formatThousands(userProfile.achievementPoints) }</Text>
                                     </Flex>
                                     <Flex gap={ 1 }>
-                                        <Text bold small>Respects:</Text>
-                                        <Text small>{ formatThousands(respectsReceived) }</Text>
+                                        <Text noWrap bold>Respects:</Text>
+                                        <Text noWrap>{ formatThousands(respectsReceived) }</Text>
                                     </Flex>
                                 </Column>
                             </Flex>
                             <Flex alignItems="center" gap={ 1 } justifyContent="between">
-                                <Text className="profile-stats-motto rounded py-1 px-2" small truncate title={ userProfile.motto }>{ userProfile.motto }&nbsp;</Text>
+                                <Text className="profile-stats-motto rounded py-1 px-2" pointer small truncate select="text" title={ userProfile.motto }>{ userProfile.motto }&nbsp;</Text>
                                 <i className={ `profile-stats-online-icon icon ${ userProfile.isOnline ? 'icon-pf-online' : 'icon-pf-offline' }` } />
                             </Flex>
                         </Column>

@@ -10,11 +10,13 @@ export interface CatalogNavigationItemViewProps
 {
     node: ICatalogNode;
     child?: boolean;
+    showIds?: boolean;
+    flat?: boolean;
 }
 
 export const CatalogNavigationItemView: FC<CatalogNavigationItemViewProps> = props =>
 {
-    const { node = null, child = false } = props;
+    const { node = null, child = false, showIds = false, flat = false } = props;
     const { activateNode = null } = useCatalog();
 
     return (
@@ -22,16 +24,16 @@ export const CatalogNavigationItemView: FC<CatalogNavigationItemViewProps> = pro
             <LayoutGridItem gap={ 1 } column={ false } itemActive={ node.isActive } onClick={ event => activateNode(node) } className={ child ? 'inset' : '' }>
                 <Flex className={ `nitro-catalog-navigation-item ${ (node.isOpen && !node.isBranch) ? 'active' : '' }` } alignItems="center" gap={ 2 } fullWidth overflow="hidden">
                     <CatalogIconView icon={ node.iconId } />
-                    <Text small grow truncate textTransform="uppercase">{ node.localization }</Text>
+                    <Text small grow truncate textTransform="uppercase">{ node.localization }{ showIds && ` (${ node.pageId })` }</Text>
                 </Flex>
-                { node.isBranch &&
+                { node.isBranch && !flat &&
                     <>
                         { node.isOpen && <FaCaretUp className="fa-icon" /> }
                         { !node.isOpen && <FaCaretDown className="fa-icon" /> }
                     </> }
             </LayoutGridItem>
-            { node.isOpen && node.isBranch &&
-                <CatalogNavigationSetView node={ node } child={ true } /> }
+            { !flat && node.isOpen && node.isBranch &&
+                <CatalogNavigationSetView node={ node } child={ true } showIds={ showIds } /> }
         </Base>
     );
 }

@@ -1,0 +1,68 @@
+diff --git a/core/communication/SocketConnection.ts b/core/communication/SocketConnection.ts
+index 74b7e83b449399fb0c2cbb4b34dee1c5f22c2d83..aaf213d5356c65ba54d1d5c32171448c5a8e13ae 100644
+--- a/core/communication/SocketConnection.ts
++++ b/core/communication/SocketConnection.ts
+@@ -32,6 +32,9 @@ export class SocketConnection extends EventDispatcher implements IConnection
+     // a socket that closes before its login succeeded = the server refused the ticket (e.g. the website issued a new one
+     // because the account logged in somewhere else); after this many in a row it stops instead of retrying / reloading
+     public static MAX_AUTH_FAILURES = 2;
++    // the emulator opens its socket before it can log anyone in (early in its boot) and drops a login sent then, while
++    // its pings keep the socket alive; a socket not logged in after this long is replaced (not counted as refused)
++    public static LOGIN_TIMEOUT_MS = 15000;
+ 
+     private _socketUrl: string = '';
+     private _wasEverReady: boolean = false;
+@@ -45,6 +48,7 @@ export class SocketConnection extends EventDispatcher implements IConnection
+     private _onVisibilityChange: () => void = null;
+     private _authFailures: number = 0;
+     private _gaveUp: boolean = false;
++    private _loginTimer: ReturnType<typeof setTimeout> = null;
+ 
+     constructor(communicationManager: ICommunicationManager, stateListener: IConnectionStateListener)
+     {
+@@ -139,6 +143,7 @@ export class SocketConnection extends EventDispatcher implements IConnection
+     private destroySocket(): void
+     {
+         this.stopHeartbeat();
++        this.stopLoginTimer();
+ 
+         if(this._reconnectStableTimer !== null) clearTimeout(this._reconnectStableTimer);
+ 
+@@ -264,11 +269,29 @@ export class SocketConnection extends EventDispatcher implements IConnection
+         this._pendingServerMessages = [];
+         this._lastReceivedTime = Date.now();
+ 
++        this.stopLoginTimer();
++        this._loginTimer = setTimeout(() =>
++        {
++            this._loginTimer = null;
++
++            if((this._socket !== socket) || this._isAuthenticated || this.disposed) return;
++
++            this.forceReconnect();
++        }, SocketConnection.LOGIN_TIMEOUT_MS);
++
+         this.dispatchConnectionEvent(SocketConnectionEvent.CONNECTION_OPENED, event);
+     }
+ 
++    private stopLoginTimer(): void
++    {
++        if(this._loginTimer !== null) clearTimeout(this._loginTimer);
++
++        this._loginTimer = null;
++    }
++
+     private onClose(event: CloseEvent): void
+     {
++        this.stopLoginTimer();
+         this.dispatchConnectionEvent(SocketConnectionEvent.CONNECTION_CLOSED, event);
+ 
+         if(this._intentionalClose || this.disposed) return;
+@@ -323,6 +346,7 @@ export class SocketConnection extends EventDispatcher implements IConnection
+     {
+         this._isAuthenticated = true;
+         this._authFailures = 0;
++        this.stopLoginTimer();
+         this._gaveUp = false;
+     }
+ 

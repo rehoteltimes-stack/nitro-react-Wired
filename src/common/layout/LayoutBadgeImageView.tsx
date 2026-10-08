@@ -1,9 +1,11 @@
 import { BadgeImageReadyEvent, NitroSprite, TextureUtils } from '@nitrots/nitro-renderer';
 import { CSSProperties, FC, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { GetConfiguration, GetSessionDataManager, LocalizeBadgeDescription, LocalizeBadgeName, LocalizeText } from '../../api';
+import { GetBadgeRarity, GetConfiguration, GetSessionDataManager, LocalizeBadgeDescription, LocalizeBadgeName, LocalizeText, OnBadgeRarity, RequestBadgeRarity } from '../../api';
 import { Base, BaseProps } from '../Base';
 import { Column } from '../Column';
+
+const RARITY_TIERS = [ 'Common', 'Uncommon', 'Rare', 'Epic', 'Mythical' ];
 
 export interface LayoutBadgeImageViewProps extends BaseProps<HTMLDivElement>
 {
@@ -19,16 +21,13 @@ export const LayoutBadgeImageView: FC<LayoutBadgeImageViewProps> = props =>
 {
     const { badgeCode = null, isGroup = false, showInfo = false, customTitle = null, isGrayscale = false, scale = 1, classNames = [], style = {}, children = null, ...rest } = props;
     const [ imageElement, setImageElement ] = useState<HTMLImageElement>(null);
+    const [ , setRarityVersion ] = useState(0);
     // Real reference behaviour, confirmed live via CDP hover on a fresh habbocity.fr tab (a static screenshot
     // could never have caught this - the tooltip is entirely absent from the DOM until hovered): the name/
     // description popup is NOT a static child of the badge div like this component used to render it - it's a
     // real, already-ported, previously-unused primitive (.tooltip-c, _26-limited.scss) mounted only while
     // hovering, portalled to document.body (position:fixed there already accounts for that), with a real
-    // directional arrow (.left/.right modifier + the CSS's own :after clip-path). Confirmed real reference
-    // content structure too: bold name, description, then a `code: <raw badge code>` row this project never had
-    // at all - added below, matching that exactly (plain literal "code:" text, not a locale key - the reference
-    // shows this same untranslated word even on an otherwise fully French account, so it isn't localized there
-    // either).
+    // directional arrow (.left/.right modifier + the CSS's own :after clip-path).
     const [ isHovering, setIsHovering ] = useState(false);
     const [ tooltipStyle, setTooltipStyle ] = useState<CSSProperties>({});
     const [ tooltipSide, setTooltipSide ] = useState<'left' | 'right'>('right');
@@ -77,6 +76,19 @@ export const LayoutBadgeImageView: FC<LayoutBadgeImageViewProps> = props =>
     {
         if(!badgeCode || !badgeCode.length) return;
 
+        if(!isGroup)
+        {
+            const element = new Image();
+
+            element.onload = () => setImageElement(element);
+            element.src = GetConfiguration<string>('badge.asset.url').replace('%badgename%', badgeCode.toString());
+
+            return () =>
+            {
+                element.onload = null;
+            };
+        }
+
         let didSetBadge = false;
 
         const onBadgeImageReadyEvent = (event: BadgeImageReadyEvent) =>
@@ -94,7 +106,7 @@ export const LayoutBadgeImageView: FC<LayoutBadgeImageViewProps> = props =>
 
         GetSessionDataManager().events.addEventListener(BadgeImageReadyEvent.IMAGE_READY, onBadgeImageReadyEvent);
 
-        const texture = isGroup ? GetSessionDataManager().getGroupBadgeImage(badgeCode) : GetSessionDataManager().getBadgeImage(badgeCode);
+        const texture = GetSessionDataManager().getGroupBadgeImage(badgeCode);
 
         if(texture && !didSetBadge)
         {
@@ -126,6 +138,22 @@ export const LayoutBadgeImageView: FC<LayoutBadgeImageViewProps> = props =>
         });
     }, [ isHovering ]);
 
+    useEffect(() =>
+    {
+        if(!isHovering || !showInfo || isGroup || !badgeCode) return;
+
+        const unsubscribe = OnBadgeRarity(() => setRarityVersion(value => value + 1));
+
+        RequestBadgeRarity(badgeCode);
+
+        return () =>
+        {
+            unsubscribe();
+        };
+    }, [ isHovering, showInfo, isGroup, badgeCode ]);
+
+    const rarity = (!isGroup && badgeCode) ? GetBadgeRarity(badgeCode) : null;
+
     return (
         <Base innerRef={ elementRef } classNames={ getClassNames } style={ getStyle } onMouseEnter={ event => setIsHovering(true) } onMouseLeave={ event => setIsHovering(false) } { ...rest }>
             { (isHovering && showInfo && GetConfiguration<boolean>('badge.descriptions.enabled', true)) && createPortal(
@@ -134,8 +162,11 @@ export const LayoutBadgeImageView: FC<LayoutBadgeImageViewProps> = props =>
                         <Column gap={ 2 } className="content-area-inner">
                             <div className="d-inline text-element text-break fw-bold mb-1">{ isGroup ? customTitle : LocalizeBadgeName(badgeCode) }</div>
                             <div className="d-inline text-element text-break">{ isGroup ? LocalizeText('group.badgepopup.body') : LocalizeBadgeDescription(badgeCode) }</div>
-                            { !isGroup &&
-                                <div className="d-inline text-element text-muted fs-7 small">code: <div className="d-inline text-element text-select-all">{ badgeCode }</div></div> }
+                            { !isGroup && rarity && (rarity.count > 0) &&
+                                <div className="badge-rarity">
+                                    <span className={ `badge-rarity-tier is-${ RARITY_TIERS[Math.min(Math.max(rarity.level, 1), RARITY_TIERS.length) - 1].toLowerCase() }` }>{ RARITY_TIERS[Math.min(Math.max(rarity.level, 1), RARITY_TIERS.length) - 1] } badge</span>
+                                    <span className="badge-rarity-owned">Owned by { rarity.count.toLocaleString() } { (rarity.count === 1) ? 'user' : 'users' }</span>
+                                </div> }
                         </Column>
                     </Column>
                 </Column>, document.body) }

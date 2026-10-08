@@ -1,0 +1,56 @@
+// Staff PIN card (own feature): theme tokens only, see the colour rule in CLAUDE.md.
+// Full-client blocking overlay like the reconnect card (.reconnect-overlay).
+.staff-pin-overlay {
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 550;
+    pointer-events: all;
+}
+
+.draggable-window:has(.staff-pin-card) {
+    z-index: 600 !important;
+}
+
+.staff-pin-card {
+    width: 320px;
+    max-width: calc(100vw - 32px);
+
+    .staff-pin-form {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .staff-pin-text {
+        margin: 0;
+        color: var(--holo-text-primary);
+    }
+
+    .staff-pin-muted {
+        margin: 0;
+        font-size: 12px;
+        color: var(--holo-text-muted);
+    }
+
+    .staff-pin-message {
+        margin: 0;
+        color: var(--holo-text-primary);
+        font-weight: 600;
+    }
+
+    .staff-pin-input {
+        height: var(--holo-input-height);
+        padding: 0 10px;
+        font-size: 18px;
+        letter-spacing: 6px;
+        text-align: center;
+        color: var(--holo-text-primary);
+        background: var(--holo-secondary);
+        border: var(--holo-input-border-size) solid var(--holo-border-color-primary);
+        border-radius: var(--holo-border-radius);
+        outline: none;
+
+        &:focus {
+            border-color: var(--holo-tertiary);
+        }
+    }
+}

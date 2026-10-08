@@ -1,9 +1,10 @@
 import { FC, useEffect, useState } from 'react';
-import { Column, Flex, Text } from '../../../../../common';
+import { Button, Column, Flex, Text } from '../../../../../common';
+import { HtmlDsl } from '../../../../../common/HtmlDsl';
 import { useCatalog } from '../../../../../hooks';
 import { CatalogItemGridWidgetView } from '../widgets/CatalogItemGridWidgetView';
 import { CatalogPurchaseWidgetView } from '../widgets/CatalogPurchaseWidgetView';
-import { CatalogTotalPriceWidget } from '../widgets/CatalogTotalPriceWidget';
+import { CatalogFurniDescriptionWidgetView } from '../widgets/CatalogFurniDescriptionWidgetView';
 import { CatalogViewProductWidgetView } from '../widgets/CatalogViewProductWidgetView';
 import { CatalogLayoutProps } from './CatalogLayout.types';
 
@@ -31,32 +32,31 @@ export const CatalogLayoutTrophiesView: FC<CatalogLayoutProps> = props =>
     return (
         <>
             <Flex fullHeight overflow="hidden">
-                <Column size={ 7 } overflow="hidden">
+                <Column size={ 7 } overflow="hidden" className="catalog-layout-furniture-view">
                     <CatalogItemGridWidgetView />
-                    <textarea className="flex-grow-1 form-control w-100" defaultValue={ trophyText || '' } onChange={ event => setTrophyText(event.target.value) } />
                 </Column>
                 <Column center={ !currentOffer } size={ 5 } overflow="hidden">
                     { !currentOffer &&
                         <>
                             { !!page.localization.getImage(1) && <img alt="" src={ page.localization.getImage(1) } /> }
-                            <Text center dangerouslySetInnerHTML={ { __html: page.localization.getText(0) } } />
+                            <Text center><HtmlDsl text={ page.localization.getText(0) } /></Text>
                         </> }
                     { currentOffer &&
                         <>
                             <CatalogViewProductWidgetView />
-                            <Column grow gap={ 1 }>
-                                <Text grow truncate>{ currentOffer.localizationName }</Text>
-                                <Flex justifyContent="end">
-                                    <CatalogTotalPriceWidget alignItems="end" />
-                                </Flex>
-                            </Column>
+                            <CatalogFurniDescriptionWidgetView title={ currentOffer.localizationName } description={ currentOffer.localizationDescription } />
                         </> }
                 </Column>
             </Flex>
-            { currentOffer &&
-                <Flex gap={ 2 } classNames={ [ 'flex-fill', 'catalog-purchase-widget' ] }>
-                    <CatalogPurchaseWidgetView />
-                </Flex> }
+            { /* reference (Pk): the engraving textarea is a full-width row BELOW the grid/preview row, and the
+                 purchase footer is always rendered (same as the default layout) */ }
+            <textarea className="flex-grow-1 form-control w-100" defaultValue={ trophyText || '' } onChange={ event => setTrophyText(event.target.value) } />
+            <Flex gap={ 2 } classNames={ [ 'flex-fill', 'catalog-purchase-widget' ] }>
+                { !currentOffer &&
+                    <Button grow variant="danger" disabled>No furni selected</Button> }
+                { currentOffer &&
+                    <CatalogPurchaseWidgetView /> }
+            </Flex>
         </>
     );
 }

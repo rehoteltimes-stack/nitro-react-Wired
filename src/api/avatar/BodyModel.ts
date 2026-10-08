@@ -1,5 +1,6 @@
 import { AvatarEditorFigureCategory, AvatarScaleType, AvatarSetType } from '@nitrots/nitro-renderer';
 import { GetAvatarRenderManager } from '../nitro';
+import { QueueAvatarEditorTask } from './AvatarEditorTaskQueue';
 import { AvatarEditorUtilities } from './AvatarEditorUtilities';
 import { CategoryBaseModel } from './CategoryBaseModel';
 import { FigureData } from './FigureData';
@@ -60,7 +61,7 @@ export class BodyModel extends CategoryBaseModel
                 }
             }
 
-            resetFigure(null);
+            QueueAvatarEditorTask(`face:${ part.id }`, () => resetFigure(null));
         }
     }
 

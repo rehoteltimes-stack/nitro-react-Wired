@@ -1,5 +1,5 @@
 import { CSSProperties, FC, useMemo } from 'react';
-import { GetConfiguration } from '../../api';
+import { GetCurrencyIconUrl } from '../../api';
 import { Base, BaseProps } from '../Base';
 
 export interface CurrencyIconProps extends BaseProps<HTMLDivElement>
@@ -20,14 +20,7 @@ export const LayoutCurrencyIcon: FC<CurrencyIconProps> = props =>
         return newClassNames;
     }, [ classNames ]);
 
-    const urlString = useMemo(() =>
-    {
-        let url = GetConfiguration<string>('currency.asset.icon.url', '');
-    
-        url = url.replace('%type%', type.toString());
-
-        return `url(${ url })`;
-    }, [ type ]);
+    const urlString = `url(${ GetCurrencyIconUrl(type) })`;
 
     const getStyle = useMemo(() =>
     {

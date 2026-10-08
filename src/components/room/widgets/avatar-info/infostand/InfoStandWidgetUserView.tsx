@@ -1,8 +1,9 @@
 import { RelationshipStatusInfoEvent, RelationshipStatusInfoMessageParser, RoomSessionFavoriteGroupUpdateEvent, RoomSessionUserBadgesEvent, RoomSessionUserFigureUpdateEvent, UserCurrentBadgesComposer, UserCurrentBadgesEvent, UserRelationshipsComposer } from '@nitrots/nitro-renderer';
+import { ShopInfostandBorder } from '../../../../shop/ShopInfostandBorder';
 import { Dispatch, FC, FocusEvent, KeyboardEvent, SetStateAction, useEffect, useState } from 'react';
 import { FaPencilAlt, FaTimes } from 'react-icons/fa';
 import { AvatarInfoUser, CloneObject, GetConfiguration, GetGroupInformation, GetSessionDataManager, GetUserProfile, LocalizeText, SendMessageComposer } from '../../../../../api';
-import { Column, Flex, LayoutAvatarImageView, LayoutBadgeImageView, Text, UserProfileIconView } from '../../../../../common';
+import { Column, Flex, LayoutAvatarImageView, LayoutBadgeImageView, Text, UsernameView, UserProfileHouseIconView } from '../../../../../common';
 import { useInventoryBanner, useMessageEvent, useRoom, useRoomSessionManagerEvent } from '../../../../../hooks';
 import { InfoStandWidgetUserRelationshipsView } from './InfoStandWidgetUserRelationshipsView';
 import { InfoStandWidgetUserTagsView } from './InfoStandWidgetUserTagsView';
@@ -100,9 +101,9 @@ export const InfoStandWidgetUserView: FC<InfoStandWidgetUserViewProps> = props =
     {
         if(!avatarInfo || (avatarInfo.webID !== event.userId)) return;
 
-        const oldBadges = avatarInfo.badges.join('');
+        const oldBadges = Array.from(avatarInfo.badges, code => code ?? '').join(',');
 
-        if(oldBadges === event.badges.join('')) return;
+        if(oldBadges === Array.from(event.badges, code => code ?? '').join(',')) return;
 
         setAvatarInfo(prevValue =>
         {
@@ -156,32 +157,37 @@ export const InfoStandWidgetUserView: FC<InfoStandWidgetUserViewProps> = props =
         setRelationships(parser);
     });
 
+    const webId = avatarInfo?.webID ?? -1;
+    const avatarMotto = avatarInfo?.motto ?? null;
+
+    useEffect(() =>
+    {
+        if(webId < 0) return;
+
+        SendMessageComposer(new UserRelationshipsComposer(webId));
+        SendMessageComposer(new UserCurrentBadgesComposer(webId));
+
+        return () => setRelationships(null);
+    }, [ webId ]);
+
     useEffect(() =>
     {
         setIsEditingMotto(false);
-        setMotto(avatarInfo.motto);
-
-        SendMessageComposer(new UserRelationshipsComposer(avatarInfo.webID));
-        SendMessageComposer(new UserCurrentBadgesComposer(avatarInfo.webID));
-
-        return () =>
-        {
-            setIsEditingMotto(false);
-            setMotto(null);
-            setRelationships(null);
-        }
-    }, [ avatarInfo ]);
+        setMotto(avatarMotto);
+    }, [ webId, avatarMotto ]);
 
     if(!avatarInfo) return null;
 
     return (
         <Column className="nitro-infostand rounded">
+            { /* hCMS Shop: the border this player equipped, around the whole infostand */ }
+            <ShopInfostandBorder userId={ avatarInfo.webID } />
             <Column overflow="visible" className="container-fluid content-area" gap={ 1 }>
                 <Column gap={ 1 }>
                     <Flex alignItems="center" justifyContent="between">
-                        <Flex alignItems="center" gap={ 1 }>
-                            <UserProfileIconView userId={ avatarInfo.webID } />
-                            <Text variant="white" small wrap>{ avatarInfo.name }</Text>
+                        <Flex alignItems="center" gap={ 2 }>
+                            <UserProfileHouseIconView userName={ avatarInfo.name } />
+                            <Text variant="white" small wrap><UsernameView userId={ avatarInfo.webID } name={ avatarInfo.name } /></Text>
                         </Flex>
                         <FaTimes className="cursor-pointer fa-icon" onClick={ onClose } />
                     </Flex>

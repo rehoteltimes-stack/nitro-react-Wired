@@ -1,0 +1,90 @@
+.nitro-casino {
+  .casino-warning { color: #d97706; }
+  .casino-message { color: #1e9e4a; }
+  .casino-info, .casino-limits { color: var(--holo-text-muted); }
+
+  .casino-balances {
+    padding: 6px 8px;
+    border: 1px solid color-mix(in srgb, var(--holo-text-primary) 12%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--holo-text-primary) 4%, transparent);
+    color: var(--holo-text-primary);
+  }
+
+  .casino-run {
+    padding: 8px;
+    border: 1px solid color-mix(in srgb, var(--holo-text-primary) 12%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--holo-text-primary) 4%, transparent);
+    color: var(--holo-text-primary);
+  }
+
+  .casino-games {
+    flex-wrap: wrap;
+
+    .casino-game { flex: 1 1 auto; }
+  }
+
+  .casino-auto {
+    flex-wrap: wrap;
+
+    .casino-auto-start { margin-left: auto; }
+  }
+
+  .casino-amount {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .casino-input {
+    border: 1px solid color-mix(in srgb, var(--holo-text-primary) 25%, transparent);
+    background-color: color-mix(in srgb, var(--holo-text-primary) 6%, transparent);
+    color: var(--holo-text-primary);
+
+    &::placeholder { color: var(--holo-text-muted); }
+
+    &:focus {
+      border-color: #0095f6;
+      background-color: color-mix(in srgb, var(--holo-text-primary) 9%, transparent);
+      color: var(--holo-text-primary);
+    }
+  }
+}
+
+.nitro-casino-dealer {
+  .casino-fund { width: 72px; flex: 0 0 auto; }
+
+  .casino-rank-row { width: 100%; }
+
+  .casino-rank-name {
+    flex: 0 0 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--holo-text-primary);
+  }
+
+  .casino-rank-cell { flex: 1 1 0; min-width: 0; }
+
+  .casino-limit-icon {
+    display: flex;
+    flex: 0 0 22px;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.nitro-ranch .casino-dealer-stack {
+  .casino-dealer-label {
+    padding: 1px 6px;
+    border: 1px solid #000;
+    border-radius: 4px;
+    background: #2b2b2b;
+    color: #ffd83d;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 15px;
+    white-space: nowrap;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15);
+  }
+}

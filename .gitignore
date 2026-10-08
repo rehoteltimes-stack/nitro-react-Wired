@@ -33,3 +33,9 @@ public/ui-config*
 !/.yarn/patches
 !/.yarn/patches/**
 /deploy.ps1
+public/hcms-guard.js
+
+*.bak-*
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+hs_err_pid*

@@ -32,12 +32,12 @@ export const ModToolsUserRoomVisitsView: FC<ModToolsUserRoomVisitsViewProps> = p
     if(!userId) return null;
 
     return (
-        <NitroCardView className="nitro-mod-tools-user-visits" theme="primary" windowPosition={ DraggableWindowPosition.TOP_LEFT }>
+        <NitroCardView resize="both" className="nitro-mod-tools-user-visits" theme="primary-slim" windowPosition={ DraggableWindowPosition.TOP_LEFT }>
             <NitroCardHeaderView headerText={ 'User Visits' } onCloseClick={ onCloseClick } />
-            <NitroCardContentView className="text-black" gap={ 1 }>
+            <NitroCardContentView gap={ 1 }>
                 <Column fullHeight gap={ 0 } overflow="hidden">
                     <Column gap={ 2 }>
-                        <Grid gap={ 1 } className="text-black fw-bold border-bottom pb-1">
+                        <Grid gap={ 1 } className="fw-bold border-bottom pb-1">
                             <Base className="g-col-2">Time</Base>
                             <Base className="g-col-7">Room name</Base>
                             <Base className="g-col-3">Visit</Base>
@@ -46,9 +46,9 @@ export const ModToolsUserRoomVisitsView: FC<ModToolsUserRoomVisitsViewProps> = p
                     <InfiniteScroll rows={ roomVisitData?.rooms ?? [] } rowRender={ row =>
                     {
                         return (
-                            <Grid fullHeight={ false } gap={ 1 } alignItems="center" className="text-black py-1 border-bottom">
+                            <Grid fullHeight={ false } gap={ 1 } alignItems="center" className="py-1 border-bottom">
                                 <Text className="g-col-2">{ row.enterHour.toString().padStart(2, '0') }: { row.enterMinute.toString().padStart(2, '0') }</Text>
-                                <Text className="g-col-7">{ row.roomName }</Text>
+                                <Text textBreak className="g-col-7">{ row.roomName }</Text>
                                 <Text bold underline pointer variant="primary" className="g-col-3" onClick={ event => TryVisitRoom(row.roomId) }>Visit Room</Text>
                             </Grid>
                         );

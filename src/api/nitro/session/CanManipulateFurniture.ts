@@ -7,6 +7,8 @@ export function CanManipulateFurniture(roomSession: IRoomSession, objectId: numb
 {
     if(!roomSession) return false;
     if(GetWiredCreatorToolsSettings().playtestingMode) return false;
+    // editing rights toggled off in room tools: nobody edits, no owner/staff/furni-owner exemption
+    if(!GetWiredCreatorToolsSettings().editingRights) return false;
 
-    return (roomSession.isRoomOwner || (roomSession.controllerLevel >= RoomControllerLevel.GUEST) || GetSessionDataManager().isModerator || IsOwnerOfFurniture(GetRoomEngine().getRoomObject(roomSession.roomId, objectId, category)));
+    return ((roomSession.isRoomOwner) || (roomSession.controllerLevel >= RoomControllerLevel.GUEST) || GetSessionDataManager().isModerator || IsOwnerOfFurniture(GetRoomEngine().getRoomObject(roomSession.roomId, objectId, category)));
 }

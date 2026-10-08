@@ -1,0 +1,87 @@
+.nitro-page-menu {
+    position: fixed;
+    z-index: 2000;
+    min-width: 210px;
+    padding: 6px;
+    border-radius: var(--holo-border-radius, 8px);
+    background: var(--holo-notifications);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    pointer-events: all;
+    user-select: none;
+    animation: nitro-page-menu-in 0.12s ease-out;
+}
+
+@keyframes nitro-page-menu-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.nitro-page-menu-section + .nitro-page-menu-section {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nitro-page-menu-title {
+    padding: 4px 10px 2px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.nitro-page-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 5px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #fff;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+
+    &:hover,
+    &:focus-visible {
+        background: rgba(255, 255, 255, 0.1);
+        outline: none;
+    }
+
+    &:active {
+        background: rgba(255, 255, 255, 0.16);
+    }
+}
+
+.nitro-page-menu .nitro-page-menu-icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+}
+
+.nitro-page-menu-label {
+    flex: 1;
+    white-space: nowrap;
+}
+
+.nitro-page-menu-separator {
+    height: 1px;
+    margin: 4px 3px;
+    background: rgba(255, 255, 255, 0.12);
+}

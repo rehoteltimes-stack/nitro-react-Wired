@@ -1,8 +1,11 @@
 import { BotRemoveComposer } from '@nitrots/nitro-renderer';
 import { FC, useMemo } from 'react';
 import { FaTimes } from 'react-icons/fa';
-import { AvatarInfoRentableBot, BotSkillsEnum, LocalizeText, SendMessageComposer } from '../../../../../api';
+import { AvatarInfoRentableBot, BotSkillsEnum, GetSessionDataManager, LocalizeText, SendMessageComposer } from '../../../../../api';
+import { CasinoActionComposer, RegisterCasinoMessages } from '../../../../../api/games/CasinoProtocol';
 import { Button, Column, Flex, LayoutAvatarImageView, LayoutBadgeImageView, Text, UserProfileIconView } from '../../../../../common';
+
+const DEALER_LEVEL = 4;
 
 interface InfoStandWidgetRentableBotViewProps
 {
@@ -24,6 +27,12 @@ export const InfoStandWidgetRentableBotView: FC<InfoStandWidgetRentableBotViewPr
     }, [ avatarInfo ]);
 
     const pickupBot = () => SendMessageComposer(new BotRemoveComposer(avatarInfo.webID));
+
+    const openDealer = () =>
+    {
+        RegisterCasinoMessages();
+        SendMessageComposer(new CasinoActionComposer('dealer_open', '', 0, 0, String(avatarInfo.roomIndex)));
+    }
     
     if(!avatarInfo) return;
 
@@ -75,9 +84,10 @@ export const InfoStandWidgetRentableBotView: FC<InfoStandWidgetRentableBotViewPr
                     </Column>
                 </Column>
             </Column>
-            { canPickup &&
-                <Flex justifyContent="end">
-                    <Button variant="dark" onClick={ pickupBot }>{ LocalizeText('infostand.button.pickup') }</Button>
+            { (canPickup || (GetSessionDataManager().securityLevel >= DEALER_LEVEL)) &&
+                <Flex justifyContent="end" gap={ 1 }>
+                    { (GetSessionDataManager().securityLevel >= DEALER_LEVEL) && <Button variant="dark" onClick={ openDealer }>Casino dealer</Button> }
+                    { canPickup && <Button variant="dark" onClick={ pickupBot }>{ LocalizeText('infostand.button.pickup') }</Button> }
                 </Flex> }
         </Column>
     );

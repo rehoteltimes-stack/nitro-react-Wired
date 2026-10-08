@@ -1,8 +1,9 @@
-import { FurnitureSingleClickComposer, ILinkEventTracker, IRoomObject, ObjectDataFactory, RoomAreaSelectionManager, RoomObjectCategory, RoomObjectOperationType, RoomObjectVariable, Vector3d } from '@nitrots/nitro-renderer';
+import { FurnitureSingleClickComposer, ILinkEventTracker, IRoomObject, LegacyDataType, ObjectDataFactory, RoomAreaSelectionManager, RoomObjectCategory, RoomObjectOperationType, RoomObjectVariable, Vector3d } from '@nitrots/nitro-renderer';
 import { Graphics } from '@pixi/graphics';
 import { ComponentType, FC, useEffect, useMemo, useRef, useState } from 'react';
-import { FaArrowsAlt, FaArrowsAltV, FaCopy, FaEraser, FaEyeDropper, FaFillDrip, FaHandPointer, FaLocationArrow, FaMousePointer, FaPaintBrush, FaPaste, FaRedo, FaSearchMinus, FaSearchPlus, FaTimes, FaUndo } from 'react-icons/fa';
-import { AddEventLinkTracker, BuilderActionResultEvent, BuilderActionType, BuilderBulkMoveComposer, BuilderClipboardEvent, BuilderClipboardLine, BuilderCopyAreaComposer, BuilderEraseAreaComposer, BuilderFillAreaComposer, BuilderModeEnterComposer, BuilderModeExitComposer, BuilderModeSettingsEvent, BuilderPasteAtTileComposer, BuilderSetHeightAreaComposer, BuilderUndoComposer, cancelRoomObjectPlacement, GetFurnitureDataForRoomObject, GetRoomEngine, GetSessionDataManager, GroupItem, NotificationBubbleType, ProcessRoomObjectOperation, RegisterBuilderModeMessages, RemoveLinkEventTracker, SendMessageComposer } from '../../api';
+import { FaArrowsAlt, FaArrowsAltV, FaChevronDown, FaChevronUp, FaCopy, FaCube, FaEraser, FaEyeDropper, FaFillDrip, FaHandPointer, FaMousePointer, FaPaste, FaRedo, FaSearchMinus, FaSearchPlus, FaTimes, FaUndo } from 'react-icons/fa';
+import { GrFormNextLink } from 'react-icons/gr';
+import { AddEventLinkTracker, GetNitroInstance, BuilderActionResultEvent, BuilderActionType, BuilderBulkMoveComposer, BuilderClipboardEvent, BuilderClipboardLine, BuilderCopyAreaComposer, BuilderEraseAreaComposer, BuilderFillAreaComposer, BuilderModeEnterComposer, BuilderModeExitComposer, BuilderModeSettingsEvent, BuilderPasteAtTileComposer, BuilderSetHeightAreaComposer, BuilderUndoComposer, cancelRoomObjectPlacement, FeedbackKind, GetFurnitureDataForRoomObject, GetRoomEngine, GetSessionDataManager, GroupItem, NotificationBubbleType, ProcessRoomObjectOperation, RegisterBuilderModeMessages, RemoveLinkEventTracker, SendMessageComposer } from '../../api';
 import { AutoGrid, Base, Flex, LayoutGridItem, Text } from '../../common';
 import { useInventoryFurni, useMessageEvent, useNotification, useRoom } from '../../hooks';
 
@@ -35,7 +36,32 @@ const ensureRedHighlight = (): string =>
     }
 };
 
-// Chosen (selected) furni are tinted GOLD, not the drag area: a sprite filter is put on each chosen
+// Blue area highlight (sodaho: copy, select, move and height areas are highlighted blue, pickup red).
+const HIGHLIGHT_BLUE = 'highlight_blue';
+
+const ensureBlueHighlight = (): string =>
+{
+    try
+    {
+        const filters = (RoomAreaSelectionManager as unknown as { HIGHLIGHT_FILTERS: { [key: string]: any } }).HIGHLIGHT_FILTERS;
+
+        if(!filters[HIGHLIGHT_BLUE])
+        {
+            const filter = new (filters[RoomAreaSelectionManager.HIGHLIGHT_BRIGHTEN].constructor)();
+
+            filter.matrix = [ 0.55, 0, 0, 0, 0, 0.95, 0, 0, 0, 0, 1.9, 0, 0, 0, 0, 1, 0, 0, 0, 0 ];
+            filters[HIGHLIGHT_BLUE] = filter;
+        }
+
+        return HIGHLIGHT_BLUE;
+    }
+    catch(error)
+    {
+        return RoomAreaSelectionManager.HIGHLIGHT_BRIGHTEN;
+    }
+};
+
+// Chosen (selected) furni are tinted BLUE like sodaho's (their selectionHighlightColor 0x66AAFF), not the drag area: a sprite filter is put on each chosen
 // furni's own sprites. The filter is built by cloning the renderer's own ColorMatrixFilter class
 // (via the area-selection manager's stock BRIGHTEN filter), so no extra import or renderer patch is
 // needed. Returns null if the renderer internals ever change (then nothing is tinted).
@@ -50,9 +76,9 @@ const getGoldFurniFilter = (): any =>
             const filters = (RoomAreaSelectionManager as unknown as { HIGHLIGHT_FILTERS: { [key: string]: any } }).HIGHLIGHT_FILTERS;
             const filter = new (filters[RoomAreaSelectionManager.HIGHLIGHT_BRIGHTEN].constructor)();
 
-            // rows are R, G, B, A of [r, g, b, a, offset]: a clearly yellow gold wash - the furni stays
-            // clearly visible underneath instead of being covered by a solid colour
-            filter.matrix = [ 1.25, 0, 0, 0, 0.14, 0, 1.1, 0, 0, 0.1, 0, 0, 0.2, 0, 0, 0, 0, 0, 1, 0 ];
+            // rows are R, G, B, A of [r, g, b, a, offset]: a blue wash (0x66AAFF) - the furni stays clearly
+            // visible underneath instead of being covered by a solid colour
+            filter.matrix = [ 0.6, 0, 0, 0, 0.08, 0, 0.85, 0, 0, 0.15, 0, 0, 1.1, 0, 0.3, 0, 0, 0, 1, 0 ];
             goldFurniFilter = filter;
         }
 
@@ -197,6 +223,7 @@ interface ToolDefinition
 {
     tool: ToolId;
     Icon: ComponentType<{ size?: number }>;
+    size: number;
     title: string;
 }
 
@@ -204,14 +231,14 @@ interface ToolDefinition
 // own rendered DOM (react-icons/fa, the exact same package this codebase already depends on) -
 // not guessed from the minified bundle's own obfuscated component names.
 const TOOLS: ToolDefinition[] = [
-    { tool: 'fill', Icon: FaFillDrip, title: 'Autofill (drag an area to fill with the brush furni)' },
-    { tool: 'eyedropper', Icon: FaEyeDropper, title: 'Eyedropper (click a furni to make it the brush)' },
-    { tool: 'select', Icon: FaMousePointer, title: 'Select furni (click or drag a box around furni, then rotate or pick up)' },
-    { tool: 'copy', Icon: FaCopy, title: 'Copy (click a tile/furni or drag an area)' },
-    { tool: 'paste', Icon: FaPaste, title: 'Paste (click a tile to rebuild the copied furni)' },
-    { tool: 'erase', Icon: FaEraser, title: 'Bulk pickup (drag an area to pick up furni)' },
-    { tool: 'move', Icon: FaArrowsAlt, title: 'Move (click or drag a box around furni, then nudge with the arrows)' },
-    { tool: 'height', Icon: FaArrowsAltV, title: 'Adjust height (drag an area or click a furni, then use the steppers)' }
+    { tool: 'fill', Icon: FaFillDrip, size: 15, title: 'Autofill (drag an area to fill with the brush furni)' },
+    { tool: 'eyedropper', Icon: FaEyeDropper, size: 14, title: 'Eyedropper (click a furni to make it the brush)' },
+    { tool: 'select', Icon: FaMousePointer, size: 14, title: 'Select furni (click or drag a box around furni, then rotate or change state)' },
+    { tool: 'copy', Icon: FaCopy, size: 14, title: 'Copy (click a tile/furni or drag an area)' },
+    { tool: 'paste', Icon: FaPaste, size: 14, title: 'Paste (click a tile to rebuild the copied furni)' },
+    { tool: 'erase', Icon: FaEraser, size: 15, title: 'Bulk pickup (drag an area to pick up furni)' },
+    { tool: 'move', Icon: FaArrowsAlt, size: 15, title: 'Move (click or drag a box around furni, then nudge with the arrows)' },
+    { tool: 'height', Icon: FaArrowsAltV, size: 15, title: 'Adjust height (drag an area or click a furni, then use the steppers)' }
 ];
 
 interface HeightRegion
@@ -269,8 +296,16 @@ export const BuilderToolbarView: FC<{}> = props =>
     const [ isVisible, setIsVisible ] = useState(false);
     const [ activeTool, setActiveTool ] = useState<ToolId>(null);
     const [ armedKey, setArmedKey ] = useState<string>(null);
+    // sodaho's brush is the furni TYPE (spriteId + name), not an inventory item: it stays armed when the last one is
+    // placed ("Remaining: 0" in red) and a fill still goes to the server, which says what was missing. Like sodaho, the
+    // eyedropper only arms furni you own.
+    const [ brush, setBrush ] = useState<{ spriteId: number, name: string }>(null);
     const [ fillRotation, setFillRotation ] = useState(0);
     const [ brushPickerOpen, setBrushPickerOpen ] = useState(false);
+    // sodaho's fill preview: half-transparent ghost furni while dragging, up to how many you own ("Will place ~N")
+    const [ willPlace, setWillPlace ] = useState<number>(null);
+    const ghostObjects = useRef(new Map<string, number>());
+    const nextGhostId = useRef(-1000000);
     const [ selectedFurniIds, setSelectedFurniIds ] = useState<number[]>([]);
     const [ pendingHeightRegion, setPendingHeightRegion ] = useState<HeightRegion>(null);
     const [ clipboard, setClipboard ] = useState<{ width: number, length: number, total: number, lines: BuilderClipboardLine[] }>(null);
@@ -279,8 +314,8 @@ export const BuilderToolbarView: FC<{}> = props =>
     // globally in RightSideView.tsx) - real, correct positioning/stacking/fade-out inherited for
     // free, rather than a bespoke toast box of our own that (confirmed live) visually overlapped the
     // brush flyout instead of sitting cleanly top-right like every other real bubble in this client.
-    const { showSingleBubble } = useNotification();
-    const pushToast = (text: string) => showSingleBubble(text, NotificationBubbleType.INFO);
+    const { showFeedback } = useNotification();
+    const pushToast = (text: string, kind: FeedbackKind = null) => showFeedback(text, kind);
     // Real bug found and fixed here: useInventoryFurni's own FurnitureListComposer() fetch only
     // fires while ITS shared isVisible flag is true (useSharedVisibility - a reference-counted
     // "someone needs this open" flag, normally only raised by the Inventory panel itself). Without
@@ -315,7 +350,11 @@ export const BuilderToolbarView: FC<{}> = props =>
 
         setSettings({ enabled: parser.enabled, canUse: parser.canUse, maxRegionTiles: parser.maxRegionTiles, maxItemsPerOp: parser.maxItemsPerOp, undoAvailable: parser.undoAvailable });
 
-        if(parser.enabled && !parser.canUse) pushToast('You need rights in this room to use Builder Mode.');
+        if(!parser.enabled || !parser.canUse)
+        {
+            pushToast(parser.enabled ? 'You need rights in this room to use Builder Mode.' : 'Builder Mode is switched off right now.', parser.enabled ? 'no_permission' : 'info');
+            setIsVisible(false);
+        }
     });
 
     useMessageEvent<BuilderClipboardEvent>(BuilderClipboardEvent, event =>
@@ -323,6 +362,11 @@ export const BuilderToolbarView: FC<{}> = props =>
         const parser = event.getParser();
 
         setClipboard({ width: parser.width, length: parser.length, total: parser.total, lines: [ ...parser.lines ] });
+
+        if(!parser.total) return;
+
+        pushToast(`Copied ${ parser.total } furni - click a tile to paste.`, 'build_copy');
+        selectToolRef.current('paste');
     });
 
     useMessageEvent<BuilderActionResultEvent>(BuilderActionResultEvent, event =>
@@ -348,6 +392,16 @@ export const BuilderToolbarView: FC<{}> = props =>
             }, 500);
         }
 
+        const kind = ({
+            [ BuilderActionType.FILL ]: 'build_place',
+            [ BuilderActionType.ERASE ]: 'build_pickup',
+            [ BuilderActionType.HEIGHT ]: 'build_height',
+            [ BuilderActionType.COPY ]: 'build_copy',
+            [ BuilderActionType.PASTE ]: 'build_paste',
+            [ BuilderActionType.MOVE ]: 'build_move',
+            [ BuilderActionType.UNDO ]: 'build_undo'
+        } as { [ key: number ]: FeedbackKind })[ parser.actionType ] || 'success';
+
         const label = ({
             [ BuilderActionType.FILL ]: 'Placed',
             [ BuilderActionType.ERASE ]: 'Picked up',
@@ -362,29 +416,31 @@ export const BuilderToolbarView: FC<{}> = props =>
         {
             pushToast(({
                 1: 'You need rights in this room.',
-                2: 'That area is too large.',
-                3: 'Nothing to do.',
+                2: 'That area is too big.',
+                3: 'Nothing to do there.',
                 4: 'Nothing to undo.',
-                5: 'No furni left.',
-                6: 'No room.',
-                7: 'Too many items selected.'
-            })[ parser.code ] || 'Action failed.');
+                5: 'You don\'t have any of that furni.',
+                6: 'You\'re not in a room.',
+                7: 'That\'s too many furni at once.'
+            })[ parser.code ] || 'That didn\'t work.', ({ 1: 'no_permission', 3: 'info', 4: 'info', 5: 'not_found' } as { [ key: number ]: FeedbackKind })[ parser.code ] || 'error');
 
             return;
         }
 
-        let message = `${ label } ${ parser.processed } item${ (parser.processed === 1) ? '' : 's' }`;
+        // copying is announced by the clipboard message (with "click a tile to paste")
+        if(parser.actionType === BuilderActionType.COPY) return;
+
+        let message = `${ label } ${ parser.processed } furni`;
 
         if(parser.failed > 0) message += `, ${ parser.failed } skipped`;
 
-        if(parser.shortfall.length)
-        {
-            const shortage = parser.shortfall.reduce((total, entry) => (total + Math.max(0, entry.required - entry.available)), 0);
+        let shortage = 0;
 
-            if(shortage > 0) message += ` - ran out of furni (${ shortage } more needed)`;
-        }
+        if(parser.shortfall.length) shortage = parser.shortfall.reduce((total, entry) => (total + Math.max(0, entry.required - entry.available)), 0);
 
-        pushToast(message);
+        if(shortage > 0) message += ` - you ran out of that furni (${ shortage } more needed)`;
+
+        pushToast(`${ message }.`, (shortage > 0) ? 'warning' : kind);
     });
 
     // Real bug fixed here: type+category is NOT a unique GroupItem key - recolors/rare variants of
@@ -401,8 +457,11 @@ export const BuilderToolbarView: FC<{}> = props =>
     [ groupItems ]);
 
     const armedGroup = useMemo(() =>
-        floorGroups.find(group => (groupKey(group) === armedKey)) || null,
-    [ floorGroups, armedKey ]);
+    {
+        if(!brush) return null;
+
+        return floorGroups.find(group => (groupKey(group) === armedKey)) || floorGroups.find(group => (group.type === brush.spriteId)) || null;
+    }, [ floorGroups, armedKey, brush ]);
 
     // The armed key is deliberately NOT cleared when its group disappears: after a Fill the server
     // removes the placed items and the client re-fetches the inventory, so the list is briefly empty
@@ -449,6 +508,7 @@ export const BuilderToolbarView: FC<{}> = props =>
         cancelRoomObjectPlacement();
         GetRoomEngine().areaSelectionManager.deactivate();
         setArmedKey(null);
+        setBrush(null);
         setActiveTool(null);
         setSelectedFurniIds([]);
         setPendingHeightRegion(null);
@@ -472,6 +532,7 @@ export const BuilderToolbarView: FC<{}> = props =>
     const arm = (group: GroupItem) =>
     {
         setArmedKey(groupKey(group));
+        setBrush({ spriteId: group.type, name: group.name });
     };
 
     /** Every floor room object whose own real footprint sits ENTIRELY inside the given rectangle -
@@ -519,7 +580,8 @@ export const BuilderToolbarView: FC<{}> = props =>
 
         if(!owned.length)
         {
-            pushToast('You have none of that furni in your inventory.');
+            // sodaho: the eyedropper only arms furni you own; a brush that runs out later stays armed
+            pushToast('You have none of that furni in your inventory.', 'not_found');
             return;
         }
 
@@ -538,10 +600,11 @@ export const BuilderToolbarView: FC<{}> = props =>
         }
 
         arm(group);
-        pushToast(`Brush set to ${ group.name }.`);
+        pushToast(`Brush set to ${ group.name }.`, 'build_brush');
         // Really switch to Fill (re-registers the area callback as 'fill'); only flipping the UI state
         // left the next drag still acting as an eyedropper.
         selectTool('fill');
+        setBrushPickerOpen(false);
     };
 
     // The big tile grid is shown for as long as Builder Mode is open in a room.
@@ -630,12 +693,12 @@ export const BuilderToolbarView: FC<{}> = props =>
         switch(tool)
         {
             case 'fill':
-                if(!armedGroup) { pushToast('Pick a furni brush first.'); break; }
+                if(!brush) { pushToast('Pick a furni brush first.', 'build_brush'); break; }
                 // Only the furni this fill adds may end up highlighted: drop every earlier gold tint now and
                 // remember which floor objects exist, so the result handler can tell the new ones apart.
                 setSelectedFurniIds([]);
                 fillSnapshot.current = floorObjectIds();
-                SendMessageComposer(new BuilderFillAreaComposer(startX, startY, endX, endY, armedGroup.type, fillRotation));
+                SendMessageComposer(new BuilderFillAreaComposer(startX, startY, endX, endY, brush.spriteId, fillRotation));
                 break;
             case 'eyedropper':
                 pickEyedropper(startX, startY, endX, endY);
@@ -682,10 +745,11 @@ export const BuilderToolbarView: FC<{}> = props =>
 
         cancelRoomObjectPlacement();
         engine.areaSelectionManager.deactivate();
+        setBrushPickerOpen((tool === 'fill') && (activeTool !== 'fill') && !brush);
 
         if(activeTool === tool)
         {
-            if(tool === 'fill') setArmedKey(null);
+            if(tool === 'fill') { setArmedKey(null); setBrush(null); }
 
             setActiveTool(null);
             setSelectedFurniIds([]);
@@ -704,16 +768,17 @@ export const BuilderToolbarView: FC<{}> = props =>
 
         // Fill only starts its area selection once a brush is armed and the picker is closed (the effect
         // below does that): an active area selection makes every furni in the room see-through/highlighted.
-        if(!((tool === 'fill') && !armedGroup)) activateArea(tool);
-
-        if(tool === 'fill') setBrushPickerOpen(!armedGroup);
+        if(!((tool === 'fill') && !brush)) activateArea(tool);
     };
+
+    const selectToolRef = useRef(selectTool);
+    selectToolRef.current = selectTool;
 
     // (Re)starts the drag-a-box gesture for a tool; the callback always reads the latest state via commitRef.
     const activateArea = (tool: ToolId) =>
     {
         const engine = GetRoomEngine();
-        const highlightType = (tool === 'erase') ? ensureRedHighlight() : RoomAreaSelectionManager.HIGHLIGHT_BRIGHTEN;
+        const highlightType = (tool === 'erase') ? ensureRedHighlight() : (([ 'copy', 'select', 'move', 'height' ] as ToolId[]).includes(tool) ? ensureBlueHighlight() : RoomAreaSelectionManager.HIGHLIGHT_BRIGHTEN);
 
         engine.areaSelectionManager.deactivate();
         engine.areaSelectionManager.activate((rootX, rootY, width, height) => commitRef.current(tool, rootX, rootY, width, height), highlightType);
@@ -721,32 +786,15 @@ export const BuilderToolbarView: FC<{}> = props =>
         clearFurniGhosting();
     };
 
-    // The armed furni is used up (its last copy was just placed): reopen the picker on its own so the
-    // next furni can be chosen straight away. Waits a moment first - the inventory list briefly empties
-    // while it reloads after a placement, which must not count as "used up".
-    useEffect(() =>
-    {
-        if(!isVisible || (activeTool !== 'fill') || !armedKey || armedGroup) return;
-
-        const timer = setTimeout(() =>
-        {
-            setArmedKey(null);
-            setBrushPickerOpen(true);
-            pushToast('That furni is used up - pick the next one.');
-        }, 700);
-
-        return () => clearTimeout(timer);
-    }, [ isVisible, activeTool, armedKey, armedGroup ]);
-
     // Fill: the drag area is active as soon as a furni is armed - the picker stays open (like the reference),
     // so you can keep switching furni and dragging. Without a brush there is nothing to drag yet.
     useEffect(() =>
     {
         if(!isVisible || (activeTool !== 'fill')) return;
 
-        if(armedKey) activateArea('fill');
+        if(brush) activateArea('fill');
         else GetRoomEngine().areaSelectionManager.deactivate();
-    }, [ activeTool, isVisible, armedKey ]);
+    }, [ activeTool, isVisible, brush ]);
 
     const toggleBrushPicker = () =>
     {
@@ -766,13 +814,13 @@ export const BuilderToolbarView: FC<{}> = props =>
         SendMessageComposer(new BuilderUndoComposer());
     };
 
-    const zoom = (factor: number) =>
+    const zoom = (direction: number) =>
     {
         if(!roomSession) return;
 
         const engine = GetRoomEngine();
         const currentScale = engine.getRoomInstanceRenderingCanvasScale(roomSession.roomId, 1);
-        const nextScale = Math.min(2, Math.max(0.25, currentScale * factor));
+        const nextScale = (direction > 0) ? Math.min(currentScale * 2, 2) : Math.max(currentScale / 2, 0.5);
 
         engine.setRoomInstanceRenderingCanvasScale(roomSession.roomId, 1, nextScale);
     };
@@ -811,6 +859,143 @@ export const BuilderToolbarView: FC<{}> = props =>
         SendMessageComposer(new BuilderSetHeightAreaComposer(pendingHeightRegion.startX, pendingHeightRegion.startY, pendingHeightRegion.endX, pendingHeightRegion.endY, Math.round(step * 100)));
     };
 
+    // like the reference, building is an edit mode: body.builder-edit-mode leaves only the chat input in the toolbar
+    // (styles in floorplan-editor/FloorplanEditorView.scss, shared with the floor editor's edit mode)
+    useEffect(() =>
+    {
+        if(!isVisible) return;
+
+        document.body.classList.add('builder-edit-mode');
+
+        return () => document.body.classList.remove('builder-edit-mode');
+    }, [ isVisible ]);
+
+    useEffect(() =>
+    {
+        if(!isVisible) return;
+
+        const canvas = GetNitroInstance().application.renderer.view as HTMLCanvasElement;
+        const swallow = (event: MouseEvent) =>
+        {
+            if(event.target === canvas) event.stopPropagation();
+        };
+
+        window.addEventListener('click', swallow, true);
+        window.addEventListener('dblclick', swallow, true);
+
+        return () =>
+        {
+            window.removeEventListener('click', swallow, true);
+            window.removeEventListener('dblclick', swallow, true);
+        };
+    }, [ isVisible ]);
+
+    const clearFillGhosts = () =>
+    {
+        const engine = GetRoomEngine();
+
+        for(const objectId of ghostObjects.current.values()) engine.removeRoomObjectFloor(engine.activeRoomId, objectId);
+
+        ghostObjects.current.clear();
+        setWillPlace(null);
+    };
+
+    // sodaho's fill preview (their builder `de`): tiles are stepped by the brush size (swapped at rotation 2 / 6),
+    // capped by min(maxItemsPerOp, owned count); each gets a ghost furni at its stacking height with alpha 0.5.
+    // Our stock area selection has no preview callback, so the dragged box is read from it every frame.
+    const previewFill = (startX: number, startY: number, endX: number, endY: number) =>
+    {
+        const engine = GetRoomEngine();
+        const roomId = engine.activeRoomId;
+        const furniData = GetSessionDataManager().getFloorItemData(brush.spriteId);
+        const turned = ((fillRotation === 2) || (fillRotation === 6));
+        const stepX = Math.max(1, (turned ? furniData?.tileSizeY : furniData?.tileSizeX) || 1);
+        const stepY = Math.max(1, (turned ? furniData?.tileSizeX : furniData?.tileSizeY) || 1);
+        const owned = floorGroups.find(group => (group.type === brush.spriteId));
+        const limit = Math.min(settings.maxItemsPerOp || 200, owned ? owned.getUnlockedCount() : 0);
+        const tiles: { x: number, y: number }[] = [];
+
+        for(let y = startY; ((y + stepY - 1) <= endY) && (tiles.length < limit); y += stepY)
+        {
+            for(let x = startX; ((x + stepX - 1) <= endX) && (tiles.length < limit); x += stepX) tiles.push({ x, y });
+        }
+
+        const wanted = new Set(tiles.map(tile => `${ tile.x }:${ tile.y }`));
+
+        for(const [ key, objectId ] of Array.from(ghostObjects.current.entries()))
+        {
+            if(wanted.has(key)) continue;
+
+            engine.removeRoomObjectFloor(roomId, objectId);
+            ghostObjects.current.delete(key);
+        }
+
+        const heightMap = (engine as unknown as { getFurnitureStackingHeightMap: (id: number) => { getTileHeight: (x: number, y: number) => number } }).getFurnitureStackingHeightMap(roomId);
+
+        for(const tile of tiles)
+        {
+            const key = `${ tile.x }:${ tile.y }`;
+
+            if(ghostObjects.current.has(key)) continue;
+
+            const objectId = nextGhostId.current--;
+            const z = Math.max(0, heightMap ? heightMap.getTileHeight(tile.x, tile.y) : 0);
+
+            if(!engine.addFurnitureFloor(roomId, objectId, brush.spriteId, new Vector3d(tile.x, tile.y, z), new Vector3d(fillRotation * 45), 0, new LegacyDataType())) continue;
+
+            engine.getRoomObject(roomId, objectId, RoomObjectCategory.FLOOR)?.model.setValue(RoomObjectVariable.FURNITURE_ALPHA_MULTIPLIER, 0.5);
+            ghostObjects.current.set(key, objectId);
+        }
+
+        setWillPlace(tiles.length);
+    };
+
+    const previewFillRef = useRef(previewFill);
+    previewFillRef.current = previewFill;
+
+    useEffect(() =>
+    {
+        if(!isVisible || (activeTool !== 'fill') || !brush) return;
+
+        const manager = GetRoomEngine().areaSelectionManager as unknown as { areaSelectionState: number, _highlightRootX: number, _highlightRootY: number, _highlightWidth: number, _highlightHeight: number };
+        let lastKey = '';
+        let frame = 0;
+
+        const tick = () =>
+        {
+            if(manager.areaSelectionState === RoomAreaSelectionManager.SELECTING)
+            {
+                const key = `${ manager._highlightRootX }:${ manager._highlightRootY }:${ manager._highlightWidth }:${ manager._highlightHeight }`;
+
+                if((key !== lastKey) && (manager._highlightWidth > 0) && (manager._highlightHeight > 0))
+                {
+                    lastKey = key;
+                    previewFillRef.current(manager._highlightRootX, manager._highlightRootY, (manager._highlightRootX + manager._highlightWidth - 1), (manager._highlightRootY + manager._highlightHeight - 1));
+                }
+
+                // a ghost's model is reset while its asset loads, so keep it half transparent every frame
+                const engine = GetRoomEngine();
+
+                for(const objectId of ghostObjects.current.values()) engine.getRoomObject(engine.activeRoomId, objectId, RoomObjectCategory.FLOOR)?.model.setValue(RoomObjectVariable.FURNITURE_ALPHA_MULTIPLIER, 0.5);
+            }
+            else if(lastKey)
+            {
+                lastKey = '';
+                clearFillGhosts();
+            }
+
+            frame = requestAnimationFrame(tick);
+        };
+
+        frame = requestAnimationFrame(tick);
+
+        return () =>
+        {
+            cancelAnimationFrame(frame);
+            clearFillGhosts();
+        };
+    }, [ isVisible, activeTool, brush, fillRotation ]);
+
     const exit = () =>
     {
         setIsVisible(false);
@@ -818,11 +1003,26 @@ export const BuilderToolbarView: FC<{}> = props =>
 
     if(!isVisible) return null;
 
-    const remaining = armedGroup ? armedGroup.getUnlockedCount() : null;
+    const remaining = armedGroup ? armedGroup.getUnlockedCount() : 0;
     // Real "{W}×{H} · rot {N}" line, read the same way the codebase's own GetFurnitureDataForRoomObject
     // reads floor-item dimensions elsewhere in this file - confirmed live against the real
     // reference's own identical brush flyout line.
-    const armedFurnitureData = armedGroup ? GetSessionDataManager().getFloorItemData(armedGroup.type) : null;
+    const armedFurnitureData = brush ? GetSessionDataManager().getFloorItemData(brush.spriteId) : null;
+    // the brush footprint follows its rotation (2 / 6 swap width and length), like sodaho's
+    const brushTurned = ((fillRotation === 2) || (fillRotation === 6));
+    const brushSize = armedFurnitureData ? `${ (brushTurned ? armedFurnitureData.tileSizeY : armedFurnitureData.tileSizeX) || 1 }×${ (brushTurned ? armedFurnitureData.tileSizeX : armedFurnitureData.tileSizeY) || 1 }` : '';
+    const brushIcon = brush ? (armedGroup?.iconUrl || GetRoomEngine().getFurnitureFloorIconUrl(brush.spriteId)) : null;
+    // one selected furni: its name in the Select header (sodaho)
+    const singleSelectedName = (() =>
+    {
+        if((selectedFurniIds.length !== 1) || !roomSession) return null;
+
+        const roomObject = GetRoomEngine().getRoomObject(roomSession.roomId, selectedFurniIds[0], RoomObjectCategory.FLOOR);
+
+        if(!roomObject) return null;
+
+        return GetSessionDataManager().getFloorItemDataByName(roomObject.type)?.name || roomObject.type;
+    })();
 
     // Markup and class names follow the reference Builder Mode toolbar exactly (its own index.css is
     // used as-is): three .bm-btn-group blocks, and every flyout is a direct child of the toolbar,
@@ -833,40 +1033,37 @@ export const BuilderToolbarView: FC<{}> = props =>
     return (
         <div className="builder-mode-toolbar">
             <div className="bm-btn-group">
-                <button ref={ element => { buttonRefs.current.brush = element; } } className={ 'bm-btn' + (brushPickerOpen ? ' active' : '') } title={ armedGroup ? `Brush: ${ armedGroup.name }` : 'Pick a furni brush' } onClick={ toggleBrushPicker }>
-                    { armedGroup ? <img className="bm-brush-icon" alt={ armedGroup.name } src={ armedGroup.iconUrl } /> : <FaPaintBrush size={ 15 } /> }
+                <button ref={ element => { buttonRefs.current.brush = element; } } className={ 'bm-btn' + (brushPickerOpen ? ' active' : '') } title={ brush ? `Brush: ${ brush.name }` : 'Pick a furni brush' } onClick={ toggleBrushPicker }>
+                    { brush ? <img className="bm-brush-icon" alt={ brush.name } src={ brushIcon } /> : <FaCube size={ 15 } /> }
                 </button>
                 { TOOLS.map(definition =>
                     <button key={ definition.tool } ref={ element => { buttonRefs.current[definition.tool] = element; } } className={ 'bm-btn' + ((activeTool === definition.tool) ? ' active' : '') } title={ definition.title } onClick={ () => selectTool(definition.tool) }>
-                        <definition.Icon size={ 14 } />
+                        <definition.Icon size={ definition.size } />
                     </button>) }
             </div>
             <div className="bm-btn-group">
-                <button className={ 'bm-btn' + (settings.undoAvailable ? '' : ' disabled') } title="Undo the last Builder Mode action" disabled={ !settings.undoAvailable } onClick={ undo }><FaUndo size={ 14 } /></button>
-                <button className="bm-btn" title="Zoom in" onClick={ () => zoom(1.25) }><FaSearchPlus size={ 14 } /></button>
-                <button className="bm-btn" title="Zoom out" onClick={ () => zoom(0.8) }><FaSearchMinus size={ 14 } /></button>
+                <button className={ 'bm-btn' + (settings.undoAvailable ? '' : ' disabled') } title="Undo the last builder action" disabled={ !settings.undoAvailable } onClick={ undo }><FaUndo size={ 14 } /></button>
+                <button className="bm-btn" title="Zoom in" onClick={ () => zoom(1) }><FaSearchPlus size={ 14 } /></button>
+                <button className="bm-btn" title="Zoom out" onClick={ () => zoom(-1) }><FaSearchMinus size={ 14 } /></button>
             </div>
             <div className="bm-btn-group">
                 <button className="bm-btn bm-btn-exit" title="Exit Builder Mode" onClick={ exit }><FaTimes size={ 16 } /></button>
             </div>
-            { settings.enabled && !settings.canUse &&
-                <div className="bm-flyout" style={ { top: 0 } }>
-                    <Text small bold>You need rights in this room to use Builder Mode.</Text>
-                </div> }
             { brushPickerOpen &&
                 <div className="bm-flyout bm-flyout-brush" style={ { top: anchorTop('brush') } }>
                     <div className="bm-flyout-header">
                         <Text bold small>Furni brush</Text>
                         <Text pointer underline small onClick={ () => setBrushPickerOpen(false) }>close</Text>
                     </div>
-                    { armedGroup &&
+                    { brush &&
                         <div className="bm-brush-status">
-                            <Text bold truncate small>{ armedGroup.name }</Text>
+                            <Text bold truncate small>{ brush.name }</Text>
                             <div className="bm-brush-meta">
-                                <Text small>{ armedFurnitureData ? `${ armedFurnitureData.tileSizeX }×${ armedFurnitureData.tileSizeY } · rot ${ fillRotation }` : `rot ${ fillRotation }` }</Text>
+                                <Text small>{ brushSize } · rot { fillRotation }</Text>
                                 <button className="bm-btn bm-btn-small" title="Rotate the brush" onClick={ () => setFillRotation(value => NEXT_ROTATION[ value ]) }><FaRedo size={ 11 } /></button>
                             </div>
-                            <Text small variant={ (remaining === 0) ? 'danger' : 'black' }>Remaining: { remaining }</Text>
+                            <Text small variant={ (remaining === 0) ? 'danger' : null }>Remaining: { remaining }</Text>
+                            { (willPlace !== null) && <Text small>Will place ~{ willPlace }</Text> }
                         </div> }
                     { /* columnMinHeight feeds --nitro-grid-column-min-height (LayoutGridItem's height);
                         the 4-column template itself comes from the reference's .bm-brush-grid rule. */ }
@@ -874,17 +1071,20 @@ export const BuilderToolbarView: FC<{}> = props =>
                         { floorGroups.map(group =>
                             <LayoutGridItem
                                 key={ groupKey(group) }
+                                className="layout-inner"
+                                title={ group.name }
                                 itemImage={ group.iconUrl }
-                                itemActive={ groupKey(group) === armedKey }
-                                onClick={ () => { arm(group); if(activeTool !== 'fill') selectTool('fill'); } } />) }
+                                itemCount={ group.getUnlockedCount() }
+                                itemActive={ !!brush && ((groupKey(group) === armedKey) || (!armedKey && (group.type === brush.spriteId))) }
+                                onClick={ () => { arm(group); if(activeTool !== 'fill') selectTool('fill'); setBrushPickerOpen(true); } } />) }
                         { !floorGroups.length &&
                             <Text small>No floor furni in your inventory.</Text> }
                     </AutoGrid>
                 </div> }
-            { flyoutsVisible && ((activeTool === 'copy') || (activeTool === 'paste')) &&
+            { flyoutsVisible && (activeTool === 'paste') && clipboard &&
                 <div className="bm-flyout bm-flyout-clipboard" style={ { top: anchorTop(activeTool) } }>
                     <div className="bm-flyout-header">
-                        <Text bold small>{ clipboard ? `Clipboard · ${ clipboard.width }×${ clipboard.length } · ${ clipboard.total } items` : 'Clipboard' }</Text>
+                        <Text bold small>{ `Clipboard · ${ clipboard.width }×${ clipboard.length } · ${ clipboard.total } items` }</Text>
                     </div>
                     { clipboard &&
                         <div className="bm-clipboard-rows">
@@ -901,12 +1101,12 @@ export const BuilderToolbarView: FC<{}> = props =>
                                 );
                             }) }
                         </div> }
-                    <Text small>{ clipboard ? 'Click a tile to paste (bottom-left corner).' : 'Drag an area to copy it.' }</Text>
+                    <Text small>Click a tile to paste (bottom-left corner).</Text>
                 </div> }
             { flyoutsVisible && (activeTool === 'select') &&
                 <div className="bm-flyout bm-flyout-furni" style={ { top: anchorTop('select') } }>
                     <div className="bm-flyout-header">
-                        <Text bold truncate small>{ selectedFurniIds.length ? `${ selectedFurniIds.length } selected` : 'Furni tools' }</Text>
+                        <Text bold truncate small>{ selectedFurniIds.length ? (singleSelectedName || `${ selectedFurniIds.length } selected`) : 'Furni tools' }</Text>
                     </div>
                     { selectedFurniIds.length === 0 &&
                         <Text small>Click furni or drag a box around them to select.</Text> }
@@ -933,30 +1133,28 @@ export const BuilderToolbarView: FC<{}> = props =>
                     { (selectedFurniIds.length > 0) &&
                         <>
                             <div className="bm-move-pad">
-                                <button className="bm-move-btn" title="Move up-left" onClick={ () => moveSelected(-1, 0) }><FaLocationArrow size="1.4em" style={ { transform: 'rotate(225deg)' } } /></button>
-                                <button className="bm-move-btn" title="Move up-right" onClick={ () => moveSelected(0, -1) }><FaLocationArrow size="1.4em" style={ { transform: 'rotate(315deg)' } } /></button>
-                                <button className="bm-move-btn" title="Move down-left" onClick={ () => moveSelected(0, 1) }><FaLocationArrow size="1.4em" style={ { transform: 'rotate(135deg)' } } /></button>
-                                <button className="bm-move-btn" title="Move down-right" onClick={ () => moveSelected(1, 0) }><FaLocationArrow size="1.4em" style={ { transform: 'rotate(45deg)' } } /></button>
+                                <button className="bm-move-btn" title="Move up-left" onClick={ () => moveSelected(-1, 0) }><GrFormNextLink size="1.4em" style={ { transform: 'rotate(225deg)' } } /></button>
+                                <button className="bm-move-btn" title="Move up-right" onClick={ () => moveSelected(0, -1) }><GrFormNextLink size="1.4em" style={ { transform: 'rotate(315deg)' } } /></button>
+                                <button className="bm-move-btn" title="Move down-left" onClick={ () => moveSelected(0, 1) }><GrFormNextLink size="1.4em" style={ { transform: 'rotate(135deg)' } } /></button>
+                                <button className="bm-move-btn" title="Move down-right" onClick={ () => moveSelected(1, 0) }><GrFormNextLink size="1.4em" style={ { transform: 'rotate(45deg)' } } /></button>
                             </div>
                             <Text small>Click furni to add or remove them from the selection.</Text>
                         </> }
                 </div> }
-            { flyoutsVisible && (activeTool === 'height') &&
+            { flyoutsVisible && (activeTool === 'height') && pendingHeightRegion &&
                 <div className="bm-flyout bm-flyout-height" style={ { top: anchorTop('height') } }>
                     <div className="bm-flyout-header">
-                        <Text bold small>{ pendingHeightRegion ? `Adjust height · ${ (pendingHeightRegion.endX - pendingHeightRegion.startX + 1) }×${ (pendingHeightRegion.endY - pendingHeightRegion.startY + 1) }` : 'Adjust height' }</Text>
+                        <Text bold small>{ `Adjust height · ${ (pendingHeightRegion.endX - pendingHeightRegion.startX + 1) }×${ (pendingHeightRegion.endY - pendingHeightRegion.startY + 1) }` }</Text>
                     </div>
-                    { !pendingHeightRegion &&
-                        <Text small>Drag an area or click a furni.</Text> }
                     { pendingHeightRegion &&
                         <>
                             <div className="bm-height-row">
-                                { HEIGHT_STEPS.map(step => <button key={ `up-${ step }` } className="bm-height-btn" title={ `Raise by ${ step }` } onClick={ () => adjustPendingHeight(step) }>{ `+${ step }` }</button>) }
+                                { HEIGHT_STEPS.map(step => <button key={ `up-${ step }` } className="bm-height-btn" title={ `Raise by ${ step }` } onClick={ () => adjustPendingHeight(step) }><FaChevronUp size={ 9 } /> { step }</button>) }
                             </div>
                             <div className="bm-height-row">
-                                { HEIGHT_STEPS.map(step => <button key={ `down-${ step }` } className="bm-height-btn" title={ `Lower by ${ step }` } onClick={ () => adjustPendingHeight(-step) }>{ `-${ step }` }</button>) }
+                                { HEIGHT_STEPS.map(step => <button key={ `down-${ step }` } className="bm-height-btn" title={ `Lower by ${ step }` } onClick={ () => adjustPendingHeight(-step) }><FaChevronDown size={ 9 } /> { step }</button>) }
                             </div>
-                            <Text small>Only furni fully inside the area are affected. Drag a new area to change the selection.</Text>
+                            <Text small>Only furni fully inside the area (highlighted blue) are affected. Drag a new area to change the selection.</Text>
                         </> }
                 </div> }
         </div>

@@ -18,6 +18,7 @@ export * from './rooms';
 export * from './session';
 export * from './useLocalStorage';
 export * from './user-settings';
+export * from './video-tv';
 export * from './UseMountEffect';
 export * from './useSharedVisibility';
 export * from './wired';

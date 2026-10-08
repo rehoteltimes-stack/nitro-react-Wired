@@ -1,0 +1,113 @@
+.hotel-alert-card {
+  width: 392px;
+  overflow: hidden;
+  border: 2px solid #1a1a1a;
+  border-radius: 9px;
+  background: #e8e7e0;
+  box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.35), 0px 0px 12px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+}
+
+.hotel-alert-card-header {
+  position: relative;
+  height: 30px;
+  border-bottom: 2px solid #1a1a1a;
+  background: linear-gradient(180deg, #5b97b8 0%, #4a84a5 50%, #3f7698 51%, #3c7193 100%);
+  text-align: center;
+  line-height: 30px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.35);
+  cursor: move;
+}
+
+.hotel-alert-card-close {
+  position: absolute;
+  right: 6px;
+  top: 4px;
+  width: 21px;
+  height: 21px;
+  border: 2px solid #1a1a1a;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #d4554a 0%, #b23a30 100%);
+  box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 2px;
+    width: 3px;
+    height: 13px;
+    border-radius: 1px;
+    background: #ffffff;
+    transform: rotate(45deg);
+  }
+
+  &::after { transform: rotate(-45deg); }
+
+  &:hover { filter: brightness(1.1); }
+}
+
+.hotel-alert-card-banner {
+  position: relative;
+  height: 95px;
+  overflow: hidden;
+  border-bottom: 2px solid #1a1a1a;
+  background-color: #2a3b4c;
+  background-repeat: no-repeat;
+  background-position: center top;
+  image-rendering: pixelated;
+}
+
+.hotel-alert-card-avatar {
+  position: absolute;
+  left: -8px;
+  top: -6px;
+  width: 64px;
+  height: 110px;
+}
+
+.hotel-alert-card-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 90px;
+  padding: 12px 10px 8px 14px;
+}
+
+.hotel-alert-card-text {
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #1e1e1e;
+}
+
+.hotel-alert-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.hotel-alert-card-button {
+  min-width: 176px;
+  padding: 5px 16px;
+  border: 2px solid #1a1a1a;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #57b23f 0%, #46a12f 50%, #3c962a 51%, #368c25 100%);
+  box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.3);
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+
+  &:hover { filter: brightness(1.08); }
+
+  &:active { transform: translateY(1px); }
+}

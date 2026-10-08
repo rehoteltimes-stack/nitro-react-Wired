@@ -1,0 +1,118 @@
+diff --git a/api/nitro/avatar/enum/AvatarFigurePartType.ts b/api/nitro/avatar/enum/AvatarFigurePartType.ts
+index 30bc5646bffe4510a6b1bd9bc2ea68c276812ff0..d122b16dfd8d90576b59ff577e161a9d737d96ff 100644
+--- a/api/nitro/avatar/enum/AvatarFigurePartType.ts
++++ b/api/nitro/avatar/enum/AvatarFigurePartType.ts
+@@ -14,6 +14,8 @@
+     public static HEAD_ACCESSORY_EXTRA: string = 'he';
+     public static COAT_CHEST: string = 'cc';
+     public static CHEST_PRINT: string = 'cp';
++    public static PET: string = 'pt';
++    public static MISC: string = 'mc';
+     public static LEFT_HAND_ITEM: string = 'li';
+     public static LEFT_HAND: string = 'lh';
+     public static LEFT_SLEEVE: string = 'ls';
+@@ -25,5 +27,5 @@
+     public static RIGHT_HAND_ITEM: string = 'ri';
+     public static LEFT_COAT_SLEEVE: string = 'lc';
+     public static RIGHT_COAT_SLEEVE: string = 'rc';
+-    public static FIGURE_SETS: string[] = [ AvatarFigurePartType.SHOES, AvatarFigurePartType.LEGS, AvatarFigurePartType.CHEST, AvatarFigurePartType.WAIST_ACCESSORY, AvatarFigurePartType.CHEST_ACCESSORY, AvatarFigurePartType.HEAD, AvatarFigurePartType.HAIR, AvatarFigurePartType.FACE_ACCESSORY, AvatarFigurePartType.EYE_ACCESSORY, AvatarFigurePartType.HEAD_ACCESSORY, AvatarFigurePartType.HEAD_ACCESSORY_EXTRA, AvatarFigurePartType.COAT_CHEST, AvatarFigurePartType.CHEST_PRINT ];
++    public static FIGURE_SETS: string[] = [ AvatarFigurePartType.SHOES, AvatarFigurePartType.LEGS, AvatarFigurePartType.CHEST, AvatarFigurePartType.WAIST_ACCESSORY, AvatarFigurePartType.CHEST_ACCESSORY, AvatarFigurePartType.HEAD, AvatarFigurePartType.HAIR, AvatarFigurePartType.FACE_ACCESSORY, AvatarFigurePartType.EYE_ACCESSORY, AvatarFigurePartType.HEAD_ACCESSORY, AvatarFigurePartType.HEAD_ACCESSORY_EXTRA, AvatarFigurePartType.COAT_CHEST, AvatarFigurePartType.CHEST_PRINT, AvatarFigurePartType.PET, AvatarFigurePartType.MISC ];
+ }
+diff --git a/nitro/avatar/AvatarRenderManager.ts b/nitro/avatar/AvatarRenderManager.ts
+index 8249966a7cafc033b9d16310e999613c25e90b1b..91cdeff4170cc81f4c254b6e52164827a8f81dd3 100644
+--- a/nitro/avatar/AvatarRenderManager.ts
++++ b/nitro/avatar/AvatarRenderManager.ts
+@@ -8,6 +8,7 @@ import { AvatarFigureContainer } from './AvatarFigureContainer';
+ import { AvatarImage } from './AvatarImage';
+ import { AvatarStructure } from './AvatarStructure';
+ import { HabboAvatarAnimations } from './data/HabboAvatarAnimations';
++import { AddExtraGeometryParts, AddExtraPartSets } from './data/HabboAvatarExtraParts';
+ import { HabboAvatarGeometry } from './data/HabboAvatarGeometry';
+ import { HabboAvatarPartSets } from './data/HabboAvatarPartSets';
+ import { EffectAssetDownloadManager } from './EffectAssetDownloadManager';
+@@ -113,7 +114,7 @@ export class AvatarRenderManager extends NitroManager implements IAvatarRenderMa
+     {
+         if(!this._structure) return;
+ 
+-        this._structure.initGeometry(HabboAvatarGeometry.geometry);
++        this._structure.initGeometry(AddExtraGeometryParts(HabboAvatarGeometry.geometry));
+ 
+         this._geometryReady = true;
+ 
+@@ -124,7 +125,7 @@ export class AvatarRenderManager extends NitroManager implements IAvatarRenderMa
+     {
+         if(!this._structure) return;
+ 
+-        this._structure.initPartSets(HabboAvatarPartSets.partSets);
++        this._structure.initPartSets(AddExtraPartSets(HabboAvatarPartSets.partSets));
+ 
+         this._partSetsReady = true;
+ 
+diff --git a/nitro/avatar/data/HabboAvatarExtraParts.ts b/nitro/avatar/data/HabboAvatarExtraParts.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..67beed0f6e1f18c51954215ff51dffcb6fe1c935
+--- /dev/null
++++ b/nitro/avatar/data/HabboAvatarExtraParts.ts
+@@ -0,0 +1,62 @@
++const GEOMETRY_TYPES = [ 'vertical', 'sitting', 'horizontal', 'swhorizontal' ];
++
++const BODY_PART_ITEMS: { [bodyPart: string]: [ string, number ][] } = {
++    'torso': [ [ 'pt', 0.08 ], [ 'mc', 0.09 ] ],
++    'leftarm': [ [ 'ptl', 0.03 ], [ 'mcl', 0.04 ] ],
++    'rightarm': [ [ 'ptr', 0.03 ], [ 'mcr', 0.04 ] ]
++};
++
++const PART_SETS = [
++    { 'setType': 'pt' },
++    { 'setType': 'ptl', 'flippedSetType': 'ptr' },
++    { 'setType': 'ptr', 'flippedSetType': 'ptl' },
++    { 'setType': 'mc' },
++    { 'setType': 'mcl', 'flippedSetType': 'mcr' },
++    { 'setType': 'mcr', 'flippedSetType': 'mcl' }
++];
++
++export const AddExtraGeometryParts = (geometry: any) =>
++{
++    for(const type of geometry.types)
++    {
++        if(GEOMETRY_TYPES.indexOf(type.id) === -1) continue;
++
++        for(const bodyPart of type.bodyParts)
++        {
++            const extra = BODY_PART_ITEMS[bodyPart.id];
++
++            if(!extra) continue;
++
++            if(!bodyPart.items) bodyPart.items = [];
++
++            for(const [ id, radius ] of extra)
++            {
++                if(bodyPart.items.some(item => (item.id === id))) continue;
++
++                bodyPart.items.push({ 'id': id, 'x': 0, 'y': 0, 'z': 0, 'radius': radius, 'nx': 0, 'ny': 0, 'nz': -1, 'double': false });
++            }
++        }
++    }
++
++    return geometry;
++};
++
++export const AddExtraPartSets = (partSets: any) =>
++{
++    for(const partSet of PART_SETS)
++    {
++        if(!partSets.partSet.some(existing => (existing.setType === partSet.setType))) partSets.partSet.push({ ...partSet });
++    }
++
++    const figure = partSets.activePartSets.find(activePartSet => (activePartSet.id === 'figure'));
++
++    if(figure)
++    {
++        for(const partSet of PART_SETS)
++        {
++            if(!figure.activeParts.some(existing => (existing.setType === partSet.setType))) figure.activeParts.push({ 'setType': partSet.setType });
++        }
++    }
++
++    return partSets;
++};

@@ -76,7 +76,7 @@ export const CatalogSearchView: FC<CatalogSearchViewProps> = props =>
 
             FilterCatalogNode(search, foundFurniLines, rootNode, nodes);
 
-            setSearchResult(new SearchResult(search, offers, nodes.filter(node => (node.isVisible))));
+            setSearchResult(new SearchResult(search, offers, nodes.filter((node, index) => (node.isVisible && (nodes.findIndex(other => (other.pageId === node.pageId)) === index)))));
             setCurrentPage((new CatalogPage(-1, 'default_3x3', new PageLocalization([], []), offers, false, 1) as ICatalogPage));
         }, 300);
 

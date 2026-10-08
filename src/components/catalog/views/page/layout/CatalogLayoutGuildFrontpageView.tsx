@@ -13,7 +13,7 @@ export const CatalogLayouGuildFrontpageView: FC<CatalogLayoutProps> = props =>
     
     return (
         <Grid>
-            <Column size={ 7 } overflow="hidden" className="bg-muted rounded p-2 text-black">
+            <Column size={ 7 } overflow="hidden" className="rounded p-2 catalog-layout-background">
                 <Base dangerouslySetInnerHTML={ { __html: page.localization.getText(2) } } />
                 <Base overflow="auto" dangerouslySetInnerHTML={ { __html: page.localization.getText(0) } } />
                 <Base dangerouslySetInnerHTML={ { __html: page.localization.getText(1) } } />

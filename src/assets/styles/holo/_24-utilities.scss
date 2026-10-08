@@ -240,18 +240,18 @@ img {
 
 body.dark-mode {
   --dark-mode: 1;
-  --holo-primary-H: 221;
-  --holo-primary-S: 23%;
-  --holo-primary-L: 16%;
-  --holo-secondary-H: 219;
-  --holo-secondary-S: 25%;
-  --holo-secondary-L: 11%;
-  --holo-tertiary-H: 222;
-  --holo-tertiary-S: 24%;
-  --holo-tertiary-L: 45%;
-  --holo-infostand-H: 240;
-  --holo-infostand-S: 7%;
-  --holo-infostand-L: 12%;
+  --holo-primary-H: 0;
+  --holo-primary-S: 0%;
+  --holo-primary-L: 16.68%;
+  --holo-secondary-H: 0;
+  --holo-secondary-S: 0%;
+  --holo-secondary-L: 15%;
+  --holo-tertiary-H: 0;
+  --holo-tertiary-S: 0%;
+  --holo-tertiary-L: 40%;
+  --holo-infostand-H: 0;
+  --holo-infostand-S: 0%;
+  --holo-infostand-L: 20%;
   --holo-primary: hsl(var(--holo-primary-H), var(--holo-primary-S), var(--holo-primary-L));
   --holo-secondary: hsl(var(--holo-secondary-H), var(--holo-secondary-S), var(--holo-secondary-L));
   --holo-tertiary: hsl(var(--holo-tertiary-H), var(--holo-tertiary-S), var(--holo-tertiary-L));
@@ -275,11 +275,11 @@ body.dark-mode {
   --holo-box-shadow-color: #FFFFFF10;
   --holo-box-shadow: var(--holo-box-shadow-offset-x) var(--holo-box-shadow-offset-y) var(--holo-box-shadow-blur-radius) var(--holo-box-shadow-spread-radius) var(--holo-box-shadow-color);
   --holo-border-radius: 12px;
-  --holo-border-color-primary: #2E334D;
-  --holo-border-color-secondary: #2E334D;
-  --holo-border-size: 3px;
+  --holo-border-color-primary: #FFFFFF14;
+  --holo-border-color-secondary: #FFFFFF14;
+  --holo-border-size: 0px;
   --holo-input-height: 37px;
-  --holo-input-border-size: 3px;
+  --holo-input-border-size: 0px;
   --holo-disabled-input-opacity: .4;
   --holo-paddings: 15px;
   --holo-inventory-color-theme-primary: #EE867B;

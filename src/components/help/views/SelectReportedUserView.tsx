@@ -1,7 +1,7 @@
 import { RoomObjectType } from '@nitrots/nitro-renderer';
 import { FC, useMemo, useState } from 'react';
 import { ChatEntryType, GetSessionDataManager, IReportedUser, LocalizeText, ReportState } from '../../../api';
-import { AutoGrid, Button, Column, Flex, LayoutGridItem, Text } from '../../../common';
+import { AutoGrid, Button, Column, Flex, LayoutGridItem, ScrollContainer, Text } from '../../../common';
 import { useChatHistory, useHelp } from '../../../hooks';
 
 export const SelectReportedUserView: FC<{}> = props =>
@@ -52,7 +52,7 @@ export const SelectReportedUserView: FC<{}> = props =>
 
     return (
         <>
-            <Column gap={ 1 }>
+            <Column shrink gap={ 1 }>
                 <Text fontSize={ 4 }>{ LocalizeText('help.emergency.main.step.two.title') }</Text>
                 { (availableUsers.length > 0) &&
                     <Text>{ LocalizeText('report.user.pick.user') }</Text> }
@@ -61,18 +61,20 @@ export const SelectReportedUserView: FC<{}> = props =>
                 { !!!availableUsers.length &&
                     <Text>{ LocalizeText('report.user.error.nolist') }</Text> }
                 { (availableUsers.length > 0) &&
-                    <AutoGrid columnCount={ 1 } columnMinHeight={ 25 } gap={ 1 }>
-                        { availableUsers.map((user, index) =>
-                        {
-                            return (
-                                <LayoutGridItem key={ user.id } onClick={ event => selectUser(user.id) } itemActive={ (selectedUserId === user.id) }>
-                                    <span dangerouslySetInnerHTML={ { __html: (user.username) } } />
-                                </LayoutGridItem>
-                            );
-                        }) }
-                    </AutoGrid> }
+                    <ScrollContainer>
+                        <AutoGrid columnCount={ 1 } columnMinHeight={ 25 } gap={ 1 }>
+                            { availableUsers.map((user, index) =>
+                            {
+                                return (
+                                    <LayoutGridItem key={ user.id } onClick={ event => selectUser(user.id) } itemActive={ (selectedUserId === user.id) }>
+                                        <span dangerouslySetInnerHTML={ { __html: (user.username) } } />
+                                    </LayoutGridItem>
+                                );
+                            }) }
+                        </AutoGrid>
+                    </ScrollContainer> }
             </Column>
-            <Flex gap={ 2 } justifyContent="between">
+            <Flex shrink gap={ 2 } justifyContent="between">
                 <Button variant="secondary" onClick={ back }>
                     { LocalizeText('generic.back') }
                 </Button>

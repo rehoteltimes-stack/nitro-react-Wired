@@ -1,7 +1,7 @@
 import { ActivityPointNotificationMessageEvent, UserCreditsEvent, UserCurrencyComposer, UserCurrencyEvent, UserSubscriptionComposer, UserSubscriptionEvent, UserSubscriptionParser } from '@nitrots/nitro-renderer';
 import { useEffect, useMemo, useState } from 'react';
 import { useBetween } from 'use-between';
-import { CloneObject, ClubStatus, GetConfiguration, IPurse, PlaySound, Purse, PurseCurrencyColorDataEvent, PurseCurrencyColorRequestComposer, PurseCurrencyMeta, RegisterPurseCurrencyColorMessages, SendMessageComposer, SoundNames } from '../../api';
+import { CloneObject, ClubStatus, GetConfiguration, IPurse, PlaySound, Purse, PurseCurrencyColorDataEvent, PurseCurrencyColorRequestComposer, PurseCurrencyMeta, RegisterPurseCurrencyColorMessages, SEASON_CURRENCY_TYPE, SendMessageComposer, SetSeasonCurrency, SoundNames } from '../../api';
 import { useMessageEvent } from '../events';
 
 const usePurseState = () =>
@@ -18,7 +18,12 @@ const usePurseState = () =>
 
     useMessageEvent<PurseCurrencyColorDataEvent>(PurseCurrencyColorDataEvent, event =>
     {
-        setCurrencyMeta(event.getParser().meta);
+        const meta = event.getParser().meta;
+        const season = meta.get(SEASON_CURRENCY_TYPE);
+
+        if(season) SetSeasonCurrency(season.pluralName, season.color);
+
+        setCurrencyMeta(meta);
     });
 
     const clubStatus = useMemo(() =>

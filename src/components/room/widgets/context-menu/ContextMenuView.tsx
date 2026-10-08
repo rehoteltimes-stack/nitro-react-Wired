@@ -1,6 +1,7 @@
-import { FixedSizeStack, GetTicker, NitroPoint, NitroRectangle, RoomObjectType } from '@nitrots/nitro-renderer';
+import { FixedSizeStack, GetTicker, NitroPoint, NitroRectangle, RoomObjectCategory, RoomObjectType } from '@nitrots/nitro-renderer';
 import { CSSProperties, FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GetNitroInstance, GetRoomObjectBounds, GetRoomObjectScreenLocation, GetRoomSession } from '../../../../api';
+import { GetRanchStackTop } from '../../../../api/games/RanchStackTops';
 import { Base, BaseProps } from '../../../../common';
 import { ContextMenuCaretView } from './ContextMenuCaretView';
 
@@ -80,6 +81,10 @@ export const ContextMenuView: FC<ContextMenuViewProps> = props =>
         let x = ~~(location.x - (elementRef.current.offsetWidth / 2));
         let y = ~~(deltaY + offset);
 
+        const ranchTop = (category === RoomObjectCategory.UNIT) ? GetRanchStackTop(objectId) : null;
+
+        if(ranchTop !== null) y = Math.min(y, ranchTop - elementRef.current.offsetHeight - 2);
+
         const maxLeft = ((GetNitroInstance().width - elementRef.current.offsetWidth) - SPACE_AROUND_EDGES);
         const maxTop = ((GetNitroInstance().height - elementRef.current.offsetHeight) - SPACE_AROUND_EDGES);
 
@@ -90,7 +95,7 @@ export const ContextMenuView: FC<ContextMenuViewProps> = props =>
         else if(y > maxTop) y = maxTop;
 
         setPos({ x, y });
-    }, [ userType ]);
+    }, [ userType, category, objectId ]);
 
     const getClassNames = useMemo(() =>
     {

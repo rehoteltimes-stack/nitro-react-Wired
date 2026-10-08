@@ -1,32 +1,41 @@
 import { FC, useMemo } from 'react';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { LocalizeFormattedNumber, LocalizeShortNumber } from '../../../api';
-import { Flex, LayoutCurrencyIcon, Text } from '../../../common';
+import { LayoutCurrencyIcon } from '../../../common';
 
 interface CurrencyViewProps
 {
     type: number;
     amount: number;
     short: boolean;
+    name?: string;
     color?: string;
 }
 
+// HabboPie's purse row (their `_f`), 1:1: `.Habbo-right-side-purse-item icon-<type>` with the name, the amount and an
+// empty icon box (its picture is a CSS background per type). With short numbers on, the full amount is a tooltip on
+// the left. Their name is LocalizeText(`Habbopie.purse.<type>`); ours is the currency name our server sends.
 export const CurrencyView: FC<CurrencyViewProps> = props =>
 {
-    const { type = -1, amount = -1, short = false, color = null } = props;
+    const { type = -1, amount = -1, short = false, name = '', color = null } = props;
 
-    // Real reference behavior, confirmed live: each currency's own amount text carries a real
-    // per-currency `--holo-text-primary` CSS variable (see PurseCurrencyColorProtocol.ts's own
-    // comment for where this value comes from - a new, additive server protocol, since the stock
-    // wire format has no color field at all).
+    // Ours on top of their layout (user, 2026-10-01: "add our icons and colors"): the text in the currency's own colour
+    // from our server, and our wallet icon in the box (has-own-icon, see the own block at the end of PurseView.scss).
     const element = useMemo(() =>
     {
         return (
-            <Flex alignItems="center" justifyContent="end" pointer gap={ 1 } className="nitro-purse-button currency rounded">
-                <LayoutCurrencyIcon type={ type } />
-                <Text fontSize={ 5 } truncate textEnd grow style={ color ? ({ '--holo-text-primary': color } as any) : undefined }>{ short ? LocalizeShortNumber(amount) : LocalizeFormattedNumber(amount) }</Text>
-            </Flex>);
-    }, [ amount, short, type, color ]);
+            <div className={ `Habbo-right-side-purse-item icon-${ type } has-own-icon` } style={ color ? ({ '--currency-color': color } as any) : undefined }>
+                <div className="Habbo-right-side-purse-item-left-side">
+                    <p className="Habbo-right-side-purse-item-text-type">{ name }</p>
+                </div>
+                <div className="Habbo-right-side-purse-item-right-side">
+                    <p className="Habbo-right-side-purse-item-text-type">{ short ? LocalizeShortNumber(amount) : LocalizeFormattedNumber(amount) }</p>
+                </div>
+                <div className="Habbo-right-side-purse-item-type-container">
+                    <LayoutCurrencyIcon type={ type } />
+                </div>
+            </div>);
+    }, [ amount, short, type, name, color ]);
 
     if(!short) return element;
 

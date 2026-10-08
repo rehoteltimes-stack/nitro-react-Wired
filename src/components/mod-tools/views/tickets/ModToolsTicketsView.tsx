@@ -71,17 +71,17 @@ export const ModToolsTicketsView: FC<ModToolsTicketsViewProps> = props =>
 
     return (
         <>
-            <NitroCardView className="nitro-mod-tools-tickets">
+            <NitroCardView resize="both" className="nitro-mod-tools-tickets">
                 <NitroCardHeaderView headerText={ 'Tickets' } onCloseClick={ onCloseClick } />
-                <NitroCardTabsView>
-                    { TABS.map((tab, index) =>
-                    {
-                        return (<NitroCardTabsItemView key={ index } isActive={ (currentTab === index) } onClick={ event => setCurrentTab(index) }>
-                            { tab }
-                        </NitroCardTabsItemView>);
-                    }) }
-                </NitroCardTabsView>
                 <NitroCardContentView gap={ 1 }>
+                    <NitroCardTabsView>
+                        { TABS.map((tab, index) =>
+                        {
+                            return (<NitroCardTabsItemView key={ index } isActive={ (currentTab === index) } onClick={ event => setCurrentTab(index) }>
+                                { tab }
+                            </NitroCardTabsItemView>);
+                        }) }
+                    </NitroCardTabsView>
                     <CurrentTabComponent />
                 </NitroCardContentView>
             </NitroCardView>

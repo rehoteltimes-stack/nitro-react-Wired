@@ -30,7 +30,7 @@ export const AvatarInfoWidgetAvatarView: FC<AvatarInfoWidgetAvatarViewProps> = p
     const { report = null } = useHelp();
     const { roomSession = null } = useRoom();
     const { userRespectRemaining = 0, respectUser = null } = useSessionInfo();
-    const [ showInspectButton, setShowInspectButton ] = useState(() => GetWiredCreatorToolsSettings().showInspectButton);
+    const [ showInspectButton, setShowInspectButton ] = useState(() => { const settings = GetWiredCreatorToolsSettings(); return settings.showInspectButton && settings.editingRights; });
     const [ handitemPassingBlocked, setHanditemPassingBlocked ] = useState(() => GetWiredCreatorToolsSettings().handitemPassingBlocked);
 
     const isShowGiveRights = useMemo(() =>
@@ -212,7 +212,7 @@ export const AvatarInfoWidgetAvatarView: FC<AvatarInfoWidgetAvatarViewProps> = p
         {
             const settings = GetWiredCreatorToolsSettings();
 
-            setShowInspectButton(settings.showInspectButton);
+            setShowInspectButton(settings.showInspectButton && settings.editingRights);
             setHanditemPassingBlocked(settings.handitemPassingBlocked);
         };
 

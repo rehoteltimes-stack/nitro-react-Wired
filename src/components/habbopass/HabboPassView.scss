@@ -1,0 +1,420 @@
+@import '../shop/center-menu';
+
+.nitro-habbopass.nitro-card {
+  --center-box: #FFFFFF;
+  --center-border: #C4CEE2;
+}
+
+body.dark-mode .nitro-habbopass.nitro-card {
+  --center-box: #262626;
+  --center-border: #FFFFFF14;
+}
+
+.nitro-habbopass {
+  --habbopass-surface: color-mix(in srgb, var(--holo-text-primary) 5%, transparent);
+  --habbopass-surface-strong: color-mix(in srgb, var(--holo-text-primary) 10%, transparent);
+  --habbopass-line: color-mix(in srgb, var(--holo-text-primary) 14%, transparent);
+  --habbopass-accent: #8fe388;
+  --habbopass-accent-dark: #5ac06a;
+  --habbopass-green: #00d264;
+  --habbopass-blue: #6d95f3;
+  --habbopass-gold: #f5c25c;
+
+  .habbopass-content {
+    zoom: .9;
+    position: relative;
+    min-height: 200px;
+    padding: 14px !important;
+    font-size: 14px;
+  }
+
+  @include center-menu;
+
+  .center-menu-wrapper { justify-content: flex-start; margin-bottom: 14px; }
+
+  .habbopass-quests-scroll {
+    max-height: min(46vh, 400px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .habbopass-empty {
+    padding: 30px 10px;
+    color: var(--holo-text-muted);
+    text-align: center;
+  }
+
+  .top-rewards-pass {
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    gap: 14px;
+  }
+
+  .card-rewards-pass {
+    display: grid;
+    gap: 10px;
+  }
+
+  .profile-rewards-pass {
+    display: grid;
+    grid-template-columns: 88px 1fr;
+    gap: 14px;
+    align-items: center;
+    padding: 10px;
+    border: 2px solid var(--habbopass-line);
+    border-radius: 14px;
+  }
+
+  .avatar-rewards-pass {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 80px;
+    height: 80px;
+    overflow: hidden;
+    border: 1px solid var(--habbopass-line);
+    border-radius: 12px;
+    background: var(--habbopass-surface-strong);
+
+    img {
+      position: absolute;
+      top: -25px;
+      left: -22px;
+      width: 120px;
+      height: auto;
+      border-radius: 12px;
+    }
+  }
+
+  .wins-rewards-pass {
+    display: grid;
+    align-content: center;
+    gap: 10px;
+    height: 100%;
+  }
+
+  .wins-text-rewards-pass {
+    font-size: 17px;
+    font-weight: 800;
+  }
+
+  .badges-rewards-pass {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .badge-rewards-pass {
+    display: grid;
+    place-items: center;
+    min-width: 26px;
+    height: 26px;
+    border: 1px solid var(--habbopass-line);
+    border-radius: 999px;
+    background: var(--habbopass-surface-strong);
+    color: var(--holo-text-primary);
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .progress-rewards-pass {
+    position: relative;
+    display: inline-grid;
+    align-items: center;
+    width: 150px;
+    height: 26px;
+    padding: 0 12px;
+    border: 2px solid var(--habbopass-accent-dark);
+    border-radius: 999px;
+    background: var(--habbopass-surface);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      width: calc((var(--value) / var(--max)) * 100%);
+      border-radius: inherit;
+      background: linear-gradient(to right, #4caf50, #f0c85a);
+      opacity: .7;
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, 0));
+      pointer-events: none;
+    }
+  }
+
+  .progress-text-rewards-pass {
+    position: relative;
+    z-index: 1;
+    color: var(--holo-text-primary);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .info-with-button-rewards-pass {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .info-rewards-pass {
+    position: relative;
+    flex: 1;
+    padding: 10px;
+    border: 2px solid var(--habbopass-line);
+    border-radius: 12px;
+    background: var(--habbopass-surface);
+    color: var(--holo-text-primary);
+    font-size: 13px;
+    line-height: 1.4;
+
+    b { color: var(--habbopass-accent-dark); font-weight: 800; }
+  }
+
+  .habbopass-vip-note { margin-top: 6px; color: var(--holo-text-muted); font-size: 12px; }
+  .habbopass-notice { margin-top: 6px; color: var(--habbopass-accent-dark); font-weight: 700; }
+
+  .habbopass-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .collect-rewards-pass {
+    padding: 9px 18px;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #8fe07f 0%, #5fc24f 100%);
+    box-shadow: 0 2px 0 #3d8a31, 0 4px 10px rgba(0, 0, 0, .25);
+    color: #0b3d0b;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    animation: habbopass-collect-pulse 1.6s ease-in-out infinite;
+
+    &:hover { filter: brightness(1.08); }
+    &:active { transform: translateY(1px); box-shadow: 0 1px 0 #3d8a31; }
+    &:disabled { animation: none; opacity: .7; cursor: default; }
+  }
+
+  .habbopass-quests {
+    padding: 7px 18px;
+    border: 2px solid var(--habbopass-line);
+    border-radius: 8px;
+    background: var(--habbopass-surface);
+    color: var(--holo-text-primary);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover { background: var(--habbopass-surface-strong); }
+  }
+
+  .lot-rewards-pass {
+    position: relative;
+    display: grid;
+    place-items: center;
+    height: 160px;
+    padding: 10px;
+    overflow: hidden;
+    border: 1px solid var(--habbopass-accent-dark);
+    border-radius: 14px;
+  }
+
+  .image-lot-rewards-pass {
+    display: grid;
+    place-items: center;
+    max-width: 120px;
+    max-height: 110px;
+
+    img {
+      max-width: 100%;
+      max-height: 100%;
+      image-rendering: pixelated;
+      transform: scale(1.5);
+    }
+  }
+
+  .desc-lot-rewards-pass {
+    position: absolute;
+    bottom: 14px;
+    max-width: calc(100% - 20px);
+    padding: 6px 14px;
+    overflow: hidden;
+    border: 1px solid #1d4659;
+    border-radius: 14px;
+    background: #88c6e39e;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .vip-tag-vitrine {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    border: 2px solid var(--habbopass-gold);
+    border-radius: 25px;
+    background: #17243b;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .habbopass-lot-level {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    color: var(--holo-text-muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .tracks-rewards-pass {
+    margin-top: 14px;
+    padding: 12px;
+    border: 2px solid var(--habbopass-line);
+    border-radius: 14px;
+  }
+
+  .tracks-grid-rewards-pass {
+    display: grid;
+    grid-auto-columns: 62px;
+    grid-auto-flow: column;
+    gap: 10px;
+    padding-bottom: 6px;
+    overflow-x: auto;
+  }
+
+  .tracks-col-rewards-pass {
+    display: grid;
+    grid-template-rows: 1fr auto 1fr;
+    align-items: stretch;
+    gap: 8px;
+    padding: 4px;
+    border: 2px solid transparent;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: opacity .15s ease;
+
+    &:hover { opacity: .7; }
+    &.is-current { border-color: var(--habbopass-blue); }
+    &.is-shown { background: var(--habbopass-surface-strong); }
+  }
+
+  .tracks-free-rewards-pass,
+  .tracks-vip-rewards-pass {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 50px;
+    overflow: hidden;
+    border-radius: 12px;
+  }
+
+  .tracks-free-rewards-pass { border: 2px solid var(--habbopass-green); }
+  .tracks-vip-rewards-pass { border: 2px solid var(--habbopass-gold); }
+
+  .tracks-image-rewards-pass {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+
+    img {
+      max-width: 40px;
+      max-height: 40px;
+      image-rendering: pixelated;
+    }
+
+    .no-reward { opacity: .35; font-weight: 700; }
+  }
+
+  .tracks-lvl-rewards-pass {
+    position: relative;
+    left: 30%;
+    display: grid;
+    place-items: center;
+    max-width: 40%;
+    min-height: 24px;
+    border: 2px solid var(--habbopass-blue);
+    border-radius: 12px;
+    font-weight: 700;
+  }
+
+  .tracks-col-rewards-pass.is-ready .tracks-lvl-rewards-pass {
+    border-color: var(--habbopass-accent);
+    background: var(--habbopass-accent-dark);
+    color: #0b3d0b;
+  }
+
+  .vip-tag {
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    padding: 1px 3px;
+    border: 2px solid var(--habbopass-gold);
+    border-radius: 6px 0 6px 0;
+    background: #17243b;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  .tracks-is-locked .habbopass-lock {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border-radius: inherit;
+    background: rgba(0, 0, 0, .45);
+  }
+
+  .tracks-col-rewards-pass-obtain-free .tracks-free-rewards-pass,
+  .tracks-col-rewards-pass-obtain-vip .tracks-vip-rewards-pass {
+    img { opacity: .55; filter: saturate(.6); }
+
+    &::after {
+      content: "Collected";
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: #7bd66b;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+      color: #0b3d0b;
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 1.4;
+      white-space: nowrap;
+      transform: translateX(-50%);
+    }
+  }
+}
+
+@keyframes habbopass-collect-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}

@@ -45,7 +45,7 @@ export const UserProfileRoomsTabView: FC<UserProfileRoomsTabViewProps> = props =
     if(!searchResult || (searchResult.code !== 'profile_view')) return null;
 
     return (
-        <ScrollContainer className="h-100">
+        <ScrollContainer>
             { searchResult.results.map((result, index) => <NavigatorSearchResultView key={ index } searchResult={ result } fromProfile categoryTitle={ `${ userProfile.username }'s Rooms` } />) }
         </ScrollContainer>
     );

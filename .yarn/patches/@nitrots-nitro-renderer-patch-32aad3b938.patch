@@ -1,0 +1,88 @@
+diff --git a/core/communication/SocketConnection.ts b/core/communication/SocketConnection.ts
+index 98d1309e3b4c638ed7ef9d4bc64ad2b4ec60ed44..d712825a3ee5910e6201426933babba3b7c3e024 100644
+--- a/core/communication/SocketConnection.ts
++++ b/core/communication/SocketConnection.ts
+@@ -29,6 +29,9 @@ export class SocketConnection extends EventDispatcher implements IConnection
+     public static RECONNECT_STABLE_RESET_MS = 30000;
+     public static HEARTBEAT_INTERVAL_MS = 30000;
+     public static RECEIVE_TIMEOUT_MS = 90000;
++    // a socket that closes before its login succeeded = the server refused the ticket (e.g. the website issued a new one
++    // because the account logged in somewhere else); after this many in a row it stops instead of retrying / reloading
++    public static MAX_AUTH_FAILURES = 2;
+ 
+     private _socketUrl: string = '';
+     private _wasEverReady: boolean = false;
+@@ -40,6 +43,8 @@ export class SocketConnection extends EventDispatcher implements IConnection
+     private _lastReceivedTime: number = 0;
+     private _heartbeatTimer: ReturnType<typeof setInterval> = null;
+     private _onVisibilityChange: () => void = null;
++    private _authFailures: number = 0;
++    private _gaveUp: boolean = false;
+ 
+     constructor(communicationManager: ICommunicationManager, stateListener: IConnectionStateListener)
+     {
+@@ -181,9 +186,9 @@ export class SocketConnection extends EventDispatcher implements IConnection
+     {
+         if(this._reconnectAttempt >= SocketConnection.MAX_RECONNECT_ATTEMPTS)
+         {
+-            this._isReconnecting = false;
+-            this._reconnectAttempt = 0;
+-            window.location.reload();
++            // theirs reloads the page here; ours can't log in again that way once the reconnect ticket is gone, so the
++            // client shows its "connection lost" card instead (isGaveUp)
++            this.giveUp();
+ 
+             return;
+         }
+@@ -222,11 +227,23 @@ export class SocketConnection extends EventDispatcher implements IConnection
+         this._heartbeatTimer = null;
+     }
+ 
++    private giveUp(): void
++    {
++        this._isReconnecting = false;
++        this._reconnectAttempt = 0;
++        this._gaveUp = true;
++    }
++
+     public get isReconnecting(): boolean
+     {
+         return this._isReconnecting;
+     }
+ 
++    public get isGaveUp(): boolean
++    {
++        return this._gaveUp;
++    }
++
+     private onOpen(event: Event): void
+     {
+         this._isReconnecting = false;
+@@ -256,6 +273,18 @@ export class SocketConnection extends EventDispatcher implements IConnection
+ 
+         if(this._intentionalClose || this.disposed) return;
+ 
++        if(!this._isAuthenticated)
++        {
++            this._authFailures++;
++
++            if(this._authFailures >= SocketConnection.MAX_AUTH_FAILURES)
++            {
++                this.giveUp();
++
++                return;
++            }
++        }
++
+         this._isReconnecting = true;
+         this.attemptReconnect();
+     }
+@@ -293,6 +322,8 @@ export class SocketConnection extends EventDispatcher implements IConnection
+     public authenticated(): void
+     {
+         this._isAuthenticated = true;
++        this._authFailures = 0;
++        this._gaveUp = false;
+     }
+ 
+     public send(...composers: IMessageComposer<unknown[]>[]): boolean

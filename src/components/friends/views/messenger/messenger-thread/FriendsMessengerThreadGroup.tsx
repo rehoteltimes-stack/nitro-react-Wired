@@ -36,7 +36,7 @@ export const FriendsMessengerThreadGroup: FC<{ thread: MessengerThread, group: M
                                         <Base>{ chat.message }</Base>
                                     </Flex> }
                                 { (chat.type === MessengerThreadChat.ROOM_INVITE) &&
-                                    <Flex gap={ 2 } alignItems="center" className="bg-light rounded mb-2 px-2 py-1 small text-black">
+                                    <Flex gap={ 2 } alignItems="center" className="bg-light rounded mb-2 px-2 py-1 small">
                                         <Base className="messenger-notification-icon flex-shrink-0" />
                                         <Base>{ (LocalizeText('messenger.invitation') + ' ') }{ chat.message }</Base>
                                     </Flex> }
@@ -56,7 +56,7 @@ export const FriendsMessengerThreadGroup: FC<{ thread: MessengerThread, group: M
                 { (groupChatData && !isOwnChat) &&
                     <LayoutAvatarImageView figure={ groupChatData.figure } direction={ 2 } /> }
             </Base>
-            <Base className={ 'bg-light text-black border-radius mb-2 rounded py-1 px-2 messages-group-' + (isOwnChat ? 'right' : 'left') }>
+            <Base className={ 'bg-light border-radius mb-2 rounded py-1 px-2 messages-group-' + (isOwnChat ? 'right' : 'left') }>
                 <Base className="fw-bold">
                     { isOwnChat && GetSessionDataManager().userName }
                     { !isOwnChat && (groupChatData ? groupChatData.username : thread.participant.name) }

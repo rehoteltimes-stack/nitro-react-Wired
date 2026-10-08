@@ -1,6 +1,6 @@
 import { FC, useCallback, useEffect, useState } from 'react';
 import { IMarketplaceSearchOptions, LocalizeText, MarketplaceSearchType } from '../../../../../../api';
-import { Button, Column, Flex, Text } from '../../../../../../common';
+import { Button, Column, CustomSelect, Flex, Text } from '../../../../../../common';
 
 export interface SearchFormViewProps
 {
@@ -47,9 +47,7 @@ export const SearchFormView: FC<SearchFormViewProps> = props =>
         <Column gap={ 1 }>
             <Flex alignItems="center" gap={ 1 }>
                 <Text className="col-3">{ LocalizeText('catalog.marketplace.sort_order') }</Text>
-                <select className="form-select form-select-sm" value={ sortType } onChange={ event => onSortTypeChange(parseInt(event.target.value)) }>
-                    { sortTypes.map(type => <option key={ type } value={ type }>{ LocalizeText(`catalog.marketplace.sort.${ type }`) }</option>) }
-                </select>
+                <CustomSelect value={ sortType } onChange={ value => onSortTypeChange(parseInt(value)) } noInvalid items={ sortTypes.map(type => ({ value: type, text: LocalizeText(`catalog.marketplace.sort.${ type }`) })) } />
             </Flex>
             { searchType === MarketplaceSearchType.ADVANCED &&
                 <>

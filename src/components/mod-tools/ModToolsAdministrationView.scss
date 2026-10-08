@@ -1,0 +1,220 @@
+// Mod Tools > Administration (own feature). Colours only from the theme tokens (assets/styles/holo/_tokens.scss), like
+// the Furni Editor: Bootstrap's .form-control is black-on-white unless a window maps it to the tokens itself.
+
+.nitro-mod-tools-administration {
+  .form-control, .form-select {
+    color: var(--holo-text-primary) !important;
+    background-color: var(--holo-secondary) !important;
+    border: 2px solid var(--holo-border-color-primary) !important;
+    border-radius: 8px;
+
+    &::placeholder {
+      color: var(--holo-text-muted);
+    }
+  }
+
+  .form-check-input {
+    background-color: var(--holo-secondary);
+    border-color: var(--holo-border-color-primary);
+
+    &:checked {
+      background-color: var(--holo-tertiary);
+      border-color: var(--holo-tertiary);
+    }
+  }
+
+  .admin-box,
+  .admin-balances {
+    background-color: var(--holo-secondary);
+    border: 2px solid var(--holo-border-color-primary);
+    border-radius: var(--holo-border-radius);
+    padding: 6px 8px;
+  }
+
+  .admin-avatar {
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    flex-shrink: 0;
+
+    .avatar-image {
+      width: 40px;
+      height: 40px;
+      background-position: center;
+    }
+  }
+
+  .admin-balance {
+    padding: 2px 6px;
+    border-radius: 6px;
+    color: var(--holo-text-primary);
+
+    &:hover {
+      background-color: var(--holo-primary);
+    }
+
+    &.active {
+      background-color: var(--holo-tertiary);
+    }
+  }
+
+  .admin-muted {
+    color: var(--holo-text-muted);
+  }
+
+  .admin-ok {
+    color: #52bc48;
+  }
+
+  .admin-error {
+    color: #e5484d;
+  }
+}
+
+// Staff Settings (ModToolsStaffSettingsView): uses the classes above; the tag label is the staff feed's coloured tag
+.nitro-mod-tools-staff-settings {
+  .staff-settings-label {
+    align-self: flex-start;
+    padding: 0 4px;
+    border-radius: 3px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  // every row of a scrolling tab keeps its own height (the column scrolls instead of squeezing rows onto each other)
+  .overflow-auto > * { flex-shrink: 0; }
+
+  .staff-settings-expiry { width: 110px; flex-shrink: 0; }
+}
+
+// Staff Settings > Incidents: the action buttons wrap; the suggested one is outlined
+.nitro-mod-tools-staff-settings {
+  .staff-incident-actions { flex-wrap: wrap; }
+  .staff-incident-suggested { outline: 2px solid var(--holo-text-primary); outline-offset: -2px; }
+}
+
+// Staff feed card (StaffFeedCardView): one line per row, the time on the left, the hover buttons on the right
+.staff-feed-card {
+  .staff-feed-card-tag { width: 120px; flex-shrink: 0; }
+
+  .staff-feed-card-lines { flex: 1; min-height: 0; }
+
+  .staff-feed-card-line {
+    align-items: flex-start;
+    padding: 3px 6px;
+    border-radius: 6px;
+    background-color: var(--holo-secondary);
+    border: 1px solid var(--holo-border-color-primary);
+    color: var(--holo-text-primary);
+    font-size: 12px;
+
+    &.has-link { cursor: pointer; }
+    &:hover { background-color: var(--holo-primary); }
+
+    .staff-feed-card-time { flex-shrink: 0; width: 34px; line-height: 18px; }
+    .staff-feed-card-text { flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 18px; }
+
+    .staff-feed-actions {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &:hover .staff-feed-actions { opacity: 1; pointer-events: auto; }
+
+    .reaction-button {
+      background: var(--holo-tertiary);
+      border: none;
+      border-radius: 4px;
+      color: var(--holo-text-primary);
+      font-size: 9px;
+      padding: 3px 4px;
+      line-height: 1;
+
+      &:disabled { opacity: .4; }
+      svg { display: block; }
+    }
+  }
+}
+
+// Staff feed card > History: the day headers between the lines
+.staff-feed-card .staff-feed-card-day {
+  flex-shrink: 0;
+  margin-top: 4px;
+  color: var(--holo-text-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+// Staff Tools > Home: the duty box, three numbers that open their tab, the prison box on a player card
+.nitro-mod-tools-staff-settings {
+  .staff-home-duty.is-on { border-color: #52bc48; }
+
+  .staff-home-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .staff-home-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+
+    &:hover { background-color: var(--holo-primary); }
+    &.is-alert { border-color: #d62828; }
+
+    .staff-home-number { font-size: 18px; line-height: 22px; }
+  }
+
+  .staff-prison-box {
+    border-top: 1px solid var(--holo-border-color-primary);
+    padding-top: 4px;
+  }
+}
+
+// Staff Tools > Players: the chatlog lines to tick as evidence
+.nitro-mod-tools-staff-settings {
+  .staff-evidence { border-top: 1px solid var(--holo-border-color-primary); padding-top: 4px; }
+
+  .staff-evidence-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    max-height: 170px;
+    overflow-y: auto;
+  }
+
+  .staff-evidence-line {
+    display: flex;
+    flex-shrink: 0;
+    gap: 6px;
+    align-items: center;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+
+    &:hover { background-color: var(--holo-primary); }
+    &.is-ticked { background-color: var(--holo-tertiary); }
+
+    .staff-evidence-time { flex-shrink: 0; color: var(--holo-text-muted); }
+    .staff-evidence-text { min-width: 0; overflow-wrap: anywhere; }
+  }
+}
+
+// Staff Tools icons (our CDN, c_images/stafftools): 32x32 pixel art shown at its own size (a scale of 0.75 made the
+// pixels uneven)
+.nitro-mod-tools-staff-settings .staff-tools-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+  object-fit: contain;
+}

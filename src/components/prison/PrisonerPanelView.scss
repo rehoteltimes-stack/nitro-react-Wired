@@ -1,0 +1,96 @@
+.prisoner-panel {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(380px, calc(100vw - 24px));
+  padding: 8px 10px 8px 0;
+  overflow: hidden;
+  border-radius: var(--holo-border-radius);
+  background-color: var(--holo-primary);
+  box-shadow: var(--holo-box-shadow);
+  color: var(--holo-text-primary);
+  transform: translateX(-50%);
+  pointer-events: all;
+
+  .prisoner-panel-indicator {
+    align-self: stretch;
+    width: 4px;
+    margin: -8px 0;
+    background: #d62828;
+  }
+
+  .prisoner-panel-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    image-rendering: pixelated;
+  }
+
+  .prisoner-panel-info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .prisoner-panel-title { font-size: 14px; font-weight: 700; }
+
+  .prisoner-panel-text {
+    overflow: hidden;
+    color: var(--holo-text-muted);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .prisoner-panel-bar {
+    height: 5px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--holo-text-primary) 12%, transparent);
+
+    > div {
+      height: 100%;
+      border-radius: 3px;
+      background: #d62828;
+      transition: width 1s linear;
+    }
+  }
+
+  .prisoner-panel-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .prisoner-panel-timer {
+    font-size: 18px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .5px;
+  }
+
+  .prisoner-panel-bail {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border: 0;
+    border-radius: 6px;
+    background: #52bc48;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover { filter: brightness(1.08); }
+    &.is-confirming { background: #e6a700; }
+  }
+}

@@ -5,6 +5,8 @@ import { AutoGrid, LayoutLoadingSpinnerView, ScrollContainer } from '../../../co
 import { useMessageEvent } from '../../../hooks';
 import { InventoryCategoryEmptyView } from '../../inventory/views/InventoryCategoryEmptyView';
 
+const pictureUrl = (url: string) => (/^https?:\/\//.test(url) ? url : `${ GetConfiguration<string>('camera.url') }/${ url.replace(/\.png$/, '') }.png`);
+
 interface UserProfilePicturesTabViewProps
 {
     userProfile: UserProfileParser;
@@ -74,7 +76,7 @@ export const UserProfilePicturesTabView: FC<UserProfilePicturesTabViewProps> = p
     return (
         <ScrollContainer className="h-100">
             <AutoGrid columnCount={ 3 } columnMinWidth={ 100 } columnMinHeight={ 100 } justifyContent="start">
-                { pictures.map((picture, index) => <img key={ index } className="profile-picture-entry" src={ `${ GetConfiguration<string>('camera.url') }/${ picture.url }.png` } alt="" />) }
+                { pictures.map((picture, index) => <img key={ index } className="profile-picture-entry" src={ pictureUrl(picture.url) } alt="" />) }
             </AutoGrid>
         </ScrollContainer>
     );

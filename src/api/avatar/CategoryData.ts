@@ -39,16 +39,6 @@ export class CategoryData
         return -1;
     }
 
-    public init(): void
-    {
-        for(const part of this._parts)
-        {
-            if(!part) continue;
-
-            part.init();
-        }
-    }
-
     public dispose(): void
     {
         if(this._parts)

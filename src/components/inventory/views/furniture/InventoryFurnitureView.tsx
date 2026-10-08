@@ -2,9 +2,10 @@ import { IRoomSession, RoomObjectVariable, RoomPreviewer, Vector3d } from '@nitr
 import { FC, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FaTrash } from 'react-icons/fa';
-import { attemptItemPlacement, FurniCategory, GetRoomEngine, GetSessionDataManager, GroupItem, LocalizeText, UnseenItemCategory } from '../../../../api';
+import { attemptItemPlacement, CreateLinkEvent, FurniCategory, GetRoomEngine, GetSessionDataManager, GroupItem, LocalizeText, SendMessageComposer, UnseenItemCategory } from '../../../../api';
+import { DeleteItemsComposer, RegisterInventoryDeleteMessages } from '../../../../api/inventory/InventoryDeleteProtocol';
 import { AutoGrid, Button, Column, Flex, Grid, LayoutLimitedEditionCompactPlateView, LayoutRarityLevelView, LayoutRoomPreviewerView, Text } from '../../../../common';
-import { useCatalog, useInventoryFurni, useInventoryUnseenTracker } from '../../../../hooks';
+import { useInventoryFurni, useInventoryUnseenTracker, useNotification } from '../../../../hooks';
 import { InventoryCategoryEmptyView } from '../InventoryCategoryEmptyView';
 import { InventoryFurnitureItemView } from './InventoryFurnitureItemView';
 import { InventoryFurnitureSearchView } from './InventoryFurnitureSearchView';
@@ -28,44 +29,52 @@ export const InventoryFurnitureView: FC<InventoryFurnitureViewProps> = props =>
     const [ filteredGroupItems, setFilteredGroupItems ] = useState<GroupItem[]>([]);
 
     const { groupItems: allGroupItems = [], selectedItem = null, activate = null, deactivate = null } = useInventoryFurni();
-    const { resetItems = null } = useInventoryUnseenTracker();
-    const { setIsVisible: setCatalogVisible = null } = useCatalog();
+    const { showConfirm = null } = useNotification();
 
-    // Real, previously-missing feature: the reference's own furniture preview footer always shows THREE buttons
-    // (Place-le dans l'appart / Acheter un / a trash-icon-only danger button), confirmed live on multiple,
-    // completely unrelated items ("Corde d'alpiniste", "Poubelle") - not conditional on rarity/type. This project
-    // only had the first two, and only conditionally. "Acheter un" (locale key infostand.button.buy, confirmed
-    // live via the reference's own loaded ExternalTexts.json) opens the Catalog to a real purchase panel for this
-    // exact item - confirmed live by clicking it on the reference (Catalog opened, showing "Poubelle" with real
-    // Offrir/Acheter buttons).
-    //
-    // Real gap, not silently hidden: tried reproducing the auto-select-this-exact-offer part two different ways
-    // (setCurrentOffer+setIsVisible directly, then the same setSearchResult+setCurrentPage(pageId=-1)+
-    // setCurrentOffer pattern this project's own CatalogSearchView.tsx already uses for the identical "represent
-    // an ad-hoc FurnitureOffer with no real catalog page" case) - both opened Catalog but to the wrong state (a
-    // stale "Diamond Gift Box" front-page offer the first time, a blank nav-tree-only screen the second), and
-    // this project's own tooling can't get console output out of the app's own React tree to debug further (the
-    // isolated-world eval used for CDP inspection doesn't share a console with the page's real JS context).
-    // Rather than ship a button that silently opens to a confusing or wrong state, this opens Catalog itself
-    // (real, correct, verified navigation) without the extra auto-select step - narrower than the reference but
-    // not misleading. Revisit with better in-app debugging access.
+    const deleteSelected = () =>
+    {
+        const target = selectedItem?.getLastItem();
+
+        if(!target) return;
+
+        const amount = selectedItem.getTotalCount();
+
+        showConfirm(`Do you really want to delete all "${ selectedItem.name }" furni from your inventory? There is no refund.`, () =>
+        {
+            RegisterInventoryDeleteMessages();
+            SendMessageComposer(new DeleteItemsComposer(target.id, amount));
+        }, null, null, null, LocalizeText('generic.alert.title'));
+    }
+    const { resetItems = null } = useInventoryUnseenTracker();
+
+    const buyOfferId = (groupItem: GroupItem) =>
+    {
+        const item = groupItem?.getLastItem();
+
+        if(!item) return -1;
+
+        const furniData = item.isWallItem ? GetSessionDataManager().getWallItemData(item.type) : GetSessionDataManager().getFloorItemData(item.type);
+
+        return (furniData && (furniData.purchaseOfferId > 0)) ? furniData.purchaseOfferId : -1;
+    }
+
     const attemptBuyAnother = (groupItem: GroupItem) =>
     {
-        setCatalogVisible(true);
+        const offerId = buyOfferId(groupItem);
+
+        if(offerId > 0) CreateLinkEvent(`catalog/open/offerId/${ offerId }/reset`);
     }
 
     // Real reference has one unified Furniture tab - no separate Rares/Clothing category to route these into, so
     // they're no longer filtered out here (previously excluded for this project's own now-removed Rares/Clothing tabs).
     const groupItems = useMemo(() => allGroupItems.filter(group =>
-{
-    const item = group.getLastItem();
-    if(!item) return false;
+    {
+        const item = group.getLastItem();
 
-    const furniData = GetSessionDataManager().getFloorItemData(item.type);
-    if(!furniData) return false;
+        if(!item) return false;
 
-    return true;
-}), [ allGroupItems ]);
+        return !!(item.isWallItem ? GetSessionDataManager().getWallItemData(item.type) : GetSessionDataManager().getFloorItemData(item.type));
+    }), [ allGroupItems ]);
 
 
     // Sync filteredGroupItems whenever groupItems changes
@@ -238,19 +247,13 @@ export const InventoryFurnitureView: FC<InventoryFurnitureViewProps> = props =>
                         { /* Marketplace/sell disabled per explicit user direction - never confirmed present in
                              this exact footer on the reference anyway (both test items were non-sellable). */ }
 
+                        { (buyOfferId(selectedItem) > 0) &&
                         <Button variant="primary" fullWidth onClick={ () => attemptBuyAnother(selectedItem) }>
                             { LocalizeText('infostand.button.buy') }
-                        </Button>
+                        </Button> }
                     </Flex>
 
-                    { /* Real reference icon (FaTrash, path-verified against react-icons/fa), real danger styling
-                         and position - genuinely unverified function, not guessed at: no dedicated "discard/
-                         delete an inventory item" composer exists anywhere in this project's own vendored
-                         @nitrots/nitro-renderer protocol, and clicking this destructively on the read-only
-                         reference account to find out was not an option. Added visually, deliberately left
-                         unwired, consistent with this project's own established precedent for a confirmed-real
-                         but functionally unverified control (the outfit editor's own FaRecycle button). */ }
-                    <Button variant="danger">
+                    <Button variant="danger" onClick={ deleteSelected }>
                         <FaTrash className="fa-icon" />
                     </Button>
                 </Flex>

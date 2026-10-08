@@ -119,6 +119,9 @@ export const AvatarInfoWidgetRentableBotView: FC<AvatarInfoWidgetRentableBotView
                 case 'inspect':
                     CreateLinkEvent(`wired-tools/inspect/user/${ avatarInfo.roomIndex }`);
                     break;
+                case 'walk':
+                    CreateLinkEvent(`bot-walk/open/${ avatarInfo.roomIndex }/${ encodeURIComponent(avatarInfo.name) }`);
+                    break;
                 default:
                     break;
             }
@@ -182,6 +185,9 @@ export const AvatarInfoWidgetRentableBotView: FC<AvatarInfoWidgetRentableBotView
                         <ContextMenuListItemView onClick={ event => processAction('dance') }>
                             { LocalizeText('avatar.widget.dance') }
                         </ContextMenuListItemView> }
+                    <ContextMenuListItemView onClick={ event => processAction('walk') }>
+                        Walk
+                    </ContextMenuListItemView>
                     { (avatarInfo.botSkills.indexOf(BotSkillsEnum.NO_PICK_UP) === -1) &&
                         <ContextMenuListItemView onClick={ event => processAction('pick') }>
                             { LocalizeText('avatar.widget.pick_up') }

@@ -43,8 +43,6 @@ export const AvatarEditorModelView: FC<AvatarEditorModelViewProps> = props =>
 
         if(!category) return;
 
-        category.init();
-
         setActiveCategory(category);
 
         for(const part of category.parts)

@@ -139,7 +139,7 @@ export const InventoryView: FC<{}> = props =>
     // live via CDP, not assumed from Catalog's pattern alone. Previously neither prop was passed at all, so no
     // resize-handler ever rendered - this window was silently non-resizable this whole time.
     return (
-        <NitroCardView uniqueKey={ 'inventory' } className="nitro-inventory" theme={ isTrading ? 'primary' : '' } resize="both" overflow="visible" >
+        <NitroCardView uniqueKey={ 'inventory' } className={ `nitro-inventory${ isTrading ? ' is-trading' : '' }` } theme={ isTrading ? 'primary-slim' : '' } resize="both" overflow="visible" >
             <NitroCardHeaderView headerText={ LocalizeText('inventory.title') } onCloseClick={ onClose } />
             { /* Real reference structure, CDP-confirmed against the live habbocity.fr Inventory (every tab
                  checked, not assumed shared): the card root's own children are exactly
@@ -177,7 +177,8 @@ export const InventoryView: FC<{}> = props =>
                 </NitroCardContentView> }
             { isTrading &&
                 <NitroCardContentView>
-                    <InventoryTradeView cancelTrade={ onClose } />
+                    <div ref={ element => setSearchSlot(element) } style={ { display: 'contents' } } />
+                    <InventoryTradeView roomPreviewer={ roomPreviewer } cancelTrade={ onClose } searchSlot={ searchSlot } />
                 </NitroCardContentView> }
         </NitroCardView>
     );

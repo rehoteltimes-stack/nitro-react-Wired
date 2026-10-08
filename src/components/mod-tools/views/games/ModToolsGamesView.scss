@@ -1,0 +1,39 @@
+.nitro-mod-tools-games {
+  .games-settings {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 10px;
+  }
+
+  .games-setting {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 11px;
+    color: var(--holo-text-muted);
+  }
+
+  .games-stat {
+    cursor: default;
+    min-width: 0;
+
+    &:hover { background-color: transparent; }
+
+    .staff-home-number {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .games-row {
+    padding: 2px 0;
+    border-bottom: 1px solid var(--holo-border-color-primary);
+
+    &:last-of-type { border-bottom: 0; }
+  }
+
+  .games-small-button { padding: 0 8px; font-size: 11px; flex-shrink: 0; }
+  .games-word-input { flex: 1; min-width: 0; }
+}

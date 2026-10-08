@@ -1,7 +1,7 @@
 {
     "start_url": "/",
-    "name": "Nitro",
-    "short_name": "Nitro",
+    "name": "Habbo",
+    "short_name": "Habbo",
     "icons": [
         {
             "src": "android-chrome-192x192.png",
@@ -14,7 +14,7 @@
             "type": "image/png"
         }
     ],
-    "theme_color": "#ffffff",
-    "background_color": "#ffffff",
+    "theme_color": "#1b1b1b",
+    "background_color": "#1b1b1b",
     "display": "standalone"
 }

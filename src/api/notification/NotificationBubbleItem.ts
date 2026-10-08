@@ -12,6 +12,8 @@ export class NotificationBubbleItem
     private _key: string;
     private _timeoutMs: number;
     private _data: any;
+    /** how often this same bubble came in a row (the repeat badge "x2", like repeated chat lines) */
+    public count: number = 1;
 
     constructor(message: string, notificationType: string = NotificationBubbleType.INFO, iconUrl: string = null, linkUrl: string = null, key: string = null, timeoutMs: number = 8000, data: any = null)
     {

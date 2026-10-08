@@ -37,9 +37,9 @@ export const SanctionSatusView:FC<{}> = props =>
     if(!sanctionInfo) return null;
 
     return (
-        <NitroCardView className="nitro-help" theme="primary">
+        <NitroCardView className="nitro-help" theme="primary-slim">
             <NitroCardHeaderView headerText={ LocalizeText('help.sanction.info.title') } onCloseClick={ () => setSanctionInfo(null) } />
-            <NitroCardContentView className="text-black">
+            <NitroCardContentView>
                 <Grid>
                     <Column center size={ 5 } overflow="hidden">
                         <Base className="index-image" />

@@ -96,9 +96,9 @@ export const HelpView: FC<{}> = props =>
     return (
         <>
             { isVisible &&
-                <NitroCardView className="nitro-help" theme="primary">
+                <NitroCardView className="nitro-help" theme="primary-slim">
                     <NitroCardHeaderView headerText={ LocalizeText('help.button.cfh') } onCloseClick={ onClose } />
-                    <NitroCardContentView className="text-black">
+                    <NitroCardContentView>
                         <Grid>
                             <Column center size={ 5 } overflow="hidden">
                                 <Base className="index-image" />

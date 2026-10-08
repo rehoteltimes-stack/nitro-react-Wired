@@ -1,0 +1,223 @@
+#music-box,
+#jukebox-player-wrapper {
+  button {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+}
+
+#music-box {
+  position: absolute;
+  top: 4px;
+  right: 230px;
+  z-index: 60;
+  display: flex;
+  width: 363px;
+  height: 50px;
+  padding: 0;
+  border-radius: 5px;
+  background-color: #1b1b1b;
+  color: #d6d6d6;
+  border: 1px solid #000;
+  box-shadow: #883e41 2px 2px inset, #652727 -2px -2px inset, #612a2a 2px -2px inset, #692929 -2px 2px inset;
+  font-family: Ubuntu, -apple-system, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+
+  #jukebox {
+    display: flex;
+    flex: 1 1 0%;
+    min-width: 0;
+    height: 100%;
+    padding-left: 10px;
+  }
+
+  #jukebox-songs {
+    display: flex;
+    flex: 1 1 0%;
+    min-width: 0;
+    overflow: hidden;
+    margin-right: 10px;
+    justify-content: center;
+    flex-direction: column;
+    line-height: 1.15;
+  }
+
+  #jukebox-current {
+    color: #bd4141;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #jukebox-next {
+    font-size: 12px;
+    color: #b8b8b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    .value { color: #d6d6d6; }
+  }
+
+  #jukebox-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-right: 10px;
+  }
+
+  #jukebox-play {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    background: #d6d6d6;
+    cursor: pointer;
+
+    &:hover { background: #fff; }
+
+    &.disabled {
+      opacity: .4;
+      cursor: default;
+    }
+  }
+
+  #jukebox-volume {
+    margin-left: 10px;
+    appearance: none;
+    background: transparent;
+    width: 75px;
+
+    &:focus { outline: none; }
+
+    &::-webkit-slider-thumb {
+      appearance: none;
+      height: 20px;
+      width: 8px;
+      border-radius: 3px;
+      background: #bd4141;
+      cursor: pointer;
+      border: 1px solid #000;
+      margin-top: -6px;
+    }
+
+    &::-webkit-slider-runnable-track {
+      height: 6px;
+      cursor: pointer;
+      background: #d6d6d6;
+      border-radius: 4px;
+    }
+  }
+
+  .jb-divider {
+    width: 1px;
+    height: 100%;
+    background-color: #a23636;
+  }
+
+  #jukebox-tv-toggle {
+    width: 60px;
+    margin: 3px;
+    border-radius: 3px;
+    cursor: pointer;
+    background: url(https://cdn.habbo.nz/jukebox/jukebox-tv-toggle.png) 50% center no-repeat;
+
+    &:hover,
+    &.active { background-color: rgba(255, 255, 255, .2); }
+  }
+}
+
+#jukebox-player-wrapper {
+  position: absolute;
+  z-index: 70;
+  width: 432px;
+  height: 307px;
+  background-image: url(https://cdn.habbo.nz/jukebox/jukebox-tv.png);
+
+  &.is-hidden {
+    position: fixed;
+    left: -10000px;
+    top: 0;
+    pointer-events: none;
+  }
+
+  #jukebox-drag-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 22px;
+    z-index: 1002;
+    cursor: move;
+  }
+
+  .jukebox-close {
+    position: absolute;
+    top: 5px;
+    right: 14px;
+    width: 13px;
+    height: 13px;
+    border: 0;
+    border-radius: 3px;
+    cursor: pointer;
+    background: rgba(0, 0, 0, .35);
+
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      top: 6px;
+      left: 2px;
+      width: 9px;
+      height: 1px;
+      background: #fff;
+      transform: rotate(45deg);
+    }
+
+    &::after { transform: rotate(-45deg); }
+  }
+
+  #jukebox-tv-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1001;
+    pointer-events: none;
+    background-image: url(https://cdn.habbo.nz/jukebox/jukebox-tv.png);
+  }
+
+  #jukebox-player {
+    position: absolute;
+    top: 22px;
+    left: 12px;
+    width: 408px;
+    height: 236px;
+    border: 0;
+    z-index: 1000;
+  }
+
+  .jukebox-empty {
+    display: grid;
+    place-items: center;
+    background: #000;
+    color: #b8b8b8;
+    font-size: 13px;
+  }
+
+  .jukebox-tv-controls {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 4px);
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+
+    button {
+      color: #d6d6d6;
+      font-size: 11px;
+      text-shadow: 0 1px 0 #000;
+
+      &:hover { color: #fff; }
+    }
+  }
+}

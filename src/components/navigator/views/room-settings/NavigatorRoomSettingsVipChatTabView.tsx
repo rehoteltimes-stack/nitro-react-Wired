@@ -1,13 +1,15 @@
 import { RoomChatSettings } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useState } from 'react';
 import { IRoomData, LocalizeText } from '../../../../api';
-import { Column, Flex, Grid, Text } from '../../../../common';
+import { Column, CustomSelect, Flex, NumberInput, Text } from '../../../../common';
 
 interface NavigatorRoomSettingsTabViewProps
 {
     roomData: IRoomData;
     handleChange: (field: string, value: string | number | boolean) => void;
 }
+
+const item = (value: number, key: string) => ({ value, text: LocalizeText(key) });
 
 export const NavigatorRoomSettingsVipChatTabView: FC<NavigatorRoomSettingsTabViewProps> = props =>
 {
@@ -19,58 +21,41 @@ export const NavigatorRoomSettingsVipChatTabView: FC<NavigatorRoomSettingsTabVie
         setChatDistance(roomData.chatSettings.distance);
     }, [ roomData.chatSettings ]);
 
+    const thickness = (prefix: string) => [ item(0, prefix + '.normal'), item(1, prefix + '.thick'), item(-1, prefix + '.thin'), item(-2, prefix + '.thinnest') ];
+
     return (
-        <>
+        <Column gap={ 3 }>
             <Column gap={ 1 }>
-                <Text bold>{ LocalizeText('navigator.roomsettings.vip.caption') }</Text>
-                <Text>{ LocalizeText('navigator.roomsettings.vip.info') }</Text>
+                <Text bold textTransform="uppercase" variant="muted">{ LocalizeText('navigator.roomsettings.vip_settings') }</Text>
+                <Flex gap={ 1 } fullWidth>
+                    <CustomSelect value={ roomData.wallThickness } onChange={ value => handleChange('wall_thickness', value) } items={ thickness('navigator.roomsettings.wall_thickness') } noInvalid />
+                    <CustomSelect value={ roomData.floorThickness } onChange={ value => handleChange('floor_thickness', value) } items={ thickness('navigator.roomsettings.floor_thickness') } noInvalid />
+                </Flex>
+                <Flex alignItems="center" gap={ 2 }>
+                    <input className="form-check-input" type="checkbox" checked={ roomData.hideWalls } onChange={ event => handleChange('hide_walls', event.target.checked) } />
+                    <Text textTransform="uppercase">{ LocalizeText('navigator.roomsettings.hide_walls') }</Text>
+                </Flex>
             </Column>
-            <Grid overflow="auto">
-                <Column size={ 6 } gap={ 1 }>
-                    <Text bold>{ LocalizeText('navigator.roomsettings.chat_settings') }</Text>
-                    <Text>{ LocalizeText('navigator.roomsettings.chat_settings.info') }</Text>
-                    <select className="form-select form-select-sm" value={ roomData.chatSettings.mode } onChange={ event => handleChange('bubble_mode', event.target.value) }>
-                        <option value={ RoomChatSettings.CHAT_MODE_FREE_FLOW }>{ LocalizeText('navigator.roomsettings.chat.mode.free.flow') }</option>
-                        <option value={ RoomChatSettings.CHAT_MODE_LINE_BY_LINE }>{ LocalizeText('navigator.roomsettings.chat.mode.line.by.line') }</option>
-                    </select>
-                    <select className="form-select form-select-sm" value={ roomData.chatSettings.weight } onChange={ event => handleChange('chat_weight', event.target.value) }>
-                        <option value={ RoomChatSettings.CHAT_BUBBLE_WIDTH_NORMAL }>{ LocalizeText('navigator.roomsettings.chat.bubbles.width.normal') }</option>
-                        <option value={ RoomChatSettings.CHAT_BUBBLE_WIDTH_THIN }>{ LocalizeText('navigator.roomsettings.chat.bubbles.width.thin') }</option>
-                        <option value={ RoomChatSettings.CHAT_BUBBLE_WIDTH_WIDE }>{ LocalizeText('navigator.roomsettings.chat.bubbles.width.wide') }</option>
-                    </select>
-                    <select className="form-select form-select-sm" value={ roomData.chatSettings.speed } onChange={ event => handleChange('bubble_speed', event.target.value) }>
-                        <option value={ RoomChatSettings.CHAT_SCROLL_SPEED_FAST }>{ LocalizeText('navigator.roomsettings.chat.speed.fast') }</option>
-                        <option value={ RoomChatSettings.CHAT_SCROLL_SPEED_NORMAL }>{ LocalizeText('navigator.roomsettings.chat.speed.normal') }</option>
-                        <option value={ RoomChatSettings.CHAT_SCROLL_SPEED_SLOW }>{ LocalizeText('navigator.roomsettings.chat.speed.slow') }</option>
-                    </select>
-                    <select className="form-select form-select-sm" value={ roomData.chatSettings.protection } onChange={ event => handleChange('flood_protection', event.target.value) }>
-                        <option value={ RoomChatSettings.FLOOD_FILTER_LOOSE }>{ LocalizeText('navigator.roomsettings.chat.flood.loose') }</option>
-                        <option value={ RoomChatSettings.FLOOD_FILTER_NORMAL }>{ LocalizeText('navigator.roomsettings.chat.flood.normal') }</option>
-                        <option value={ RoomChatSettings.FLOOD_FILTER_STRICT }>{ LocalizeText('navigator.roomsettings.chat.flood.strict') }</option>
-                    </select>
-                    <Text>{ LocalizeText('navigator.roomsettings.chat_settings.hearing.distance') }</Text>
-                    <input type="number" min="0" className="form-control form-control-sm" value={ chatDistance } onChange={ event => setChatDistance(event.target.valueAsNumber) } onBlur={ event => handleChange('chat_distance', chatDistance) } />
-                </Column>
-                <Column size={ 6 } gap={ 1 }>
-                    <Text bold>{ LocalizeText('navigator.roomsettings.vip_settings') }</Text>
-                    <Flex alignItems="center" gap={ 1 }>
-                        <input className="form-check-input" type="checkbox" checked={ roomData.hideWalls } onChange={ event => handleChange('hide_walls', event.target.checked) } />
-                        <Text>{ LocalizeText('navigator.roomsettings.hide_walls') }</Text>
-                    </Flex>
-                    <select className="form-select form-select-sm" value={ roomData.wallThickness } onChange={ event => handleChange('wall_thickness', event.target.value) }>
-                        <option value="0">{ LocalizeText('navigator.roomsettings.wall_thickness.normal') }</option>
-                        <option value="1">{ LocalizeText('navigator.roomsettings.wall_thickness.thick') }</option>
-                        <option value="-1">{ LocalizeText('navigator.roomsettings.wall_thickness.thin') }</option>
-                        <option value="-2">{ LocalizeText('navigator.roomsettings.wall_thickness.thinnest') }</option>
-                    </select>
-                    <select className="form-select form-select-sm" value={ roomData.floorThickness } onChange={ event => handleChange('floor_thickness', event.target.value) }>
-                        <option value="0">{ LocalizeText('navigator.roomsettings.floor_thickness.normal') }</option>
-                        <option value="1">{ LocalizeText('navigator.roomsettings.floor_thickness.thick') }</option>
-                        <option value="-1">{ LocalizeText('navigator.roomsettings.floor_thickness.thin') }</option>
-                        <option value="-2">{ LocalizeText('navigator.roomsettings.floor_thickness.thinnest') }</option>
-                    </select>
-                </Column>
-            </Grid>
-        </>
+            <Column gap={ 1 }>
+                <Text bold textTransform="uppercase" variant="muted">{ LocalizeText('navigator.roomsettings.chat_settings') }</Text>
+                <Text variant="muted">{ LocalizeText('navigator.roomsettings.chat_settings.info') }</Text>
+                <Flex gap={ 1 } fullWidth>
+                    <CustomSelect value={ roomData.chatSettings.mode } onChange={ value => handleChange('bubble_mode', value) } noInvalid
+                        items={ [ item(RoomChatSettings.CHAT_MODE_FREE_FLOW, 'navigator.roomsettings.chat.mode.free.flow'), item(RoomChatSettings.CHAT_MODE_LINE_BY_LINE, 'navigator.roomsettings.chat.mode.line.by.line') ] } />
+                    <CustomSelect value={ roomData.chatSettings.weight } onChange={ value => handleChange('chat_weight', value) } noInvalid
+                        items={ [ item(RoomChatSettings.CHAT_BUBBLE_WIDTH_NORMAL, 'navigator.roomsettings.chat.bubbles.width.normal'), item(RoomChatSettings.CHAT_BUBBLE_WIDTH_THIN, 'navigator.roomsettings.chat.bubbles.width.thin'), item(RoomChatSettings.CHAT_BUBBLE_WIDTH_WIDE, 'navigator.roomsettings.chat.bubbles.width.wide') ] } />
+                </Flex>
+                <Flex gap={ 1 } fullWidth>
+                    <CustomSelect value={ roomData.chatSettings.speed } onChange={ value => handleChange('bubble_speed', value) } noInvalid
+                        items={ [ item(RoomChatSettings.CHAT_SCROLL_SPEED_FAST, 'navigator.roomsettings.chat.speed.fast'), item(RoomChatSettings.CHAT_SCROLL_SPEED_NORMAL, 'navigator.roomsettings.chat.speed.normal'), item(RoomChatSettings.CHAT_SCROLL_SPEED_SLOW, 'navigator.roomsettings.chat.speed.slow') ] } />
+                    <CustomSelect value={ roomData.chatSettings.protection } onChange={ value => handleChange('flood_protection', value) } noInvalid
+                        items={ [ item(RoomChatSettings.FLOOD_FILTER_LOOSE, 'navigator.roomsettings.chat.flood.loose'), item(RoomChatSettings.FLOOD_FILTER_NORMAL, 'navigator.roomsettings.chat.flood.normal'), item(RoomChatSettings.FLOOD_FILTER_STRICT, 'navigator.roomsettings.chat.flood.strict') ] } />
+                </Flex>
+                <Flex alignItems="center" gap={ 2 }>
+                    <NumberInput min={ 0 } value={ chatDistance } onEvent={ value => setChatDistance(value) } onBlur={ () => handleChange('chat_distance', chatDistance) } style={ { maxWidth: 120 } } />
+                    <Text textTransform="uppercase">{ LocalizeText('navigator.roomsettings.chat_settings.hearing.distance') }</Text>
+                </Flex>
+            </Column>
+        </Column>
     );
 }

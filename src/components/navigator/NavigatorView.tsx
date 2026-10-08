@@ -232,7 +232,7 @@ export const NavigatorView: FC<{}> = props =>
                                     </NitroCardTabsItemView>) }
                             </NitroCardTabsView>
                             <ScrollContainer innerRef={ resultsRef } className="flex-grow-1">
-                                { searchResult && searchResult.results.map((result, index) => <NavigatorSearchResultView key={ index } searchResult={ result } />) }
+                                { searchResult && searchResult.results.filter(result => (result.code !== 'official-root') || result.rooms.length).map((result, index) => <NavigatorSearchResultView key={ index } searchResult={ result } />) }
                             </ScrollContainer>
                             <Flex shrink fullWidth gap={ 2 }>
                                 <HoloButton fullWidth onClick={ event => visitRandomRoom() } text={ LocalizeText('navigator.random.room') } variant="primary" iconClass="icon-navigator-visit-rooms" />

@@ -12,6 +12,8 @@ export class TorsoModel extends CategoryBaseModel
         this.addCategory(FigureData.CHEST_PRINTS);
         this.addCategory(FigureData.JACKET);
         this.addCategory(FigureData.CHEST_ACCESSORIES);
+        this.addCategory(FigureData.PET);
+        this.addCategory(FigureData.MISC);
 
         this._isInitalized = true;
     }

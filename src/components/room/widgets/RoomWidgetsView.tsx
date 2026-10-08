@@ -3,6 +3,8 @@ import { FC } from 'react';
 import { DispatchUiEvent, GetRoomEngine, LocalizeText, NotificationAlertType, RoomWidgetUpdateRoomObjectEvent } from '../../../api';
 import { useNotification, useRoom, useRoomEngineEvent, useRoomSessionManagerEvent } from '../../../hooks';
 import { AvatarInfoWidgetView } from './avatar-info/AvatarInfoWidgetView';
+import { ArrowWalkView } from './arrow-walk/ArrowWalkView';
+import { BotWalkView } from './bot-walk/BotWalkView';
 import { ChatInputView } from './chat-input/ChatInputView';
 import { ChatWidgetView } from './chat/ChatWidgetView';
 import { FurniChooserWidgetView } from './choosers/FurniChooserWidgetView';
@@ -13,6 +15,7 @@ import { FurnitureWidgetsView } from './furniture/FurnitureWidgetsView';
 import { PetPackageWidgetView } from './pet-package/PetPackageWidgetView';
 import { RoomFilterWordsWidgetView } from './room-filter-words/RoomFilterWordsWidgetView';
 import { RoomThumbnailWidgetView } from './room-thumbnail/RoomThumbnailWidgetView';
+import { VideoTvOverlayView } from '../../video-tv/VideoTvOverlayView';
 import { RoomToolsWidgetView } from './room-tools/RoomToolsWidgetView';
 import { WordQuizWidgetView } from './word-quiz/WordQuizWidgetView';
 
@@ -154,7 +157,10 @@ export const RoomWidgetsView: FC<{}> = props =>
 
     return (
         <>
+            <VideoTvOverlayView />
             <AvatarInfoWidgetView />
+            <BotWalkView />
+            <ArrowWalkView />
             <ChatWidgetView />
             <ChatInputView />
             <DoorbellWidgetView />

@@ -1,12 +1,14 @@
 import { ILinkEventTracker, NitroSettingsEvent, UserSettingsCameraFollowComposer, UserSettingsEvent, UserSettingsRoomInvitesComposer, UserSettingsSoundComposer } from '@nitrots/nitro-renderer';
 import { ChangeEvent, FC, useEffect, useRef, useState } from 'react';
 import { FaVolumeDown, FaVolumeMute, FaVolumeUp } from 'react-icons/fa';
-import { AddEventLinkTracker, DispatchMainEvent, DispatchUiEvent, GetSessionDataManager, LocalizeText, ProfileCoverUploadComposer, RegisterProfileCoverMessages, RemoveLinkEventTracker, SendMessageComposer } from '../../api';
+import { AddEventLinkTracker, CreateLinkEvent, DispatchMainEvent, DispatchUiEvent, GetSessionDataManager, LocalizeText, ProfileCoverDataEvent, ProfileCoverUploadComposer, RegisterProfileCoverMessages, RemoveLinkEventTracker, SendMessageComposer, SetCoverDeletePending } from '../../api';
 import { Button, classNames, Column, CustomInputRange, Flex, LayoutAvatarImageView, LayoutBadgeRackView, NitroCardContentView, NitroCardHeaderView, NitroCardTabsItemView, NitroCardTabsView, NitroCardView, ProfileCoverCropWidgetView, ScrollContainer, Text } from '../../common';
 import { useInventoryBadges, useMessageEvent } from '../../hooks';
 import { UserSettingsCoverInfoView } from './UserSettingsCoverInfoView';
 import { UserSettingsFloorView } from './UserSettingsFloorView';
+import { UserSettingsPerformanceView } from './UserSettingsPerformanceView';
 import { UserSettingsModerateView } from './UserSettingsModerateView';
+import { UserSettingsOptionsView } from './UserSettingsOptionsView';
 
 const COVER_SIZE: [ number, number ] = [ 452, 115 ];
 
@@ -21,6 +23,8 @@ export const UserSettingsView: FC<{}> = props =>
     const [ croppedCoverCanvas, setCroppedCoverCanvas ] = useState<HTMLCanvasElement>(null);
     const [ coverError, setCoverError ] = useState<string>(null);
     const [ coverSuccess, setCoverSuccess ] = useState<string>(null);
+    const [ coverBusy, setCoverBusy ] = useState(false);
+    const [ coverDeleteQueued, setCoverDeleteQueued ] = useState(false);
     const coverFileInputRef = useRef<HTMLInputElement>(null);
 
     const processAction = (type: string, value?: boolean | number | string) =>
@@ -143,6 +147,7 @@ export const UserSettingsView: FC<{}> = props =>
         {
             if(!blob)
             {
+                setCoverBusy(false);
                 setCoverError('Could not process that image.');
                 return;
             }
@@ -150,17 +155,71 @@ export const UserSettingsView: FC<{}> = props =>
             const buffer = await blob.arrayBuffer();
 
             SendMessageComposer(new ProfileCoverUploadComposer(new Uint8Array(buffer)));
-            setCoverSuccess('Cover sent to the server!');
         }, 'image/png');
 
+        setCoverBusy(true);
+        setCoverError(null);
+        setCoverSuccess(null);
         cancelCoverCrop();
     }
 
     const deleteCover = () =>
     {
-        SendMessageComposer(new ProfileCoverUploadComposer(null));
+        setCoverError(null);
         setCoverSuccess('Profile cover removed!');
+        CreateLinkEvent('user-profile/cover-removed');
+        SetCoverDeletePending(true);
+
+        if(coverBusy)
+        {
+            setCoverDeleteQueued(true);
+            return;
+        }
+
+        setCoverBusy(true);
+        SendMessageComposer(new ProfileCoverUploadComposer(null));
     }
+
+    useEffect(() =>
+    {
+        if(!coverBusy) return;
+
+        const timeout = setTimeout(() =>
+        {
+            if(coverDeleteQueued)
+            {
+                setCoverDeleteQueued(false);
+                SendMessageComposer(new ProfileCoverUploadComposer(null));
+                return;
+            }
+
+            setCoverBusy(false);
+        }, 8000);
+
+        return () => clearTimeout(timeout);
+    }, [ coverBusy, coverDeleteQueued ]);
+
+    useMessageEvent<ProfileCoverDataEvent>(ProfileCoverDataEvent, event =>
+    {
+        const parser = event.getParser();
+
+        if(parser.userId !== GetSessionDataManager().userId) return;
+
+        if(!parser.filename) SetCoverDeletePending(false);
+
+        if(!coverBusy) return;
+
+        if(coverDeleteQueued)
+        {
+            setCoverDeleteQueued(false);
+            SendMessageComposer(new ProfileCoverUploadComposer(null));
+            return;
+        }
+
+        setCoverBusy(false);
+
+        if(parser.filename) setCoverSuccess('Profile cover saved!');
+    });
 
     useMessageEvent<UserSettingsEvent>(UserSettingsEvent, event =>
     {
@@ -247,7 +306,9 @@ export const UserSettingsView: FC<{}> = props =>
                 <NitroCardTabsView>
                     <NitroCardTabsItemView isActive={ (activeTab === 0) } onClick={ event => setActiveTab(0) }>General</NitroCardTabsItemView>
                     <NitroCardTabsItemView isActive={ (activeTab === 1) } onClick={ event => setActiveTab(1) }>Floor</NitroCardTabsItemView>
+                    <NitroCardTabsItemView isActive={ (activeTab === 4) } onClick={ event => setActiveTab(4) }>Performance</NitroCardTabsItemView>
                     <NitroCardTabsItemView isActive={ (activeTab === 2) } onClick={ event => setActiveTab(2) }>Moderate</NitroCardTabsItemView>
+                    <NitroCardTabsItemView isActive={ (activeTab === 3) } onClick={ event => setActiveTab(3) }>Options</NitroCardTabsItemView>
                 </NitroCardTabsView>
                 { (activeTab === 0) &&
                 <ScrollContainer>
@@ -302,7 +363,7 @@ export const UserSettingsView: FC<{}> = props =>
                         <UserSettingsCoverInfoView size={ COVER_SIZE } />
                     </Flex>
                     <Flex gap={ 1 } className="user-settings-button-group">
-                        <Button onClick={ openCoverFilePicker }>Change</Button>
+                        <Button disabled={ coverBusy } onClick={ openCoverFilePicker }>Change</Button>
                         <Button onClick={ deleteCover }>Delete</Button>
                     </Flex>
                     <input type="file" accept="image/*" ref={ coverFileInputRef } onChange={ onCoverFileSelected } style={ { display: 'none' } } />
@@ -349,8 +410,13 @@ export const UserSettingsView: FC<{}> = props =>
                 </ScrollContainer> }
                 { (activeTab === 1) &&
                     <UserSettingsFloorView /> }
+                { (activeTab === 4) &&
+                    <UserSettingsPerformanceView /> }
                 { (activeTab === 2) &&
                     <UserSettingsModerateView /> }
+                { /* own feature: every personal on/off command (:nomention, :noaura, ...) as a switch */ }
+                { (activeTab === 3) &&
+                    <UserSettingsOptionsView /> }
             </NitroCardContentView> }
             { pendingCoverImage &&
                 <NitroCardContentView className="user-settings-crop-container">

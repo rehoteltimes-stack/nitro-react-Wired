@@ -1,6 +1,6 @@
 import { AvatarEditorFigureCategory, FigureSetIdsMessageEvent, GetWardrobeMessageComposer, IAvatarFigureContainer, ILinkEventTracker, UserFigureComposer, UserWardrobePageEvent } from '@nitrots/nitro-renderer';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { FaDice, FaRecycle, FaShoppingBag, FaTrash, FaUndo } from 'react-icons/fa';
+import { FaDice, FaRecycle, FaTrash, FaUndo } from 'react-icons/fa';
 import { AddEventLinkTracker, AvatarEditorAction, AvatarEditorUtilities, BodyModel, CreateLinkEvent, FigureData, generateRandomFigure, GetAvatarRenderManager, GetClubMemberLevel, GetConfiguration, GetSessionDataManager, HeadModel, IAvatarEditorCategoryModel, LegModel, LocalizeText, RemoveLinkEventTracker, SendMessageComposer, TorsoModel } from '../../api';
 import { Button, ButtonGroup, Flex, NitroCardHeaderView, NitroCardTabsItemView, NitroCardTabsView, NitroCardView } from '../../common';
 import { useMessageEvent } from '../../hooks';
@@ -320,15 +320,6 @@ export const AvatarEditorView: FC<{}> = props =>
                                 <FaRecycle className="fa-icon" />
                             </Button>
                         </ButtonGroup>
-                        { /* Real, own-feature entry point (not from the reference - HabboCity has no shop button
-                             here at all): opens ClothesShopView, hCMS's own instant-grant clothing shop. Placed
-                             here per explicit user direction, since buying clothes while already customizing a
-                             look is the natural point to jump into the shop. Closes this editor first - both
-                             windows use the same default centered position, so leaving this one open behind the
-                             shop just stacks two identical-looking cards on top of each other. */ }
-                        <Button variant="warning" onClick={ event => { setIsVisible(false); CreateLinkEvent('clothes-shop/toggle'); } }>
-                            <FaShoppingBag className="fa-icon" />
-                        </Button>
                         <Button fullWidth variant="success" onClick={ event => processAction(AvatarEditorAction.ACTION_SAVE) }>
                             { LocalizeText('avatareditor.save') }
                         </Button>

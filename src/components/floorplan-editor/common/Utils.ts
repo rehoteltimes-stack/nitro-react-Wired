@@ -1,3 +1,4 @@
+import { LocalizeText } from '../../../api';
 import { TILE_SIZE } from './Constants';
 
 export const getScreenPositionForTile = (x: number, y: number): [number , number] =>
@@ -50,4 +51,13 @@ export const convertSettingToNumber = (value: number): number =>
         default:
             return 2;
     }
+}
+
+// A locale text, or the English fallback when the key has no text (LocalizeText then returns the key itself);
+// sodaho writes the same as `b(key) ?? "Walls"`.
+export const localizeOr = (key: string, fallback: string): string =>
+{
+    const value = LocalizeText(key);
+
+    return (!value || (value === key)) ? fallback : value;
 }

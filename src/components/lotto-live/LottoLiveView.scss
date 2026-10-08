@@ -1,0 +1,124 @@
+.lotto-live {
+  position: relative;
+  width: 230px;
+  overflow: hidden;
+  border-radius: var(--holo-border-radius);
+  background-color: var(--holo-primary);
+  box-shadow: var(--holo-box-shadow);
+  color: var(--holo-text-primary);
+  pointer-events: all;
+
+  .lotto-live-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--holo-border-color-primary);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .lotto-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e11d48;
+    animation: lotto-live-pulse 1.4s ease-in-out infinite;
+  }
+
+  .lotto-live-title { flex: 1; font-size: 13px; font-weight: 700; }
+
+  .lotto-live-players {
+    padding: 0 6px;
+    border-radius: 8px;
+    background: #c27c0e;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .lotto-live-toggle { width: 12px; color: var(--holo-text-muted); font-weight: 700; text-align: center; }
+
+  .lotto-live-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px 9px;
+  }
+
+  .lotto-live-prizes { display: flex; gap: 6px; }
+
+  .lotto-live-prize {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--holo-text-primary) 6%, transparent);
+    color: #f0aa28;
+    font-size: 15px;
+    font-weight: 700;
+
+    &.is-bonus { flex: 0 0 auto; color: #1d9bd7; }
+  }
+
+  .lotto-live-bar {
+    position: relative;
+    height: 16px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--holo-text-primary) 10%, transparent);
+
+    > div {
+      height: 100%;
+      background: linear-gradient(90deg, #e11d48, #f0aa28);
+      transition: width 1s linear;
+    }
+
+    > span {
+      position: absolute;
+      inset: 0;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 16px;
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+    }
+  }
+
+  .lotto-live-footer { display: flex; align-items: center; gap: 4px; }
+
+  .lotto-live-mine {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--holo-text-muted);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .lotto-live-buy {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border: 0;
+    border-radius: 6px;
+    background: #52bc48;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover { filter: brightness(1.08); }
+  }
+}
+
+@keyframes lotto-live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .35; }
+}

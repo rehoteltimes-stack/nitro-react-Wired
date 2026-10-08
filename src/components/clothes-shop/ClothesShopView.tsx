@@ -71,9 +71,9 @@ export const ClothesShopView: FC<{}> = props =>
     const [ previewFigureData ] = useState(() => new FigureData());
     const { simpleAlert = null } = useNotification();
     const gridRef = useRef<HTMLDivElement>(null);
-    const columnCount = useAvatarEditorGridColumns(gridRef);
+    const columnCount = useAvatarEditorGridColumns(gridRef, [ isVisible ]);
 
-    useEffect(() => RegisterClothesShopMessages(), []);
+    RegisterClothesShopMessages();
 
     useEffect(() =>
     {
@@ -227,7 +227,7 @@ export const ClothesShopView: FC<{}> = props =>
     if(!isVisible) return null;
 
     return (
-        <NitroCardView uniqueKey="clothes-shop" className="nitro-avatar-editor" overflow="visible" gap={ 3 }>
+        <NitroCardView uniqueKey="clothes-shop" className="nitro-avatar-editor clothes-shop" overflow="visible" gap={ 3 }>
             <NitroCardHeaderView headerText={ LocalizeText('clothesshop.title') } onCloseClick={ () => setIsVisible(false) } />
             <Flex gap={ 3 } classNames={ [ 'nitro-avatar-editor-content' ] }>
                 <Flex column fullWidth gap={ 2 }>
@@ -242,7 +242,7 @@ export const ClothesShopView: FC<{}> = props =>
                             <Flex fullWidth grow style={ { flexBasis: 0 } } classNames={ [ 'figure-preview-section' ] }>
                                 <AvatarEditorFigurePreviewView figureData={ previewFigureData } />
                             </Flex>
-                            <Flex column overflow="hidden" gap={ 2 } grow style={ { flexBasis: 0 } }>
+                            <Flex column fullWidth overflow="hidden" gap={ 2 } grow style={ { flexBasis: 0 } }>
                                 <ScrollContainer>
                                     <Flex innerRef={ gridRef } column fullWidth>
                                         { rows.map((row, rowIndex) =>
@@ -266,7 +266,9 @@ export const ClothesShopView: FC<{}> = props =>
                                 </ScrollContainer>
                             </Flex>
                         </Flex>
-                        <Flex column fullWidth fullHeight center>
+                        <Flex column fullWidth fullHeight center gap={ 2 } className="clothes-shop-details">
+                            { !focusedItem &&
+                                <Text center small>{ LocalizeText('clothesshop.hint') }</Text> }
                             { focusedItem &&
                                 <>
                                     <Text center bold truncate>{ focusedItem.publicName || focusedItem.name }</Text>
@@ -296,12 +298,12 @@ export const ClothesShopView: FC<{}> = props =>
                         <Flex alignItems="center" gap={ 2 }>
                             { (totalCredits > 0) &&
                                 <Flex alignItems="center" gap={ 1 }>
-                                    <Text bold>{ totalCredits }</Text>
+                                    <Text bold variant="muted">{ totalCredits }</Text>
                                     <LayoutCurrencyIcon type={ -1 } />
                                 </Flex> }
                             { Array.from(totalPoints.entries()).map(([ type, amount ]) =>
                                 <Flex alignItems="center" gap={ 1 } key={ type }>
-                                    <Text bold>{ amount }</Text>
+                                    <Text bold variant="muted">{ amount }</Text>
                                     <LayoutCurrencyIcon type={ type } />
                                 </Flex>) }
                         </Flex>
@@ -323,9 +325,9 @@ export const ClothesShopView: FC<{}> = props =>
                                  real clothesshop.* set) - plain literal string, same honest-gap precedent as
                                  User Settings' Moderate tab. */ }
                             { !basket.size &&
-                                <Text small>Basket is empty</Text> }
+                                <Text small variant="muted">{ LocalizeText('clothesshop.basket.empty') }</Text> }
                         </Flex>
-                        <Button variant="success" disabled={ isPending || !basket.size } onClick={ buyAll }>
+                        <Button variant="success" className="clothes-shop-buy" disabled={ isPending || !basket.size } onClick={ buyAll }>
                             { isPending ? LocalizeText('clothesshop.buying') : LocalizeText('clothesshop.buy', [ 'count' ], [ basket.size.toString() ]) }
                         </Button>
                     </Flex>

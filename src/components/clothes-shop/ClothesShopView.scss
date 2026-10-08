@@ -1,0 +1,36 @@
+.nitro-avatar-editor.clothes-shop {
+    .nitro-avatar-editor-content {
+        --left-shift: 0px;
+    }
+
+    .avatar-editor-figure-set-item {
+        position: relative;
+    }
+
+    .clothes-shop-owned-badge,
+    .clothes-shop-basket-badge {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        font-size: 8px;
+        line-height: 10px;
+        border-radius: 0 0 var(--holo-border-radius) var(--holo-border-radius);
+        background-color: var(--holo-primary);
+        border-top: var(--holo-border-size) solid var(--holo-border-color-primary);
+        pointer-events: none;
+    }
+
+    .clothes-shop-details {
+        padding: var(--holo-paddings);
+        background-color: var(--holo-secondary);
+        border: var(--holo-border-size) solid var(--holo-border-color-primary);
+        border-radius: var(--holo-border-radius);
+        box-shadow: var(--holo-box-shadow);
+    }
+
+    .clothes-shop-buy {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+}

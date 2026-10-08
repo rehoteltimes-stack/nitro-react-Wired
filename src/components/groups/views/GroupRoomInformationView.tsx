@@ -1,6 +1,6 @@
 import { DesktopViewEvent, GetGuestRoomResultEvent, GroupInformationComposer, GroupInformationEvent, GroupInformationParser, GroupRemoveMemberComposer, HabboGroupDeactivatedMessageEvent, RoomEntryInfoMessageEvent } from '@nitrots/nitro-renderer';
 import { FC, useState } from 'react';
-import { GetGroupInformation, GetGroupManager, GetSessionDataManager, GroupMembershipType, GroupType, LocalizeText, SendMessageComposer, TryJoinGroup } from '../../../api';
+import { GetGroupInformation, GetGroupManager, GetSessionDataManager, GroupMembershipType, GroupType, IsRoomDataRefresh, LocalizeText, SendMessageComposer, TryJoinGroup } from '../../../api';
 import { Base, Button, Column, Flex, LayoutBadgeImageView, Text } from '../../../common';
 import { useMessageEvent, useNotification } from '../../../hooks';
 
@@ -27,7 +27,7 @@ export const GroupRoomInformationView: FC<{}> = props =>
     {
         const parser = event.getParser();
 
-        if(!parser.roomEnter) return;
+        if(!parser.roomEnter || IsRoomDataRefresh(parser.data.roomId)) return;
 
         if(parser.data.habboGroupId > 0)
         {

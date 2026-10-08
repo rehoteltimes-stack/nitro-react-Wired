@@ -9,6 +9,13 @@ export class ChatBubbleMessage
     public height: number = 0;
     public elementRef: HTMLDivElement = null;
     public skipMovement: boolean = false;
+    /** the server's id of this chat line (0 = none: reactions and replies need one), see api/chat/ChatReactions */
+    public stableId: number = 0;
+    /** the line this one replies to */
+    public reply: { id: number, username: string, text: string } = null;
+    public receivedAt: number = Date.now();
+    /** the same line sent again straight after: the newest bubble counts it instead of a new bubble ("(x2)", MetroHotel) */
+    public repeatCount: number = 1;
 
     private _top: number = 0;
     private _left: number = 0;

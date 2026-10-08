@@ -160,7 +160,10 @@ export class AvatarEditorUtilities
             i--;
         }
 
-        partItems.sort(this.clubItemsFirst ? this.clubSorter : this.noobSorter);
+        const sorter = (this.clubItemsFirst ? this.clubSorter : this.noobSorter);
+        const newest = this.newestRanks();
+
+        partItems.sort((a, b) => ((Number(b.isClear) - Number(a.isClear)) || this.newestSorter(newest, a, b) || sorter(a, b)));
 
         // if(this._forceSellableClothingVisibility || GetNitroInstance().getConfiguration<boolean>("avatareditor.support.sellablefurni", false))
         // {
@@ -221,6 +224,30 @@ export class AvatarEditorUtilities
         if(a.partColor.index > b.partColor.index) return 1;
 
         return 0;
+    }
+
+    private static newestRanks(): Map<number, number>
+    {
+        const ranks = new Map<number, number>();
+        const ids = GetConfiguration<number[]>('avatareditor.newest.sets', []);
+
+        if(Array.isArray(ids)) ids.forEach((id, index) => ranks.set(Number(id), index));
+
+        return ranks;
+    }
+
+    private static newestSorter(ranks: Map<number, number>, a: AvatarEditorGridPartItem, b: AvatarEditorGridPartItem): number
+    {
+        const rankA = (a.partSet ? ranks.get(a.partSet.id) : undefined);
+        const rankB = (b.partSet ? ranks.get(b.partSet.id) : undefined);
+
+        if(rankA === undefined && rankB === undefined) return 0;
+
+        if(rankA === undefined) return 1;
+
+        if(rankB === undefined) return -1;
+
+        return (rankA - rankB);
     }
 
     public static noobSorter(a: AvatarEditorGridPartItem, b: AvatarEditorGridPartItem): number

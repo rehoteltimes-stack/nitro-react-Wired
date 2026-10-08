@@ -1,6 +1,6 @@
 import React, { FC, useMemo, useState } from 'react';
 import { LocalizeText, RoomObjectItem, chooserSelectionVisualizer } from '../../../../api';
-import { NitroCardHeaderView, NitroCardView } from '../../../../common';
+import { CustomSelect, NitroCardHeaderView, NitroCardView } from '../../../../common';
 
 interface ChooserWidgetViewProps {
     title: string;
@@ -74,19 +74,8 @@ export const ChooserWidgetView: FC<ChooserWidgetViewProps> = (props) =>
                         />
                     </div>
                     <div className="owner-select-container">
-                        <select
-                            className="form-control"
-                            value={ selectedFilter }
-                            onChange={ event => setSelectedFilter(event.target.value) }>
-                            <option value="all">
-                                { label === 'users' ? 'All types' : 'All Owners' }
-                            </option>
-                            {Array.from(new Set(items.map(item => label === 'users' ? item.type : item.ownerName)))
-                                .filter(value => !!value && value !== '-')
-                                .map((value, index) => (
-                                    <option key={ index } value={ value }>{ value }</option>
-                                ))}
-                        </select>
+                        <CustomSelect value={ selectedFilter } onChange={ value => setSelectedFilter(value) } noInvalid
+                            items={ [ { value: 'all', text: (label === 'users') ? 'All types' : 'All Owners' }, ...Array.from(new Set(items.map(item => (label === 'users') ? item.type : item.ownerName))).filter(value => !!value && (value !== '-')).map(value => ({ value, text: String(value) })) ] } />
                     </div>
                 </div>
 

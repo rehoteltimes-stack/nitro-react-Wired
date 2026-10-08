@@ -61,11 +61,17 @@ export class ProfileStatsDataParser implements IMessageParser
 {
     public userId: number = 0;
     public respectsReceived: number = 0;
+    public staffColor: string = '';
+    public staffBackground: string = '';
+    public isVip: boolean = false;
 
     public flush(): boolean
     {
         this.userId = 0;
         this.respectsReceived = 0;
+        this.staffColor = '';
+        this.staffBackground = '';
+        this.isVip = false;
         return true;
     }
 
@@ -73,6 +79,9 @@ export class ProfileStatsDataParser implements IMessageParser
     {
         this.userId = wrapper.readInt();
         this.respectsReceived = wrapper.readInt();
+        this.staffColor = wrapper.readString();
+        this.staffBackground = wrapper.readString();
+        this.isVip = wrapper.readBoolean();
         return true;
     }
 }

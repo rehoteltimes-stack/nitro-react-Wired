@@ -1,0 +1,494 @@
+// hCMS Furni Editor (own feature). Colours come ONLY from the theme tokens in assets/styles/holo/_tokens.scss
+// (--holo-*), never hard-coded, so the window follows dark/light mode like every HabboCity window. Same approach as
+// .nitro-wired's form rules: the base .form-control/.form-select is Bootstrap's black-on-white, and HabboCity only
+// re-themes it inside specific windows, so an own window must scope its own token mapping.
+
+.furni-editor {
+  .form-control,
+  .form-select {
+    color: var(--holo-text-primary) !important;
+    background-color: var(--holo-secondary) !important;
+    border: 2px solid var(--holo-border-color-primary) !important;
+    border-radius: 8px;
+
+    &::placeholder {
+      color: var(--holo-text-muted);
+    }
+  }
+
+  .form-select option {
+    color: var(--holo-text-primary);
+    background-color: var(--holo-secondary);
+  }
+
+  .form-check-input {
+    background-color: var(--holo-secondary);
+    border-color: var(--holo-border-color-primary);
+
+    &:checked {
+      background-color: var(--holo-tertiary);
+      border-color: var(--holo-tertiary);
+    }
+  }
+
+  .furni-editor-list {
+    background-color: var(--holo-secondary);
+    border: 2px solid var(--holo-border-color-primary);
+    border-radius: var(--holo-border-radius);
+
+    .furni-editor-row:hover {
+      background-color: var(--holo-primary);
+    }
+
+    .furni-editor-row.active {
+      background-color: var(--holo-tertiary);
+      color: var(--holo-text-tertiary);
+    }
+  }
+
+  .furni-editor-box {
+    background-color: var(--holo-secondary);
+    border: 2px solid var(--holo-border-color-primary);
+    border-radius: var(--holo-border-radius);
+    padding: 6px;
+  }
+
+  .furni-editor-catalog {
+    width: 200px;
+    flex-shrink: 0;
+  }
+
+  .furni-editor-side {
+    width: 250px;
+    flex-shrink: 0;
+    padding-right: 2px;
+  }
+
+  // scrolling columns: their rows keep their own height and the column scrolls, instead of every row being squeezed
+  // (measured: titles 9px of 14, the preview 168px of 210 before this)
+  .furni-editor-side > *,
+  .furni-editor-scroll > *,
+  .furni-editor-team > *,
+  .furni-editor-list > *,
+  .furni-editor-box > * {
+    flex-shrink: 0;
+  }
+
+  // build-mode style height stepper (same steps as BuilderToolbarView's Adjust height), theme tokens only
+  .furni-editor-stepper {
+    button {
+      flex: 1;
+      height: 27px;
+      padding: 0 4px;
+      border: 2px solid var(--holo-border-color-primary);
+      border-radius: 8px;
+      background-color: var(--holo-secondary);
+      color: var(--holo-text-primary);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+
+      &:hover { background-color: var(--holo-primary); }
+      &:active { background-color: var(--holo-tertiary); }
+    }
+
+    .form-control {
+      flex: 1.4;
+      min-width: 0;
+      text-align: center;
+    }
+  }
+
+  .furni-editor-names {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 150px;   // long candidate lists scroll inside the box, the window itself does not
+    overflow-y: auto;
+
+    .furni-editor-name {
+      flex-shrink: 0;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background-color: var(--holo-primary);
+
+      .line {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 2px 8px;
+        font-size: 12px;
+      }
+
+      .name, .english { cursor: pointer; }
+      .name:hover, .english:hover { text-decoration: underline; }
+      .english { color: #22abd6; }   // theme primary blue (_63-buttons.scss)
+
+      .sources {
+        font-size: 10px;
+        color: var(--holo-text-muted);
+        white-space: normal;
+      }
+
+      &.active {
+        background-color: var(--holo-tertiary);
+        color: var(--holo-text-tertiary);
+
+        .sources { color: var(--holo-text-tertiary); opacity: .75; }
+      }
+    }
+  }
+
+  .furni-editor-flags {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 8px;
+  }
+
+  .furni-editor-muted {
+    color: var(--holo-text-muted);
+  }
+
+  .furni-editor-match {
+    color: #52bc48; // the theme's own success green (_63-buttons.scss .btn-success)
+  }
+}
+
+.furni-editor-preview {
+  position: relative;
+  cursor: grab;
+
+  .furni-editor-zoom {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    display: flex;
+    gap: 2px;
+    z-index: 1;
+
+    button {
+      min-width: 22px;
+      height: 22px;
+      padding: 0;
+      border: 2px solid var(--holo-border-color-primary);
+      border-radius: 6px;
+      background-color: var(--holo-secondary);
+      color: var(--holo-text-primary);
+      font-weight: 700;
+      line-height: 1;
+
+      &:hover:not(:disabled) { background-color: var(--holo-primary); }
+      &:disabled { opacity: var(--holo-disabled-input-opacity); }
+    }
+  }
+
+  .furni-editor-ruler {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;   // clicks still reach the preview (cycle state / rotate)
+
+    .ruler-grip { pointer-events: all; fill: transparent; cursor: ns-resize; }
+    .ruler-axis { stroke: var(--holo-text-primary); stroke-width: 1; opacity: .8; }
+    .ruler-label { fill: var(--holo-text-primary); font-size: 9px; }
+    .ruler-height { stroke: #eeb80e; stroke-width: 2; stroke-dasharray: 4 2; }   // theme warning yellow (_63-buttons.scss)
+    .ruler-height-label { fill: #eeb80e; font-size: 10px; font-weight: 700; }
+    .ruler-footprint { fill: none; stroke: var(--holo-text-primary); stroke-width: 1; stroke-dasharray: 3 2; opacity: .7; }
+    .ruler-top { fill: none; stroke: #eeb80e; stroke-width: 1; opacity: .8; }
+    .ruler-size-label { fill: var(--holo-text-primary); font-size: 10px; font-weight: 700; }
+    .ruler-state line { stroke: #22abd6; stroke-width: 2; }   // theme primary blue (_63-buttons.scss)
+    .ruler-state text { fill: #22abd6; font-size: 9px; }
+    .ruler-state.active text { font-weight: 700; }
+    .ruler-state.active line { stroke-width: 3; }
+  }
+}
+
+// bulk rename modal: one grid table, fixed column widths, cells cut off with a tooltip instead of overlapping
+.furni-editor-bulk {
+  .furni-editor-bulk-toolbar { flex-wrap: wrap; row-gap: 4px; }
+  .furni-editor-bulk-pages { width: 280px; }
+  .furni-editor-bulk-hotels { width: 240px; }
+
+  .furni-editor-bulk-table {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    background-color: var(--holo-secondary);
+    border: 2px solid var(--holo-border-color-primary);
+    border-radius: var(--holo-border-radius);
+    overflow: hidden;
+  }
+
+  .bulk-body { flex: 1; min-height: 0; overflow-y: auto; }
+
+  .bulk-row {
+    display: grid;
+    grid-template-columns: 24px 200px 1fr 1.6fr 28px;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 8px;
+    font-size: 12px;
+    color: var(--holo-text-primary);
+    border-bottom: 1px solid var(--holo-border-color-primary);
+
+    .cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .new-name {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+
+      .new-name-line { display: flex; gap: 4px; min-width: 0; }
+      .form-control { flex: 1; min-width: 0; }
+      .form-select { width: 96px; flex-shrink: 0; }
+
+      // the chosen hotel's own name + word-by-word hints under the suggestion
+      .hints {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 8px;
+        font-size: 10px;
+        color: var(--holo-text-muted);
+
+        .hint { color: #22abd6; }   // theme primary blue (_63-buttons.scss)
+      }
+    }
+
+    .status { text-align: center; font-weight: 700; }
+    .status.done { color: #52bc48; }    // theme success green
+    .status.error { color: #ea4646; }   // theme danger red (_63-buttons.scss)
+
+    &.ticked { background-color: var(--holo-primary); }
+  }
+
+  .bulk-head {
+    font-weight: 700;
+    background-color: var(--holo-primary);
+    color: var(--holo-text-primary);
+  }
+}
+
+// word translations: the add/change form, clickable word chips (unknown words / known words with their English), Words tab
+.furni-editor {
+  .furni-editor-word-form {
+    min-width: 0;
+
+    .form-control { flex: 1; min-width: 80px; }
+    .form-select { width: 110px; flex-shrink: 0; }
+  }
+
+  .furni-editor-word-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    font-size: 10px;
+
+    .chip {
+      cursor: pointer;
+      padding: 0 5px;
+      border-radius: 6px;
+      color: #22abd6;   // theme primary blue (_63-buttons.scss), same as the old hint colour
+      border: 1px solid var(--holo-border-color-primary);
+
+      &:hover { background-color: var(--holo-tertiary); color: var(--holo-text-tertiary); }
+
+      &.unknown { color: #eeb80e; border-style: dashed; }   // theme warning yellow: not in the dictionary yet
+    }
+  }
+
+  .furni-editor-words {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    height: 100%;
+    min-height: 0;
+    color: var(--holo-text-primary);
+  }
+
+  .furni-editor-words-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    background-color: var(--holo-secondary);
+    border: 2px solid var(--holo-border-color-primary);
+    border-radius: var(--holo-border-radius);
+
+    .word-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 80px 110px auto auto;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--holo-border-color-primary);
+
+      .word { font-weight: 700; }
+      .kind, .by { color: var(--holo-text-muted); }
+      &:hover { background-color: var(--holo-primary); }
+    }
+  }
+}
+
+// bulk rename: find & replace row
+.furni-editor-bulk .furni-editor-bulk-replace .form-control { flex: 1; min-width: 120px; }
+
+// auto run status next to the Save buttons
+.furni-editor .furni-editor-auto-status { max-width: 320px; }
+
+// Auto run review list: furni | what changed | accept / revert (same table as the bulk rename)
+.furni-editor-review {
+  .bulk-row.review-row { grid-template-columns: 24px 220px 1fr 150px; }
+  .review-name { cursor: pointer; text-decoration: underline dotted; }
+  .bulk-row.is-reverted .cell, .bulk-row.is-accepted .cell { color: var(--holo-text-muted); }
+}
+.furni-editor-review {
+  .review-changes { display: flex; flex-direction: column; white-space: normal; }
+  .review-unsure { color: #eeb80e; font-size: 11px; }   // theme warning yellow
+}
+.furni-editor-review {
+  .review-diffs { display: flex; flex-wrap: wrap; gap: 2px 10px; }
+  .review-old { color: var(--holo-text-muted); text-decoration: line-through; }
+  .review-current { color: #52bc48; }   // theme success green
+}
+
+// Asset data: icon checks (furni icon + the icons of the catalog pages that sell it)
+.furni-editor {
+  .furni-editor-icon-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+
+    .icon-box {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: var(--holo-border-radius);
+      background-color: var(--holo-secondary);
+      border: 1px solid var(--holo-border-color-primary);
+
+      img { max-width: 22px; max-height: 22px; image-rendering: pixelated; }
+    }
+  }
+
+  .furni-editor-warn { color: #eeb80e; }   // the theme's warning yellow (Button variant warning)
+}
+
+// "?" word chip that carries a suggestion from other hotels' names
+.furni-editor-word-chips .chip.unknown.suggested { border-style: dashed; }
+
+// Window layouts (2026-09-28): compact = no catalog column and the two field columns stacked in one scrolling column;
+// minimized = title bar only. The review is docked in the window instead of being its own window.
+.furni-editor {
+  &.is-minimized .nitro-card-header-text {
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &.is-compact .furni-editor-fields {
+    flex-direction: column;
+    overflow-y: auto;
+
+    > .furni-editor-scroll {
+      flex: none;
+      overflow: visible;
+    }
+  }
+
+  .furni-editor-review-dock {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 320px;
+    flex-shrink: 0;
+    min-height: 0;
+    padding: 6px;
+    background-color: var(--holo-secondary);
+    border: 2px solid var(--holo-border-color-primary);
+    border-radius: var(--holo-border-radius);
+    color: var(--holo-text-primary);
+
+    > * { flex-shrink: 0; }
+
+    .btn { padding: 2px 8px; }
+
+    .review-list {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .review-item {
+      flex-shrink: 0;
+      padding: 5px 6px;
+      border: 1px solid var(--holo-border-color-primary);
+      border-radius: var(--holo-border-radius);
+      background-color: var(--holo-primary);
+
+      &.is-current { border-color: var(--holo-tertiary); box-shadow: 0 0 0 1px var(--holo-tertiary); }
+      &.is-accepted, &.is-reverted { opacity: .6; }
+    }
+
+    .review-name {
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+
+      &:hover { text-decoration: underline; }
+    }
+
+    .review-diff { font-size: 12px; overflow-wrap: anywhere; }
+    .review-old { color: var(--holo-text-muted); text-decoration: line-through; }
+    .review-current { color: #52bc48; }   // theme success green
+    .review-unsure { font-size: 12px; color: #eeb80e; }   // theme warning yellow
+  }
+}
+
+// Auto run pages picker (FurniEditorRunPagesView): the review dock's layout, one checkbox row per catalog page
+.furni-editor {
+  .furni-editor-run-pages {
+    .run-page {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      min-width: 0;
+      padding: 2px 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+
+      &:hover { background-color: var(--holo-primary); }
+    }
+
+    .run-page-caption { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  }
+}
+
+// the result of a single action (save, download, test furni, words...), shown under the tabs
+.furni-editor .furni-editor-notice {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: var(--holo-border-radius);
+  background: var(--holo-secondary);
+  color: var(--holo-text-primary);
+  border-left: 4px solid var(--holo-border-color-primary);
+
+  &.is-success { border-left-color: #52bc48; }
+  &.is-error, &.is-no_permission { border-left-color: #ea4646; }
+  &.is-warning, &.is-cooldown, &.is-not_found { border-left-color: #eeb80e; }
+}

@@ -1,7 +1,7 @@
 import { FriendlyTime, GetModeratorUserInfoMessageComposer, ModeratorUserInfoData, ModeratorUserInfoEvent } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useMemo, useState } from 'react';
-import { CreateLinkEvent, LocalizeText, SendMessageComposer } from '../../../../api';
-import { Button, Column, DraggableWindowPosition, Grid, NitroCardContentView, NitroCardHeaderView, NitroCardView } from '../../../../common';
+import { CreateLinkEvent, GetUserProfile, LocalizeText, SendMessageComposer } from '../../../../api';
+import { Button, DraggableWindowPosition, Flex, NitroCardContentView, NitroCardHeaderView, NitroCardView, ScrollContainer } from '../../../../common';
 import { useMessageEvent } from '../../../../hooks';
 import { ModToolsUserModActionView } from './ModToolsUserModActionView';
 import { ModToolsUserRoomVisitsView } from './ModToolsUserRoomVisitsView';
@@ -100,32 +100,19 @@ export const ModToolsUserView: FC<ModToolsUserViewProps> = props =>
 
     return (
         <>
-            <NitroCardView className="nitro-mod-tools-user" theme="primary" windowPosition={ DraggableWindowPosition.TOP_LEFT }>
+            <NitroCardView className="nitro-mod-tools-user" theme="primary-slim" windowPosition={ DraggableWindowPosition.TOP_LEFT }>
                 <NitroCardHeaderView headerText={ LocalizeText('modtools.userinfo.title', [ 'username' ], [ userInfo.userName ]) } onCloseClick={ () => onCloseClick() } />
-                <NitroCardContentView className="text-black">
-                    <Grid overflow="hidden">
-                    <Column size={ 12 } gap={ 1 }>
-                        <div className="d-flex justify-content-between mb-2">
-                    <Button onClick={ event => CreateLinkEvent(`mod-tools/open-user-chatlog/${ userId }`) }>
-            Room Chat
-        </Button>
-        <Button  
-                onClick={ event => setSendMessageVisible(!sendMessageVisible) }>
-            Send Message
-        </Button>
-        <Button 
-                onClick={ event => setRoomVisitsVisible(!roomVisitsVisible) }>
-            Room Visits
-        </Button>
-        <Button  
-                onClick={ event => setModActionVisible(!modActionVisible) }>
-            Mod Action
-        </Button>
-    </div>
-</Column>
-
-                        <Column size={ 12 } overflow="auto">
-                            <table className="table table-striped table-sm table-text-small text-black m-0">
+                <NitroCardContentView>
+                    <Flex overflow="hidden" fullHeight column gap={ 1 }>
+                        <Flex gap={ 1 } shrink className="mod-tools-group-button">
+                            <Button onClick={ event => CreateLinkEvent(`mod-tools/open-user-chatlog/${ userId }`) }>Room Chat</Button>
+                            <Button onClick={ event => setSendMessageVisible(!sendMessageVisible) }>Send Message</Button>
+                            <Button onClick={ event => setRoomVisitsVisible(!roomVisitsVisible) }>Room Visits</Button>
+                            <Button onClick={ event => setModActionVisible(!modActionVisible) }>Mod Action</Button>
+                            <Button onClick={ event => GetUserProfile(userId) }>Profile</Button>
+                        </Flex>
+                        <ScrollContainer>
+                            <table className="table table-striped table-sm table-text-small m-0">
                                 <tbody>
                                     { userProperties.map( (property, index) =>
                                     {
@@ -143,8 +130,8 @@ export const ModToolsUserView: FC<ModToolsUserViewProps> = props =>
                                     }) }
                                 </tbody>
                             </table>
-                        </Column>
-                    </Grid>
+                        </ScrollContainer>
+                    </Flex>
                 </NitroCardContentView>
             </NitroCardView>
             { sendMessageVisible &&

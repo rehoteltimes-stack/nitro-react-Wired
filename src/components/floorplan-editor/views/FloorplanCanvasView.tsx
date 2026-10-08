@@ -1,19 +1,43 @@
-import { GetOccupiedTilesMessageComposer, GetRoomEntryTileMessageComposer, NitroPoint, RoomEntryTileMessageEvent, RoomOccupiedTilesMessageEvent } from '@nitrots/nitro-renderer';
+import { GetOccupiedTilesMessageComposer, GetRoomEntryTileMessageComposer, RoomEntryTileMessageEvent, RoomOccupiedTilesMessageEvent } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useRef, useState } from 'react';
-import { FaArrowDown, FaArrowLeft, FaArrowRight, FaArrowUp } from 'react-icons/fa';
+import { FaArrowsAlt, FaMinus, FaPencilAlt, FaPlus } from 'react-icons/fa';
 import { SendMessageComposer } from '../../../api';
-import { Base, Button, Column, ColumnProps, Flex, Grid } from '../../../common';
+import { Base, Column, ColumnProps } from '../../../common';
 import { useMessageEvent } from '../../../hooks';
+import { TILE_SIZE } from '../common/Constants';
 import { FloorplanEditor } from '../common/FloorplanEditor';
+import { getScreenPositionForTile } from '../common/Utils';
 import { useFloorplanEditorContext } from '../FloorplanEditorContext';
 
-export const FloorplanCanvasView: FC<ColumnProps> = props =>
+const FIT_PADDING = 10;
+
+interface FloorplanCanvasViewProps extends ColumnProps
 {
-    const { gap = 1, children = null, ...rest } = props;
-    const [ occupiedTilesReceived , setOccupiedTilesReceived ] = useState(false);
+    variant?: 'full' | 'mini';
+}
+
+// The 2D floor plan (sodaho's `Olt`). "full" (panel maximised): the editor canvas in a scroll box with zoom buttons
+// (and a draw / pan switch on touch screens). "mini" (small panel): the used tiles fitted into the box, no input.
+export const FloorplanCanvasView: FC<FloorplanCanvasViewProps> = props =>
+{
+    const { gap = 1, children = null, variant = 'full', ...rest } = props;
+    const [ occupiedTilesReceived, setOccupiedTilesReceived ] = useState(false);
     const [ entryTileReceived, setEntryTileReceived ] = useState(false);
-    const { originalFloorplanSettings = null, setOriginalFloorplanSettings = null, setVisualizationSettings = null } = useFloorplanEditorContext();
-    const elementRef = useRef<HTMLDivElement>(null);
+    const [ zoom, setZoom ] = useState(1);
+    const [ touchMode, setTouchMode ] = useState<'draw' | 'pan'>('draw');
+    const [ miniTransform, setMiniTransform ] = useState('scale(0.15)');
+    const { originalFloorplanSettings = null, setOriginalFloorplanSettings = null, setVisualizationSettings = null, tilemapVersion = 0 } = useFloorplanEditorContext();
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const canvasHostRef = useRef<HTMLDivElement>(null);
+    const touchModeRef = useRef<'draw' | 'pan'>('draw');
+    const variantRef = useRef(variant);
+    const isTouch = (typeof window !== 'undefined') && ('ontouchstart' in window);
+
+    const changeTouchMode = (mode: 'draw' | 'pan') =>
+    {
+        touchModeRef.current = mode;
+        setTouchMode(mode);
+    }
 
     useMessageEvent<RoomOccupiedTilesMessageEvent>(RoomOccupiedTilesMessageEvent, event =>
     {
@@ -24,67 +48,103 @@ export const FloorplanCanvasView: FC<ColumnProps> = props =>
             const newValue = { ...prevValue };
 
             newValue.reservedTiles = parser.blockedTilesMap;
-
             FloorplanEditor.instance.setTilemap(newValue.tilemap, newValue.reservedTiles);
 
             return newValue;
         });
 
         setOccupiedTilesReceived(true);
-        
-        elementRef.current.scrollTo((FloorplanEditor.instance.view.width / 3), 0);
+
+        if((variantRef.current !== 'mini') && scrollRef.current) scrollRef.current.scrollTo((FloorplanEditor.instance.renderer.canvas.width / 3), 0);
     });
 
     useMessageEvent<RoomEntryTileMessageEvent>(RoomEntryTileMessageEvent, event =>
     {
         const parser = event.getParser();
 
-        setOriginalFloorplanSettings(prevValue =>
-        {
-            const newValue = { ...prevValue };
+        setOriginalFloorplanSettings(prevValue => ({ ...prevValue, entryPoint: [ parser.x, parser.y ], entryPointDir: parser.direction }));
+        setVisualizationSettings(prevValue => ({ ...prevValue, entryPointDir: parser.direction }));
 
-            newValue.entryPoint = [ parser.x, parser.y ];
-            newValue.entryPointDir = parser.direction;
-
-            return newValue;
-        });
-
-        setVisualizationSettings(prevValue =>
-        {
-            const newValue = { ...prevValue };
-
-            newValue.entryPointDir = parser.direction;
-
-            return newValue;
-        });
-        
-        FloorplanEditor.instance.doorLocation = new NitroPoint(parser.x, parser.y);
+        FloorplanEditor.instance.doorLocation = { x: parser.x, y: parser.y };
 
         setEntryTileReceived(true);
     });
 
-    const onClickArrowButton = (scrollDirection: string) =>
+    const onPointer = (event: PointerEvent) =>
     {
-        const element = elementRef.current;
+        if(variantRef.current === 'mini') return;
+        if((event.pointerType === 'touch') && (touchModeRef.current === 'pan')) return;
 
-        if(!element) return;
+        event.preventDefault();
 
-        switch(scrollDirection)
+        switch(event.type)
         {
-            case 'up':
-                element.scrollBy({ top: -10 });
+            case 'pointerout':
+            case 'pointerup':
+                FloorplanEditor.instance.onPointerRelease(event);
                 break;
-            case 'down':
-                element.scrollBy({ top: 10 });
+            case 'pointerdown':
+                FloorplanEditor.instance.onPointerDown(event);
                 break;
-            case 'left':
-                element.scrollBy({ left: -10 });
-                break;
-            case 'right':
-                element.scrollBy({ left: 10 });
+            case 'pointermove':
+                FloorplanEditor.instance.onPointerMove(event);
                 break;
         }
     }
+
+    useEffect(() =>
+    {
+        variantRef.current = variant;
+
+        if((variant === 'full') && scrollRef.current) scrollRef.current.scrollTo((FloorplanEditor.instance.renderer.canvas.width / 3), 0);
+    }, [ variant ]);
+
+    // mini: fit the used tiles (plus a small margin) into the box
+    useEffect(() =>
+    {
+        if(variant !== 'mini') return;
+
+        const element = scrollRef.current;
+
+        if(!element) return;
+
+        const tilemap = FloorplanEditor.instance.tilemap;
+        let minX = -1, minY = -1, maxX = -1, maxY = -1;
+
+        for(let y = 0; y < tilemap.length; y++)
+        {
+            if(!tilemap[y]) continue;
+
+            for(let x = 0; x < tilemap[y].length; x++)
+            {
+                if(!tilemap[y][x] || (tilemap[y][x].height === 'x')) continue;
+
+                if((minX === -1) || (x < minX)) minX = x;
+                if((minY === -1) || (y < minY)) minY = y;
+                if(x > maxX) maxX = x;
+                if(y > maxY) maxY = y;
+            }
+        }
+
+        if(minX === -1) return;
+
+        const left = getScreenPositionForTile(minX, maxY)[0];
+        const right = (getScreenPositionForTile(maxX, minY)[0] + TILE_SIZE);
+        const top = getScreenPositionForTile(minX, minY)[1];
+        const bottom = (getScreenPositionForTile(maxX, maxY)[1] + TILE_SIZE);
+        const width = ((right - left) + (FIT_PADDING * 2));
+        const height = ((bottom - top) + (FIT_PADDING * 2));
+        const boxWidth = element.clientWidth, boxHeight = element.clientHeight;
+
+        if(!boxWidth || !boxHeight) return;
+
+        const scale = Math.min(Math.max(Math.min(boxWidth / width, boxHeight / height), 0.05), 1);
+        const offsetX = ((boxWidth - (width * scale)) / 2);
+        const offsetY = ((boxHeight - (height * scale)) / 2);
+
+        element.scrollTo(0, 0);
+        setMiniTransform(`translate(${ offsetX }px, ${ offsetY }px) scale(${ scale }) translate(${ -(left - FIT_PADDING) }px, ${ -(top - FIT_PADDING) }px)`);
+    }, [ variant, tilemapVersion, occupiedTilesReceived ]);
 
     useEffect(() =>
     {
@@ -92,22 +152,19 @@ export const FloorplanCanvasView: FC<ColumnProps> = props =>
         {
             FloorplanEditor.instance.clear();
 
-            setVisualizationSettings(prevValue =>
-            {
-                return {
-                    wallHeight: originalFloorplanSettings.wallHeight,
-                    thicknessWall: originalFloorplanSettings.thicknessWall,
-                    thicknessFloor: originalFloorplanSettings.thicknessFloor,
-                    entryPointDir: prevValue.entryPointDir
-                }
-            });
+            setVisualizationSettings(prevValue => ({
+                wallHeight: originalFloorplanSettings.wallHeight,
+                thicknessWall: originalFloorplanSettings.thicknessWall,
+                thicknessFloor: originalFloorplanSettings.thicknessFloor,
+                entryPointDir: prevValue.entryPointDir
+            }));
         }
     }, [ originalFloorplanSettings.thicknessFloor, originalFloorplanSettings.thicknessWall, originalFloorplanSettings.wallHeight, setVisualizationSettings ]);
 
     useEffect(() =>
     {
         if(!entryTileReceived || !occupiedTilesReceived) return;
-        
+
         FloorplanEditor.instance.renderTiles();
     }, [ entryTileReceived, occupiedTilesReceived ]);
 
@@ -116,41 +173,40 @@ export const FloorplanCanvasView: FC<ColumnProps> = props =>
         SendMessageComposer(new GetRoomEntryTileMessageComposer());
         SendMessageComposer(new GetOccupiedTilesMessageComposer());
 
-        FloorplanEditor.instance.tilemapRenderer.interactive = true;
+        const element = scrollRef.current;
 
-        if(!elementRef.current) return;
+        if(!element) return;
 
-        elementRef.current.appendChild(FloorplanEditor.instance.renderer.view);
+        const host = canvasHostRef.current;
+
+        if(host) host.appendChild(FloorplanEditor.instance.renderer.canvas);
+
+        for(const type of [ 'pointerup', 'pointerout', 'pointerdown', 'pointermove' ]) element.addEventListener(type, onPointer);
+
+        return () =>
+        {
+            for(const type of [ 'pointerup', 'pointerout', 'pointerdown', 'pointermove' ]) element.removeEventListener(type, onPointer);
+        }
     }, []);
 
+    const isMini = (variant === 'mini');
+
     return (
-        <Column gap={ gap } { ...rest }>
-            <Grid overflow="hidden" gap={ 1 }>
-                <Column center size={ 1 }>
-                    <Button className="d-md-none" onClick={ event => onClickArrowButton('left') }>
-                        <FaArrowLeft className="fa-icon" />
-                    </Button>
-                </Column>
-                <Column overflow="hidden" size={ 10 } gap={ 1 }>
-                    <Flex justifyContent="center" className="d-md-none">
-                        <Button shrink onClick={ event => onClickArrowButton('up') }>
-                            <FaArrowUp className="fa-icon" />
-                        </Button>
-                    </Flex>
-                    <Base overflow="auto" innerRef={ elementRef } />
-                    <Flex justifyContent="center" className="d-md-none">
-                        <Button shrink onClick={ event => onClickArrowButton('down') }>
-                            <FaArrowDown className="fa-icon" />
-                        </Button>
-                    </Flex>
-                </Column>
-                <Column center size={ 1 }>
-                    <Button className="d-md-none" onClick={ event => onClickArrowButton('right') }>
-                        <FaArrowRight className="fa-icon" />
-                    </Button>
-                </Column>
-            </Grid>
+        <Column gap={ gap } { ...rest } style={ { flex: 1, position: 'relative', minWidth: 0, minHeight: 0 } }>
+            <Base overflow={ isMini ? 'hidden' : 'auto' } innerRef={ scrollRef } style={ { flex: 1, minHeight: 0, touchAction: ((touchMode === 'draw') || isMini) ? 'none' : 'auto' } }>
+                <div ref={ canvasHostRef } style={ { transform: isMini ? miniTransform : `scale(${ zoom })`, transformOrigin: '0 0' } } />
+            </Base>
+            { !isMini &&
+                <div className="floorplan-canvas-zoom">
+                    <button title="Zoom in" onClick={ () => setZoom(value => Math.min(value + 0.25, 2)) }><FaPlus size={ 10 } /></button>
+                    <button title="Zoom out" onClick={ () => setZoom(value => Math.max(value - 0.25, 0.5)) }><FaMinus size={ 10 } /></button>
+                    { isTouch &&
+                        <button className={ (touchMode === 'pan') ? 'active' : '' } title={ (touchMode === 'draw') ? 'Switch to pan mode' : 'Switch to draw mode' } onClick={ () => changeTouchMode((touchMode === 'draw') ? 'pan' : 'draw') }>
+                            { (touchMode === 'draw') ? <FaPencilAlt size={ 10 } /> : <FaArrowsAlt size={ 10 } /> }
+                        </button> }
+                </div> }
             { children }
         </Column>
     );
 }
+

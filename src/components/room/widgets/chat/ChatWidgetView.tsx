@@ -1,7 +1,8 @@
 import { RoomChatSettings } from '@nitrots/nitro-renderer';
-import { FC, useCallback, useEffect, useMemo, useRef } from 'react';
-import { ChatBubbleMessage, DoChatsOverlap, GetConfiguration } from '../../../../api';
-import { useChatWidget, useRoom } from '../../../../hooks';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChatBubbleMessage, DoChatsOverlap, GetConfiguration, SendMessageComposer } from '../../../../api';
+import { PlayerSettingsEvent, PlayerSettingsRequestComposer, RegisterPlayerSettingsMessages } from '../../../../api/settings/PlayerSettingsProtocol';
+import { useChatWidget, useMessageEvent, useRoom } from '../../../../hooks';
 import IntervalWebWorker from '../../../../workers/IntervalWebWorker';
 import { WorkerBuilder } from '../../../../workers/WorkerBuilder';
 import { ChatWidgetMessageView } from './ChatWidgetMessageView';
@@ -10,7 +11,22 @@ export const ChatWidgetView: FC<{}> = props =>
 {
     const { chatMessages = [], setChatMessages = null, chatSettings = null, getScrollSpeed = 6000 } = useChatWidget();
     const { roomSession = null } = useRoom();
+    const [ bubblesHidden, setBubblesHidden ] = useState(false);
     const elementRef = useRef<HTMLDivElement>();
+
+    RegisterPlayerSettingsMessages();
+
+    useMessageEvent<PlayerSettingsEvent>(PlayerSettingsEvent, event =>
+    {
+        const setting = event.getParser().settings.find(entry => entry.key === 'chat_bubbles');
+
+        if(setting) setBubblesHidden(!setting.on);
+    });
+
+    useEffect(() =>
+    {
+        SendMessageComposer(new PlayerSettingsRequestComposer());
+    }, []);
     const visibleChatMessages = useMemo(() => chatMessages.filter(chat => !roomSession || (chat.roomId === roomSession.roomId)), [ chatMessages, roomSession ]);
 
     const removeHiddenChats = useCallback(() =>
@@ -155,7 +171,7 @@ export const ChatWidgetView: FC<{}> = props =>
     }, [ getScrollSpeed, removeHiddenChats, setChatMessages ]);
 
     return (
-        <div ref={ elementRef } className="nitro-chat-widget">
+        <div ref={ elementRef } className={ 'nitro-chat-widget' + (bubblesHidden ? ' is-hidden' : '') }>
             { visibleChatMessages.map(chat => <ChatWidgetMessageView key={ chat.id } chat={ chat } makeRoom={ makeRoom } bubbleWidth={ chatSettings.weight } />) }
         </div>
     );

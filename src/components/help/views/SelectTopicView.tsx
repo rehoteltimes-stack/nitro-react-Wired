@@ -1,6 +1,6 @@
 import { FC, useState } from 'react';
 import { LocalizeText, ReportState } from '../../../api';
-import { Button, Column, Flex, Text } from '../../../common';
+import { Button, Column, Flex, ScrollContainer, Text } from '../../../common';
 import { useHelp, useModTools } from '../../../hooks';
 
 export const SelectTopicView: FC<{}> = props =>
@@ -30,17 +30,19 @@ export const SelectTopicView: FC<{}> = props =>
 
     return (
         <>
-            <Column gap={ 1 }>
+            <Column shrink gap={ 1 }>
                 <Text fontSize={ 4 }>{ LocalizeText('help.emergency.chat_report.subtitle') }</Text>
                 <Text>{ LocalizeText('help.cfh.pick.topic') }</Text>
             </Column>
-            <Column gap={ 1 } overflow="auto">
-                { (selectedCategory < 0) &&
-                    cfhCategories.map((category, index) => <Button key={ index } variant="danger" onClick={ event => setSelectedCategory(index) }>{ LocalizeText(`help.cfh.reason.${ category.name }`) }</Button>) }
-                { (selectedCategory >= 0) &&
-                    cfhCategories[selectedCategory].topics.map((topic, index) => <Button key={ index } variant="danger" onClick={ event => setSelectedTopic(index) } active={ (selectedTopic === index) }>{ LocalizeText(`help.cfh.topic.${ topic.id }`) }</Button>) }
-            </Column>
-            <Flex gap={ 2 } justifyContent="between">
+            <ScrollContainer>
+                <Column gap={ 1 } overflow="auto">
+                    { (selectedCategory < 0) &&
+                        cfhCategories.map((category, index) => <Button key={ index } variant="danger" onClick={ event => setSelectedCategory(index) }>{ LocalizeText(`help.cfh.reason.${ category.name }`) }</Button>) }
+                    { (selectedCategory >= 0) &&
+                        cfhCategories[selectedCategory].topics.map((topic, index) => <Button key={ index } variant="danger" onClick={ event => setSelectedTopic(index) } active={ (selectedTopic === index) }>{ LocalizeText(`help.cfh.topic.${ topic.id }`) }</Button>) }
+                </Column>
+            </ScrollContainer>
+            <Flex shrink gap={ 2 } justifyContent="between">
                 <Button variant="secondary" onClick={ back }>
                     { LocalizeText('generic.back') }
                 </Button>

@@ -1,6 +1,7 @@
 import { AvatarFigurePartType, AvatarScaleType, AvatarSetType, GetGuestRoomResultEvent, NitroPoint, PetFigureData, RoomChatSettings, RoomChatSettingsEvent, RoomDragEvent, RoomObjectCategory, RoomObjectType, RoomObjectVariable, RoomSessionChatEvent, RoomSessionEvent, RoomUserData, SystemChatStyleEnum, TextureUtils, Vector3d } from '@nitrots/nitro-renderer';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChatBubbleMessage, ChatEntryType, ChatHistoryCurrentDate, ExtractWiredChatLayout, GetAvatarRenderManager, GetConfiguration, GetRoomEngine, GetRoomObjectScreenLocation, IRoomChatSettings, LocalizeText, PlaySound, RoomChatFormatter } from '../../../api';
+import { ChatBubbleMessage, ChatEntryType, ChatHistoryCurrentDate, ExtractWiredChatLayout, GetAvatarRenderManager, GetConfiguration, GetRoomEngine, GetRoomObjectScreenLocation, IRoomChatSettings, IsRoomDataRefresh, LocalizeText, PlaySound, RoomChatFormatter } from '../../../api';
+import { ApplyChatReaction, ChatMetaEvent, ChatReactionEvent, RegisterChatReactionMessages, SetPendingChatMeta, TakePendingChatMeta } from '../../../api/chat/ChatReactions';
 import { useMessageEvent, useRoomEngineEvent, useRoomSessionManagerEvent } from '../../events';
 import { useRoom } from '../useRoom';
 import { useChatHistory } from './../../chat-history';
@@ -11,6 +12,9 @@ const petImageCache: Map<string, string> = new Map();
 
 const useChatWidgetState = () =>
 {
+    // chat reactions / replies: registered before its useMessageEvent hooks (see CLAUDE.md rule 7)
+    RegisterChatReactionMessages();
+
     const [ chatMessages, setChatMessages ] = useState<ChatBubbleMessage[]>([]);
     const [ chatSettings, setChatSettings ] = useState<IRoomChatSettings>({
         mode: RoomChatSettings.CHAT_MODE_FREE_FLOW,
@@ -214,7 +218,37 @@ const useChatWidgetState = () =>
             wiredChatLayout.bubbleWidth,
             wiredChatLayout.textAlign);
 
-        setChatMessages(prevValue => [ ...prevValue, chatMessage ]);
+        // talk / shout lines get the id the server sent just before them (chat reactions, replies)
+        if((chatType === RoomSessionChatEvent.CHAT_TYPE_SPEAK) || (chatType === RoomSessionChatEvent.CHAT_TYPE_SHOUT))
+        {
+            const meta = TakePendingChatMeta(userData.roomIndex);
+
+            if(meta)
+            {
+                chatMessage.stableId = meta.chatId;
+                chatMessage.reply = meta.reply;
+            }
+        }
+
+        // the same line again (same sender, text, type and reply) straight after: the newest bubble counts it, "(x2)",
+        // "(x3)"... instead of a new bubble (MetroHotel's chat does the same)
+        setChatMessages(prevValue =>
+        {
+            const last = prevValue[prevValue.length - 1];
+
+            if(last && (last.roomId === chatMessage.roomId) && (last.senderId === chatMessage.senderId) && (last.senderCategory === chatMessage.senderCategory)
+                && (last.username === chatMessage.username) && (last.text === chatMessage.text) && (last.type === chatMessage.type)
+                && ((last.reply?.id || 0) === (chatMessage.reply?.id || 0)))
+            {
+                last.repeatCount++;
+                last.formattedText = chatMessage.formattedText;
+                last.styleId = chatMessage.styleId;
+
+                return [ ...prevValue ];
+            }
+
+            return [ ...prevValue, chatMessage ];
+        });
         addChatEntry({ id: -1, webId: userData.webID, entityId: userData.roomIndex, name: username, imageUrl, style: styleId, chatType: chatType, entityType: userData.type, message: formattedText, timestamp: ChatHistoryCurrentDate(), type: ChatEntryType.TYPE_CHAT, roomId: roomSession.roomId, color });
     });
 
@@ -229,13 +263,28 @@ const useChatWidgetState = () =>
         chatMessages.forEach(chat => (chat.elementRef && (chat.left += offsetX)));
     });
 
+    useMessageEvent<ChatMetaEvent>(ChatMetaEvent, event =>
+    {
+        const parser = event.getParser();
+
+        SetPendingChatMeta(parser.unitIndex, parser.chatId, parser.reply);
+    });
+
+    useMessageEvent<ChatReactionEvent>(ChatReactionEvent, event =>
+    {
+        const parser = event.getParser();
+
+        ApplyChatReaction(parser.chatId, parser.userId, parser.reaction, parser.on);
+    });
+
     useMessageEvent<GetGuestRoomResultEvent>(GetGuestRoomResultEvent, event =>
     {
         const parser = event.getParser();
 
         if(!parser.roomEnter) return;
-        
-        setChatMessages([]);
+
+        if(!IsRoomDataRefresh(parser.data.roomId)) setChatMessages([]);
+
         setChatSettings(parser.chat);
     });
 

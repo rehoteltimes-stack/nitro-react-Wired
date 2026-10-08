@@ -44,7 +44,8 @@
 }
 
 .alert-item .alert-text {
-  word-break: break-all;
+  word-break: normal;
+  overflow-wrap: anywhere;
 }
 
 .alert-item .alert-sender-section {

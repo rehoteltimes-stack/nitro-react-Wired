@@ -54,7 +54,8 @@ export const AvatarInfoWidgetFurniView: FC<AvatarInfoWidgetFurniViewProps> = pro
         }
     }
 
-    const canManipulate = !creatorSettings.playtestingMode;
+    // room-tools editing rights off: no move/rotate/pickup for anyone (owner/staff included), re-evaluated live
+    const canManipulate = !creatorSettings.playtestingMode && creatorSettings.editingRights;
 
     return (
         <ContextMenuView objectId={ avatarInfo.id } category={ avatarInfo.category } onClose={ onClose } collapsable={ true }>
@@ -76,7 +77,7 @@ export const AvatarInfoWidgetFurniView: FC<AvatarInfoWidgetFurniViewProps> = pro
                     <ContextMenuListItemView onClick={ event => processAction('eject') }>
                         <FaTrashRestore className="center fa-icon" />
                     </ContextMenuListItemView> }
-                { creatorSettings.showInspectButton &&
+                { creatorSettings.showInspectButton && creatorSettings.editingRights &&
                     <ContextMenuListItemView onClick={ event => processAction('inspect') }>
                         <FaSearch className="center fa-icon" />
                     </ContextMenuListItemView> }

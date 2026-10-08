@@ -1,9 +1,10 @@
-import { GetGuestRoomResultEvent, GetGuestRoomResultMessageParser, RateFlatMessageComposer, RoomControllerLevel, RoomDataParser } from '@nitrots/nitro-renderer';
+import { GetGuestRoomResultEvent, GetGuestRoomResultMessageParser, RateFlatMessageComposer, RoomControllerLevel, RoomDataParser, RoomRightsClearEvent, RoomRightsEvent } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useRef, useState } from 'react';
 import { Overlay, Popover } from 'react-bootstrap';
-import { CreateLinkEvent, GetRoomEngine, GetUserProfile, LocalizeText, SendMessageComposer } from '../../../../api';
+import { CreateLinkEvent, GetConfiguration, GetWiredCreatorToolsSettings, SetWiredCreatorToolsSettings, GetRoomEngine, GetUserProfile, IsRoomDataRefresh, LocalizeText, NotificationBubbleType, SendMessageComposer } from '../../../../api';
 import { Base, classNames, Column, Flex, Grid, Marquee, NitroCardContentView, ScrollContainer, Text } from '../../../../common';
-import { useMessageEvent, useNavigator, useRoom } from '../../../../hooks';
+import { PlayerSettingsEvent, PlayerSettingsRequestComposer, PlayerSettingToggleComposer, RegisterPlayerSettingsMessages } from '../../../../api/settings/PlayerSettingsProtocol';
+import { useMessageEvent, useNavigator, useNotification, useRoom } from '../../../../hooks';
 
 const DOOR_MODE_ICONS: { [ doorMode: number ]: string } = {
     [ RoomDataParser.OPEN_STATE ]: 'open',
@@ -19,12 +20,31 @@ export const RoomToolsWidgetView: FC<{}> = props =>
 {
     const { roomSession = null } = useRoom();
     const { navigatorData = null, navigatorHistory = null, goToHistory = null } = useNavigator();
+    const { showFeedback = null } = useNotification();
+    const [ rightsMode, setRightsMode ] = useState(() => GetWiredCreatorToolsSettings().editingRights);
+    const [ , setControllerLevel ] = useState(roomSession.controllerLevel);
+    const trueControllerLevel = useRef(roomSession.controllerLevel);
     const [ zoomScale, setZoomScale ] = useState(() => GetRoomEngine().getRoomInstanceRenderingCanvasScale(roomSession.roomId, 1));
     const [ historyOpen, setHistoryOpen ] = useState(false);
     const [ roomInfo, setRoomInfo ] = useState<GetGuestRoomResultMessageParser>(null);
     const [ infoVisible, setInfoVisible ] = useState(false);
     const historyButtonRef = useRef<HTMLDivElement>(null);
     const historyContentRef = useRef<HTMLDivElement>(null);
+    const [ bubblesHidden, setBubblesHidden ] = useState(false);
+
+    RegisterPlayerSettingsMessages();
+
+    useMessageEvent<PlayerSettingsEvent>(PlayerSettingsEvent, event =>
+    {
+        const setting = event.getParser().settings.find(entry => entry.key === 'chat_bubbles');
+
+        if(setting) setBubblesHidden(!setting.on);
+    });
+
+    useEffect(() =>
+    {
+        SendMessageComposer(new PlayerSettingsRequestComposer());
+    }, []);
 
     useEffect(() =>
     {
@@ -42,11 +62,39 @@ export const RoomToolsWidgetView: FC<{}> = props =>
         return () => document.removeEventListener('mousedown', onMouseDown);
     }, [ historyOpen ]);
 
+    // our renderer's own RoomPermissionsHandler always applies the granted level, so hide it again while rights mode is off
+    useEffect(() =>
+    {
+        // the flag lives in the shared settings store (like the reference's static rightsMode) so it survives room changes
+        if(GetWiredCreatorToolsSettings().editingRights || (roomSession.controllerLevel === RoomControllerLevel.NONE)) return;
+
+        roomSession.setControllerLevel(RoomControllerLevel.NONE);
+        setControllerLevel(RoomControllerLevel.NONE);
+    }, [ roomSession ]);
+
+    useMessageEvent<RoomRightsEvent>(RoomRightsEvent, event =>
+    {
+        const level = event.getParser().controllerLevel;
+
+        trueControllerLevel.current = level;
+
+        if(!GetWiredCreatorToolsSettings().editingRights) roomSession.setControllerLevel(RoomControllerLevel.NONE);
+
+        setControllerLevel(roomSession.controllerLevel);
+    });
+
+    useMessageEvent<RoomRightsClearEvent>(RoomRightsClearEvent, event =>
+    {
+        trueControllerLevel.current = RoomControllerLevel.NONE;
+
+        setControllerLevel(RoomControllerLevel.NONE);
+    });
+
     useMessageEvent<GetGuestRoomResultEvent>(GetGuestRoomResultEvent, event =>
     {
         const parser = event.getParser();
 
-        if(!parser.roomEnter || (parser.data.roomId !== roomSession.roomId)) return;
+        if(!parser.roomEnter || (parser.data.roomId !== roomSession.roomId) || IsRoomDataRefresh(parser.data.roomId)) return;
 
         setRoomInfo(parser);
         setHistoryOpen(false);
@@ -74,17 +122,40 @@ export const RoomToolsWidgetView: FC<{}> = props =>
     const { history = [], index: historyIndex = 0 } = navigatorHistory;
     const canGoBack = (history.length > 0) && (historyIndex !== 0);
     const canGoForward = (history.length > 0) && (historyIndex !== (history.length - 1));
+
+    // the level the room granted us is remembered while rights mode is on, so the hand stays available once it is switched off
+    if(rightsMode && (roomSession.controllerLevel !== RoomControllerLevel.NONE)) trueControllerLevel.current = roomSession.controllerLevel;
+
+    const canToggleRights = (trueControllerLevel.current >= RoomControllerLevel.GUEST) && (trueControllerLevel.current !== RoomControllerLevel.GUILD_MEMBER);
     const canBuild = (roomSession.controllerLevel >= RoomControllerLevel.GUEST) && (roomSession.controllerLevel !== RoomControllerLevel.GUILD_MEMBER);
+
+    const toggleRightsMode = () =>
+    {
+        if(trueControllerLevel.current < RoomControllerLevel.GUEST) return;
+
+        const enabled = !rightsMode;
+        const level = (enabled ? trueControllerLevel.current : RoomControllerLevel.NONE);
+
+        SetWiredCreatorToolsSettings({ editingRights: enabled });
+        roomSession.setControllerLevel(level);
+        setRightsMode(enabled);
+        setControllerLevel(level);
+
+        showFeedback((enabled ? '<b>Editing rights enabled!</b><br/>You can now edit the rooms where you have rights.' : '<b>Editing rights disabled!</b><br/>You can no longer edit the rooms where you have rights.'), (enabled ? 'rights_on' : 'rights_off'));
+    }
 
     return (
         <Flex gap={ 3 } className="nitro-room-additional-widgets">
             <Flex gap={ 3 } className="nitro-room-tools container">
                 <Flex gap={ 2 } alignItems="center">
                     <Base pointer title={ LocalizeText('room.settings.button.text') } className="icon room-tools-icon icon-cog" onClick={ event => CreateLinkEvent('navigator/toggle-room-info') } />
+                    { canToggleRights &&
+                        <Base pointer title={ 'Editing rights ' + (rightsMode ? 'enabled' : 'disabled') } className={ `icon room-tools-icon icon-small-${ rightsMode ? 'rights' : 'no-rights' }` } onClick={ toggleRightsMode } /> }
                     { canBuild &&
-                        <Base pointer title="Build mode" className="icon room-tools-icon icon-small-room" onClick={ event => CreateLinkEvent('builder-toolbar/toggle') } /> }
+                        <Base pointer title="Build mode" className="icon room-tools-icon icon-small-room" onClick={ event => CreateLinkEvent('build-mode/toggle') } /> }
                     <Base pointer title={ LocalizeText('room.zoom.button.text') } className={ classNames('icon', 'room-tools-icon', (zoomScale >= 1) ? 'icon-zoom-less' : 'icon-zoom-more') } onClick={ toggleZoom } />
                     <Base pointer title={ LocalizeText('room.chathistory.button.text') } className="icon room-tools-icon icon-chat-history" onClick={ event => CreateLinkEvent('chat-history/toggle') } />
+                    <Base pointer title={ bubblesHidden ? 'Show chat bubbles' : 'Hide chat bubbles' } className={ classNames('icon', 'room-tools-icon', 'icon-message', 'room-tools-bubbles', bubblesHidden ? 'is-off' : '') } onClick={ event => SendMessageComposer(new PlayerSettingToggleComposer('chat_bubbles')) } />
                     { navigatorData.canRate && (navigatorData.enteredGuestRoom?.roomId >= 0) &&
                         <Base pointer title={ LocalizeText('room.like.button.text') } className="icon room-tools-icon icon-like-room" onClick={ event => SendMessageComposer(new RateFlatMessageComposer(1)) } /> }
                 </Flex>

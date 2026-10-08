@@ -1,7 +1,7 @@
 import { RoomObjectType } from '@nitrots/nitro-renderer';
 import { FC, useMemo, useState } from 'react';
 import { ChatEntryType, IChatEntry, LocalizeText, ReportState, ReportType } from '../../../api';
-import { AutoGrid, Button, Column, Flex, LayoutGridItem, Text } from '../../../common';
+import { AutoGrid, Button, Column, Flex, LayoutGridItem, ScrollContainer, Text } from '../../../common';
 import { useChatHistory, useHelp } from '../../../hooks';
 
 export const SelectReportedChatsView: FC<{}> = props =>
@@ -58,7 +58,7 @@ export const SelectReportedChatsView: FC<{}> = props =>
 
     return (
         <>
-            <Column gap={ 1 }>
+            <Column shrink gap={ 1 }>
                 <Text fontSize={ 4 }>{ LocalizeText('help.emergency.chat_report.subtitle') }</Text>
                 <Text>{ LocalizeText('help.emergency.chat_report.description') }</Text>
             </Column>
@@ -66,18 +66,20 @@ export const SelectReportedChatsView: FC<{}> = props =>
                 { !userChats || !userChats.length &&
                     <Text>{ LocalizeText('help.cfh.error.no_user_data') }</Text> }
                 { (userChats.length > 0) &&
-                    <AutoGrid gap={ 1 } columnCount={ 1 } columnMinHeight={ 25 } overflow="auto">
-                        { userChats.map((chat, index) =>
-                        {
-                            return (
-                                <LayoutGridItem key={ chat.id } onClick={ event => selectChat(chat) } itemActive={ (selectedChats.indexOf(chat) >= 0) }>
-                                    <Text>{ chat.message }</Text>
-                                </LayoutGridItem>
-                            );
-                        }) }
-                    </AutoGrid> }
+                    <ScrollContainer>
+                        <AutoGrid gap={ 1 } columnCount={ 1 } columnMinHeight={ 25 } overflow="auto">
+                            { userChats.map((chat, index) =>
+                            {
+                                return (
+                                    <LayoutGridItem key={ chat.id } onClick={ event => selectChat(chat) } itemActive={ (selectedChats.indexOf(chat) >= 0) }>
+                                        <Text>{ chat.message }</Text>
+                                    </LayoutGridItem>
+                                );
+                            }) }
+                        </AutoGrid>
+                    </ScrollContainer> }
             </Column>
-            <Flex gap={ 2 } justifyContent="between">
+            <Flex shrink gap={ 2 } justifyContent="between">
                 <Button variant="secondary" onClick={ back } disabled={ (activeReport.reportType === ReportType.IM) }>
                     { LocalizeText('generic.back') }
                 </Button>

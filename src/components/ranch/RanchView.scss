@@ -1,0 +1,520 @@
+.nitro-ranch {
+  font-family: Ubuntu, sans-serif;
+  font-size: 12px;
+  line-height: normal;
+  text-align: left;
+
+  &, * { box-sizing: content-box; }
+
+  &.ranch-badge-anchor {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 5;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .ranch-badge-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    pointer-events: auto;
+  }
+
+  .ranch-level {
+    display: flex;
+    cursor: pointer;
+  }
+
+  .ranch-fx {
+    display: block;
+    image-rendering: pixelated;
+  }
+
+  &.ranch-shop {
+    width: 520px;
+    border: 2px solid #3a1f08;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fdf3e1;
+    box-shadow: 0px 3px 0px #3a1f08, 0px 0px 14px rgba(0, 0, 0, 0.45);
+    color: #4a2a0d;
+  }
+
+  .ranch-shop-header {
+    position: relative;
+    padding: 9px 12px;
+    background: linear-gradient(180deg, #e98a3c 0%, #b8562a 60%, #8a3f1a 100%);
+    border-bottom: 2px solid #3a1f08;
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 0px 2px 0px rgba(0, 0, 0, 0.45);
+    cursor: move;
+  }
+
+  .ranch-shop-close {
+    position: absolute;
+    right: 9px;
+    top: 8px;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #3a1f08;
+    border-radius: 4px;
+    background: #c8402f;
+    cursor: pointer;
+
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 2px;
+      width: 2px;
+      height: 10px;
+      background: #ffffff;
+      transform: rotate(45deg);
+    }
+
+    &::after { transform: rotate(-45deg); }
+
+    &:hover { filter: brightness(1.1); }
+  }
+
+  .ranch-shop-wallet {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 12px;
+    background: #f1d7a8;
+    border-bottom: 1px solid #d9b77e;
+    font-weight: bold;
+  }
+
+  .ranch-shop-level {
+    margin-left: auto;
+    font-size: 11px;
+    color: #8a4f1e;
+  }
+
+  .ranch-shop-price {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: bold;
+    color: #c77b00;
+
+    img { image-rendering: pixelated; }
+
+    &.is-tokens { color: #4d8f1f; }
+  }
+
+  .ranch-shop-body {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .ranch-shop-column {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    max-height: 330px;
+    overflow-y: auto;
+
+    &:first-child { flex: 1.35; }
+  }
+
+  .ranch-shop-title {
+    padding: 6px 10px;
+    border-radius: 5px;
+    background: #e3bd7f;
+    box-shadow: inset 0px -2px 0px rgba(0, 0, 0, 0.12);
+    font-size: 12px;
+    font-weight: bold;
+    color: #5e3711;
+  }
+
+  .ranch-shop-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 6px;
+    border-radius: 6px;
+    background: #fff9ee;
+    box-shadow: inset 0px 0px 0px 1px #ecd3a6;
+
+    &.is-locked { opacity: 0.6; }
+
+    &.is-stock { padding: 3px 6px; }
+  }
+
+  .ranch-shop-icon {
+    position: relative;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    background-color: #f3dcb4;
+    background-repeat: no-repeat;
+    background-position: 50%;
+
+    &.is-pixel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      img { image-rendering: pixelated; }
+    }
+  }
+
+  .ranch-shop-badge {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    image-rendering: pixelated;
+  }
+
+  .ranch-shop-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ranch-shop-name {
+    font-size: 12px;
+    font-weight: bold;
+    color: #4a2a0d;
+  }
+
+  .ranch-shop-meta {
+    font-size: 11px;
+    color: #8a6a45;
+  }
+
+  .ranch-shop-buy {
+    flex-shrink: 0;
+    min-width: 48px;
+    padding: 5px 10px;
+    border: 2px solid #7a3a10;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #f6b04a 0%, #d8731f 100%);
+    box-shadow: 0px 2px 0px #7a3a10;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+
+    &:hover { filter: brightness(1.08); }
+
+    &:active { transform: translateY(1px); box-shadow: 0px 1px 0px #7a3a10; }
+
+    &.is-disabled {
+      border-color: #8c8270;
+      background: #b8ad98;
+      box-shadow: 0px 2px 0px #8c8270;
+      cursor: not-allowed;
+    }
+  }
+
+  .ranch-shop-empty,
+  .ranch-shop-hint {
+    padding: 6px 4px;
+    font-size: 11px;
+    color: #8a6a45;
+  }
+
+  &.ranch-barn {
+    position: absolute;
+    left: 50%;
+    bottom: 84px;
+    transform: translateX(-50%);
+    z-index: 55;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 7px;
+    border: 2px solid #3a1f08;
+    border-radius: 8px;
+    background: rgba(253, 243, 225, 0.96);
+    box-shadow: 0px 2px 0px #3a1f08;
+    pointer-events: auto;
+  }
+
+  .ranch-barn-title {
+    padding: 0 4px;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #8a4f1e;
+  }
+
+  .ranch-barn-slots {
+    display: flex;
+    gap: 5px;
+  }
+
+  .ranch-barn-slot {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    background-color: #f3dcb4;
+    background-repeat: no-repeat;
+    background-position: 50%;
+    box-shadow: inset 0px 0px 0px 1px #d9b77e;
+    cursor: pointer;
+
+    img { image-rendering: pixelated; }
+
+    &:hover { box-shadow: inset 0px 0px 0px 2px #d8731f; }
+
+    &.is-selected { box-shadow: inset 0px 0px 0px 2px #4d8f1f, 0px 0px 6px rgba(77, 143, 31, 0.7); }
+
+    &.is-pixel { cursor: default; }
+
+    &.is-shop {
+      width: auto;
+      padding: 0 10px;
+      border: 2px solid #7a3a10;
+      background: linear-gradient(180deg, #f6b04a 0%, #d8731f 100%);
+      box-shadow: 0px 2px 0px #7a3a10;
+      font-size: 12px;
+      font-weight: bold;
+      color: #ffffff;
+      text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  .ranch-barn-count {
+    position: absolute;
+    right: 1px;
+    bottom: 0px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 1px 1px 0px #3a1f08, -1px -1px 0px #3a1f08, 1px -1px 0px #3a1f08, -1px 1px 0px #3a1f08;
+  }
+
+  .ranch-barn-tag {
+    position: absolute;
+    left: 2px;
+    top: 1px;
+    font-size: 10px;
+    font-weight: bold;
+    color: #5e3711;
+  }
+
+  &.ranch-dialog {
+    width: 250px;
+    border: 2px solid #3a1f08;
+    border-radius: 8px;
+    background: #fdf3e1;
+    box-shadow: 0px 3px 0px #3a1f08, 0px 0px 14px rgba(0, 0, 0, 0.45);
+    color: #4a2a0d;
+    overflow: hidden;
+  }
+
+  .ranch-dialog-header {
+    padding: 9px;
+    border-bottom: 2px solid #3a1f08;
+    background: linear-gradient(180deg, #e98a3c 0%, #b8562a 60%, #8a3f1a 100%);
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 0px 2px 0px rgba(0, 0, 0, 0.45);
+    cursor: move;
+  }
+
+  .ranch-dialog-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px 4px;
+  }
+
+  .ranch-dialog-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    border-radius: 6px;
+    background: #f3dcb4;
+
+    img { max-width: 44px; max-height: 44px; }
+  }
+
+  .ranch-dialog-desc {
+    font-size: 13px;
+    font-weight: bold;
+    color: #4a2a0d;
+  }
+
+  .ranch-dialog-price {
+    margin-top: 2px;
+    font-size: 11px;
+    color: #8a6a45;
+  }
+
+  .ranch-dialog-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 12px 4px;
+  }
+
+  .ranch-dialog-step,
+  .ranch-dialog-max {
+    height: 26px;
+    border: 2px solid #7a3a10;
+    border-radius: 6px;
+    background: #f3dcb4;
+    box-shadow: 0px 2px 0px #7a3a10;
+    text-align: center;
+    line-height: 26px;
+    font-weight: bold;
+    color: #5e3711;
+    cursor: pointer;
+    user-select: none;
+
+    &:active { transform: translateY(1px); box-shadow: 0px 1px 0px #7a3a10; }
+  }
+
+  .ranch-dialog-step {
+    width: 26px;
+    font-size: 16px;
+  }
+
+  .ranch-dialog-max {
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .ranch-dialog-input {
+    width: 56px;
+    height: 26px;
+    margin: 0;
+    padding: 0 4px;
+    border: 2px solid #d9b77e;
+    border-radius: 6px;
+    background: #fff9ee;
+    outline: none;
+    box-shadow: none;
+    text-align: center;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: bold;
+    color: #4a2a0d;
+    appearance: textfield;
+
+    &::-webkit-inner-spin-button, &::-webkit-outer-spin-button { appearance: none; margin: 0; }
+  }
+
+  .ranch-dialog-total {
+    padding: 10px 12px 0;
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    color: #c77b00;
+  }
+
+  .ranch-dialog-requirement {
+    padding: 4px 12px 0;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #b40404;
+  }
+
+  .ranch-dialog-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .ranch-dialog-confirm,
+  .ranch-dialog-close {
+    padding: 6px 22px;
+    border: 2px solid #7a3a10;
+    border-radius: 6px;
+    box-shadow: 0px 2px 0px #7a3a10;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+  }
+
+  .ranch-dialog-confirm {
+    background: linear-gradient(180deg, #f6b04a 0%, #d8731f 100%);
+
+    &.disabled { border-color: #8c8270; background: #b8ad98; box-shadow: 0px 2px 0px #8c8270; cursor: not-allowed; }
+  }
+
+  .ranch-dialog-close {
+    border-color: #3a1f08;
+    background: #8a6a45;
+    box-shadow: 0px 2px 0px #3a1f08;
+  }
+}
+
+.lotto-live.ranch-quests {
+  order: -1;
+  width: 260px;
+
+  .ranch-quests-day { font-size: 12px; font-weight: 700; }
+
+  .ranch-quests-steps { display: flex; flex-direction: column; gap: 3px; }
+
+  .ranch-quests-step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-size: 11px;
+
+    &.is-current { background: color-mix(in srgb, var(--holo-text-primary) 8%, transparent); font-weight: 700; }
+
+    &.is-done { color: var(--holo-text-muted); }
+
+    &.is-locked { opacity: .55; }
+  }
+
+  .ranch-quests-check {
+    display: inline-flex;
+    flex: 0 0 16px;
+    align-items: center;
+    justify-content: center;
+    height: 16px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--holo-text-primary) 12%, transparent);
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .is-done .ranch-quests-check { background: #52bc48; color: #fff; }
+
+  .ranch-quests-text { flex: 1; min-width: 0; }
+
+  .ranch-quests-count { color: #c27c0e; font-weight: 700; }
+
+  .ranch-quests-reward { display: inline-flex; align-items: center; gap: 2px; color: #f0aa28; font-weight: 700; }
+}

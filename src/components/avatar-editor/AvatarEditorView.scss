@@ -1,0 +1,21 @@
+.nitro-avatar-editor-spritesheet {
+  &.pt-icon {
+    width: 25px;
+    height: 24px;
+    background: url('@/assets/images/avatareditor/pt-icon.png') no-repeat;
+  }
+
+  &.pt-icon.selected {
+    background-image: url('@/assets/images/avatareditor/pt-selected-icon.png');
+  }
+
+  &.mc-icon {
+    width: 34px;
+    height: 16px;
+    background: url('@/assets/images/avatareditor/mc-icon.png') no-repeat;
+  }
+
+  &.mc-icon.selected {
+    background-image: url('@/assets/images/avatareditor/mc-selected-icon.png');
+  }
+}

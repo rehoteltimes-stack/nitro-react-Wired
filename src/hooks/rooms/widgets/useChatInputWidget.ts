@@ -1,6 +1,8 @@
+import { ChatReplyComposer, GetChatReplyTarget, SetChatReplyTarget } from '../../../api/chat/ChatReactions';
 import { AvatarExpressionEnum, GetTicker, HabboClubLevelEnum, RoomControllerLevel, RoomEngineObjectEvent, RoomObjectCategory, RoomRotatingEffect, RoomSessionChatEvent, RoomSettingsComposer, RoomShakingEffect, RoomZoomEvent, TextureUtils } from '@nitrots/nitro-renderer';
+import { RegisterShopMessages, SHOP_SETTING_COMMANDS, ShopSettingComposer, ShopSpawnComposer } from '../../../api/shop/ShopProtocol';
 import { useEffect, useState } from 'react';
-import { ChatMessageTypeEnum, CreateLinkEvent, NotificationBubbleType, GetClubMemberLevel, GetConfiguration, GetRoomEngine, GetSessionDataManager, LocalizeText, SendMessageComposer } from '../../../api';
+import { ChatMessageTypeEnum, CreateLinkEvent, NotificationBubbleType, GetClubMemberLevel, GetConfiguration, GetRoomEngine, GetRoomSession, GetSessionDataManager, LocalizeText, RegisterMentionMessages, SendMentionByNameComposer, SendMessageComposer } from '../../../api';
 import { useRoomEngineEvent, useRoomSessionManagerEvent } from '../../events';
 import { useNotification } from '../../notification';
 import { useObjectSelectedEvent } from '../engine';
@@ -14,13 +16,89 @@ const useChatInputWidgetState = () =>
     const [ isIdle, setIsIdle ] = useState(false);
     const [ floodBlocked, setFloodBlocked ] = useState(false);
     const [ floodBlockedSeconds, setFloodBlockedSeconds ] = useState(0);
-    const { showNitroAlert = null, showConfirm = null, showSingleBubble = null } = useNotification();
+    const { showConfirm = null, showFeedback = null } = useNotification();
     const { roomSession = null } = useRoom();
 
     const sendChat = (text: string, chatType: number, recipientName: string = '', styleId: number = 0) =>
     {
         if(text === '') return null;
 
+        // hCMS Shop: play the equipped spawn animation for the room (the server checks the cooldown)
+        if(text.trim().toLowerCase() === ':spawn')
+        {
+            RegisterShopMessages();
+            SendMessageComposer(new ShopSpawnComposer(false));
+
+            return null;
+        }
+
+        // hCMS Shop: :nospawn / :noentryspawn / :noaura flip a setting (the same command turns it back)
+        const shopSetting = /^:([a-z]+)$/.exec(text.trim().toLowerCase());
+
+        if(shopSetting && SHOP_SETTING_COMMANDS[shopSetting[1]])
+        {
+            RegisterShopMessages();
+            SendMessageComposer(new ShopSettingComposer(SHOP_SETTING_COMMANDS[shopSetting[1]]));
+
+            return null;
+        }
+
+        // "@name" or "@name message" is a mention: a short (optionally text-less) ping to a player anywhere in the hotel, shown as a card on their screen.
+        if(text.charAt(0) === '@')
+        {
+            RegisterMentionMessages();
+
+            const space = text.indexOf(' ');
+            const name = ((space > 1) ? text.slice(1, space) : text.slice(1)).trim();
+            const message = (space > 1) ? text.slice(space + 1).trim() : '';
+
+            if(name.length) SendMessageComposer(new SendMentionByNameComposer(name, message));
+            else showFeedback('Usage: @username message', 'error');
+
+            return null;
+        }
+
+        // An embedded, non-leading "@name" (e.g. "hey @Phi") is a real mention/ping too, not just cosmetic
+        // in-message coloring - fires regardless of whether normal room chat below also succeeds.
+        const embeddedMention = /(^|\s)@([A-Za-z0-9_.-]{1,25})/.exec(text);
+
+        // Room chat/commands need a real room - outside one (the landing view also mounts this input, for
+        // mentions), this throws and is handled below instead of the roomSession calls silently failing with no
+        // visible result. A plain `!roomSession` check isn't enough on its own: useRoom() is a use-between shared
+        // hook that can hold a stale, already-left roomSession reference for a tick (see RoomView.tsx's own doc
+        // comment on this exact race) - wrapping the whole block catches that stale-session throw too.
+        let sentAsRoomChat = false;
+
+        try
+        {
+            if(!roomSession) throw new Error('not in a room');
+
+            sendRoomChat(text, chatType, recipientName, styleId);
+            sentAsRoomChat = true;
+        }
+        catch(e)
+        {
+            sentAsRoomChat = false;
+        }
+
+        if(embeddedMention)
+        {
+            const name = embeddedMention[2];
+            const message = (text.slice(0, embeddedMention.index) + text.slice(embeddedMention.index + embeddedMention[0].length)).trim();
+
+            RegisterMentionMessages();
+            SendMessageComposer(new SendMentionByNameComposer(name, message, sentAsRoomChat));
+        }
+        else if(!sentAsRoomChat)
+        {
+            showFeedback('You need to be in a room to chat - use @username message to send a mention instead.', 'not_found');
+        }
+
+        return null;
+    }
+
+    const sendRoomChat = (text: string, chatType: number, recipientName: string, styleId: number) =>
+    {
         const parts = text.split(' ');
 
         if(parts.length > 0)
@@ -98,6 +176,18 @@ const useChatInputWidgetState = () =>
                     roomSession.sendExpressionMessage(AvatarExpressionEnum.RESPECT.ordinal);
 
                     return null;
+                case ':commands':
+                    CreateLinkEvent('cmdhelp/command');
+
+                    return null;
+                case ':help':
+                    // The reference opens the list named by the second word, and the help center for anything else.
+                    if([ 'command', 'commands', 'cmd', 'cmds' ].includes(secondPart.toLowerCase())) CreateLinkEvent('cmdhelp/command');
+                    else if([ 'enable', 'enables', 'effect', 'effects' ].includes(secondPart.toLowerCase())) CreateLinkEvent('cmdhelp/enable');
+                    else if([ 'hand', 'hands', 'handitem', 'handitems', 'item', 'items' ].includes(secondPart.toLowerCase())) CreateLinkEvent('cmdhelp/handitem');
+                    else CreateLinkEvent('cmdhelp/help');
+
+                    return null;
                 case ':sign':
                     roomSession.sendSignMessage(parseInt(secondPart));
 
@@ -147,42 +237,25 @@ const useChatInputWidgetState = () =>
                     if(roomSession.controllerLevel >= RoomControllerLevel.GUEST) CreateLinkEvent('build-mode/toggle/' + ((secondPart.toLowerCase() === 'reset') ? 'reset' : ''));
 
                     return null;
-                case ':setz':
-                case ':forceact':
-                case ':forcerot':
-                {
-                    if(roomSession.controllerLevel < RoomControllerLevel.GUEST) return null;
-
-                    const command = firstPart.toLowerCase().slice(1);
-
-                    if(secondPart.toLowerCase() === 'stop')
-                    {
-                        CreateLinkEvent('build-mode/' + command + '/stop');
-
-                        return null;
-                    }
-
-                    const value = (command === 'setz') ? parseFloat(secondPart) : parseInt(secondPart, 10);
-                    const limit = (command === 'forceact') ? 2147483647 : 7;
-
-                    if(isNaN(value) || !isFinite(value))
-                    {
-                        showSingleBubble(('Bad command format!\n:' + command + ' value or :' + command + ' stop'), NotificationBubbleType.INFO);
-
-                        return null;
-                    }
-
-                    if(((value < 0) || (value > limit)) && (command !== 'setz'))
-                    {
-                        showSingleBubble(('The value must be between 0 and ' + limit + '\nExample: :' + command + ' 2'), NotificationBubbleType.INFO);
-
-                        return null;
-                    }
-
-                    CreateLinkEvent('build-mode/' + command + '/' + value);
+                case ':buildertool':
+                case ':buildtool':
+                    // Builder Toolbar (brush/fill/copy/paste), the one Room Info's "Furni brush" button opens
+                    if(roomSession.controllerLevel >= RoomControllerLevel.GUEST) CreateLinkEvent('builder-toolbar/toggle');
 
                     return null;
-                }
+                // :setz :forceact :forcerot (and their short names) are handled by the server (hcms-emulator-plugin BuildTools), so they
+                // work without any client panel.
+                case ':shop':
+                case ':stylelab':
+                case ':presence':
+                    // Presence (hCMS Shop, own plugin)
+                    CreateLinkEvent('shop/toggle');
+                    return null;
+                case ':furnieditor':
+                case ':fe':
+                    // hCMS Furni Editor (own plugin, admins only - the view and the server both check rank 7+)
+                    CreateLinkEvent('furni-editor/toggle');
+                    return null;
                 case ':furni':
                     CreateLinkEvent('furni-chooser/');
                     return null;
@@ -210,7 +283,7 @@ const useChatInputWidgetState = () =>
                 case ':client':
                 case ':nitro':
                 case ':billsonnn':
-                    showNitroAlert();
+                    roomSession.sendChatMessage(':info', styleId);
                     return null;
                 case ':settings':
                     if(roomSession.isRoomOwner || GetSessionDataManager().isModerator)
@@ -220,6 +293,16 @@ const useChatInputWidgetState = () =>
 
                     return null;
             }
+        }
+
+        // replying to a chat line: the server gets which one right before the line itself (api/chat/ChatReactions)
+        const replyTarget = GetChatReplyTarget();
+
+        if(replyTarget && (chatType !== ChatMessageTypeEnum.CHAT_WHISPER))
+        {
+            SendMessageComposer(new ChatReplyComposer(replyTarget.id));
+            SetChatReplyTarget(null);
+            showFeedback(`Reply sent to ${ replyTarget.username }.`, 'reply');
         }
 
         switch(chatType)
@@ -301,6 +384,8 @@ const useChatInputWidgetState = () =>
 
     useEffect(() =>
     {
+        if(!roomSession) return;
+
         if(isTyping)
         {
             if(!typingStartedSent)

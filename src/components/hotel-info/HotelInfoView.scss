@@ -1,0 +1,87 @@
+.nitro-hotel-card {
+  &.nitro-card .nitro-card-header.hotel-card-header {
+    min-height: 62px;
+    max-height: none;
+    background: url('https://cdn.habbo.nz/c_images/info/banner.png?v=1') center / cover no-repeat;
+
+    .nitro-card-header-content {
+      height: 100%;
+      padding-top: 0;
+    }
+
+    .nitro-card-header-text {
+      height: auto;
+      line-height: normal;
+    }
+  }
+
+  .hotel-card-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .info-icon {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 41px;
+    background-image: image-set(url('https://cdn.habbo.nz/c_images/icons/logo_habbo_icon_toolbar.png?v=1') 1x, url('https://cdn.habbo.nz/c_images/icons/logo_habbo_icon_toolbar@2x.png?v=1') 2x);
+    background-repeat: no-repeat;
+    background-size: 34px 41px;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .5));
+  }
+
+  .hotel-card-banner .name {
+    display: flex;
+    flex-direction: column;
+    color: #fff;
+    line-height: 1.2;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .55);
+
+    b { font-size: 18px; }
+    span { font-size: 12px; font-weight: normal; opacity: .9; }
+  }
+
+  .hotel-card-body { padding: 12px 16px 14px; }
+
+  h4 {
+    max-width: fit-content;
+    margin: 0 auto 8px;
+    padding: 2px 12px;
+    background: transparent url('https://cdn.habbo.nz/c_images/info/glitter.gif?v=1');
+    color: #f8d236;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: .3px;
+    text-align: center;
+    text-shadow: #fffab1 1px 1px 10px;
+  }
+
+  hr {
+    margin: 8px 0;
+    border: 0;
+    border-top: 1px solid var(--holo-border-color-primary);
+    opacity: 1;
+  }
+
+  .case {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 3px 0;
+    font-size: 12.5px;
+
+    .l { flex: 0 0 auto; color: var(--holo-text-muted); }
+    .r { min-width: 0; color: var(--holo-text-primary); font-weight: bold; text-align: right; word-break: break-word; }
+  }
+
+  .hotel-card-list {
+    max-height: min(50vh, 360px);
+    overflow-y: auto;
+
+    .case {
+      .l { flex: 1 1 auto; min-width: 0; color: var(--holo-text-primary); font-weight: bold; word-break: break-word; }
+      .r { flex: 0 0 auto; color: var(--holo-text-muted); font-weight: normal; }
+    }
+  }
+}

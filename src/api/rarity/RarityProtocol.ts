@@ -9,12 +9,14 @@ import { GetConnection } from '../nitro';
 
 const IncomingHeaders = {
     RARE_LEVELS_DATA: 9541,
-    RARE_ROOM_DATA: 9543
+    RARE_ROOM_DATA: 9543,
+    BADGE_RARITY_DATA: 9677
 };
 
 const OutgoingHeaders = {
     RARE_LEVELS_REQUEST: 9540,
-    RARE_ROOM_REQUEST: 9542
+    RARE_ROOM_REQUEST: 9542,
+    BADGE_RARITY_REQUEST: 9676
 };
 
 let registered = false;
@@ -30,11 +32,13 @@ export const RegisterRarityMessages = () =>
     connection.registerMessages({
         events: new Map<number, Function>([
             [ IncomingHeaders.RARE_LEVELS_DATA, RareLevelsDataEvent ],
-            [ IncomingHeaders.RARE_ROOM_DATA, RareRoomDataEvent ]
+            [ IncomingHeaders.RARE_ROOM_DATA, RareRoomDataEvent ],
+            [ IncomingHeaders.BADGE_RARITY_DATA, BadgeRarityDataEvent ]
         ]),
         composers: new Map<number, Function>([
             [ OutgoingHeaders.RARE_LEVELS_REQUEST, RareLevelsRequestComposer ],
-            [ OutgoingHeaders.RARE_ROOM_REQUEST, RareRoomRequestComposer ]
+            [ OutgoingHeaders.RARE_ROOM_REQUEST, RareRoomRequestComposer ],
+            [ OutgoingHeaders.BADGE_RARITY_REQUEST, BadgeRarityRequestComposer ]
         ])
     });
 
@@ -150,4 +154,47 @@ export class RareRoomDataEvent extends MessageEvent
     {
         return this.parser as RareRoomDataParser;
     }
+}
+
+export class BadgeRarityRequestComposer implements IMessageComposer<[ string ]>
+{
+    private _data: [ string ];
+
+    constructor(badgeCode: string) { this._data = [ badgeCode ]; }
+
+    public getMessageArray() { return this._data; }
+
+    public dispose(): void { return; }
+}
+
+export class BadgeRarityDataParser implements IMessageParser
+{
+    public badgeCode: string = '';
+    public count: number = 0;
+    public level: number = 0;
+
+    public flush(): boolean
+    {
+        this.badgeCode = '';
+        this.count = 0;
+        this.level = 0;
+
+        return true;
+    }
+
+    public parse(wrapper: IMessageDataWrapper): boolean
+    {
+        this.badgeCode = wrapper.readString();
+        this.count = wrapper.readInt();
+        this.level = wrapper.readInt();
+
+        return true;
+    }
+}
+
+export class BadgeRarityDataEvent extends MessageEvent
+{
+    constructor(callBack: Function) { super(callBack, BadgeRarityDataParser); }
+
+    public getParser(): BadgeRarityDataParser { return this.parser as BadgeRarityDataParser; }
 }

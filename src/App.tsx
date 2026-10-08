@@ -1,22 +1,15 @@
 import { ConfigurationEvent, GetAssetManager, HabboWebTools, LegacyExternalInterface, Nitro, NitroCommunicationDemoEvent, NitroConfiguration, NitroEvent, NitroLocalizationEvent, NitroVersion, RoomEngineEvent } from '@nitrots/nitro-renderer';
 import { FC, useCallback, useEffect, useState } from 'react';
-import { GetCommunication, GetConfiguration, GetNitroInstance, GetUIVersion } from './api';
+import { GetCommunication, GetConfiguration, GetNitroInstance, GetUIVersion, ReportClientIdentity, SendClientIdentity } from './api';
 import { Base, TransitionAnimation, TransitionAnimationTypes } from './common';
 import { LoadingView } from './components/loading/LoadingView';
 import { MainView } from './components/main/MainView';
+import { ApplyPerformanceSettings } from './api/settings/PerformanceSettings';
+import { useProtectedReady } from './components/protected/LoadProtected';
 import { useConfigurationEvent, useLocalizationEvent, useMainEvent, useRoomEngineEvent } from './hooks';
-import { preloadNitroTruffle } from './truffle';
 
 NitroVersion.UI_VERSION = GetUIVersion();
 
-const trufflePreload = preloadNitroTruffle()
-    .then(() => true)
-    .catch(error =>
-    {
-        console.error('Failed to preload Truffle', error);
-
-        return false;
-    });
 
 export const App: FC<{}> = props =>
 {
@@ -25,6 +18,7 @@ export const App: FC<{}> = props =>
     const [ message, setMessage ] = useState('Getting Ready');
     const [ percent, setPercent ] = useState(0);
     const [ imageRendering, setImageRendering ] = useState<boolean>(true);
+    const protectedReady = useProtectedReady();
       
     if(!GetNitroInstance())
     {
@@ -57,6 +51,7 @@ export const App: FC<{}> = props =>
                 setTimeout(() => window.location.reload(), 1500);
                 return;
             case NitroCommunicationDemoEvent.CONNECTION_HANDSHAKING:
+                SendClientIdentity();
                 setPercent(prevValue => (prevValue + 20));
                 return;
             case NitroCommunicationDemoEvent.CONNECTION_HANDSHAKE_FAILED:
@@ -67,6 +62,7 @@ export const App: FC<{}> = props =>
                 setPercent(prevValue => (prevValue + 20));
 
                 GetNitroInstance().init();
+                ReportClientIdentity();
 
                 if(LegacyExternalInterface.available) LegacyExternalInterface.call('legacyTrack', 'authentication', 'authok', []);
                 return;
@@ -82,14 +78,8 @@ export const App: FC<{}> = props =>
                 HabboWebTools.send(-1, 'client.init.handshake.fail');
                 return;
             case RoomEngineEvent.ENGINE_INITIALIZED:
+                ApplyPerformanceSettings();
                 setPercent(prevValue => (prevValue + 20));
-
-                if(!(await trufflePreload))
-                {
-                    setIsError(true);
-                    setMessage('Truffle Failed');
-                    return;
-                }
 
                 setTimeout(() => setIsReady(true), 300);
                 return;
@@ -147,7 +137,7 @@ export const App: FC<{}> = props =>
     
     return (
         <Base fit overflow="hidden" className={ imageRendering && 'image-rendering-pixelated' }>
-            { (!isReady || isError) &&
+            { (!isReady || isError || !protectedReady) &&
                 <LoadingView isError={ isError } message={ message } percent={ percent } /> }
             <TransitionAnimation type={ TransitionAnimationTypes.FADE_IN } inProp={ (isReady) }>
                 <MainView />

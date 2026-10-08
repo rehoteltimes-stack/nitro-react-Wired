@@ -1,0 +1,33 @@
+diff --git a/nitro/communication/messages/parser/room/mapping/FloorHeightMapMessageParser.ts b/nitro/communication/messages/parser/room/mapping/FloorHeightMapMessageParser.ts
+index 4b12f96752503328487496118f9193deaa2b2d69..e460bfb0ae0bc2e3eb1af5512801960e37fe5c11 100644
+--- a/nitro/communication/messages/parser/room/mapping/FloorHeightMapMessageParser.ts
++++ b/nitro/communication/messages/parser/room/mapping/FloorHeightMapMessageParser.ts
+@@ -106,7 +106,9 @@ export class FloorHeightMapMessageParser implements IMessageParser
+                     const char = text.charAt(subIterator);
+                     let height = FloorHeightMapMessageParser.TILE_BLOCKED;
+ 
+-                    if((char !== 'x') && (char !== 'X')) height = parseInt(char, 36);
++                    // hCMS: 0-9 = 0-9, a-z = 10-35, A-Z = 36-61 (floor heights above z, like sodaho.tel's
++                    // parseHeightCharacter); x / X = blocked
++                    if((char !== 'x') && (char !== 'X')) height = FloorHeightMapMessageParser.parseHeightCharacter(char);
+ 
+                     heightMap[subIterator] = height;
+ 
+@@ -120,6 +122,17 @@ export class FloorHeightMapMessageParser implements IMessageParser
+         return true;
+     }
+ 
++    public static parseHeightCharacter(char: string): number
++    {
++        const code = char.charCodeAt(0);
++
++        if((code >= 48) && (code <= 57)) return (code - 48);
++        if((code >= 97) && (code <= 122)) return (10 + (code - 97));
++        if((code >= 65) && (code <= 90)) return (36 + (code - 65));
++
++        return FloorHeightMapMessageParser.TILE_BLOCKED;
++    }
++
+     public getHeight(x: number, y: number): number
+     {
+         if((x < 0) || (x >= this._width) || (y < 0) || (y >= this._height)) return -110;

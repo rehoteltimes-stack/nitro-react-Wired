@@ -1,0 +1,105 @@
+.nitro-bug-report {
+  width: 340px;
+
+  .bug-report-modes {
+    display: flex;
+    padding: 2px;
+    border-radius: 8px;
+    background-color: color-mix(in srgb, var(--holo-text-primary) 8%, transparent);
+  }
+
+  .bug-report-mode {
+    flex: 1;
+    padding: 4px 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--holo-text-primary);
+    font-size: 12px;
+    font-weight: 700;
+
+    &.active {
+      background: #0095f6;
+      color: #fff;
+    }
+  }
+
+  .bug-report-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .bug-report-chip {
+    padding: 3px 8px;
+    border: 1px solid color-mix(in srgb, var(--holo-text-primary) 25%, transparent);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--holo-text-primary);
+    font-size: 11px;
+
+    &.active {
+      border-color: #0095f6;
+      background: #0095f6;
+      color: #fff;
+    }
+  }
+
+  .bug-report-input {
+    width: 100%;
+    padding: 5px 8px;
+    border: 1px solid color-mix(in srgb, var(--holo-text-primary) 25%, transparent);
+    border-radius: 6px;
+    background-color: color-mix(in srgb, var(--holo-text-primary) 6%, transparent);
+    color: var(--holo-text-primary);
+    font-size: 12px;
+    resize: vertical;
+
+    &::placeholder { color: var(--holo-text-muted); }
+
+    &:focus {
+      outline: none;
+      border-color: #0095f6;
+    }
+  }
+
+  .bug-report-target {
+    min-width: 0;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background-color: color-mix(in srgb, #0095f6 18%, transparent);
+    color: var(--holo-text-primary);
+  }
+
+  .bug-report-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .bug-report-result {
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(255, 89, 66, .18);
+    color: #e5533d;
+    font-size: 11px;
+
+    &.is-ok {
+      background: rgba(34, 171, 84, .18);
+      color: #1f9d55;
+    }
+  }
+}
+
+.nitro-bug-report-picker {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  z-index: 100001;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, .8);
+  color: #fff;
+  transform: translateX(-50%);
+}

@@ -11,11 +11,12 @@ export interface FlexProps extends BaseProps<HTMLDivElement>
     alignSelf?: AlignSelfType;
     alignItems?: AlignItemType;
     justifyContent?: JustifyContentType;
+    fill?: boolean;
 }
 
 export const Flex: FC<FlexProps> = props =>
 {
-    const { display = 'flex', column = undefined, reverse = false, gap = null, center = false, alignSelf = null, alignItems = null, justifyContent = null, classNames = [], ...rest } = props;
+    const { display = 'flex', column = undefined, reverse = false, gap = null, center = false, alignSelf = null, alignItems = null, justifyContent = null, fill = false, classNames = [], ...rest } = props;
 
     const getClassNames = useMemo(() =>
     {
@@ -41,10 +42,12 @@ export const Flex: FC<FlexProps> = props =>
 
         if(!alignItems && !justifyContent && center) newClassNames.push('align-items-center', 'justify-content-center');
 
+        if(fill) newClassNames.push('flex-fill');
+
         if(classNames.length) newClassNames.push(...classNames);
 
         return newClassNames;
-    }, [ column, reverse, gap, center, alignSelf, alignItems, justifyContent, classNames ]);
+    }, [ column, reverse, gap, center, alignSelf, alignItems, justifyContent, fill, classNames ]);
 
     return <Base display={ display } classNames={ getClassNames } { ...rest } />;
 }

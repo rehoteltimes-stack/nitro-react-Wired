@@ -1,7 +1,7 @@
 import { GroupDeleteComposer, GroupSaveInformationComposer } from '@nitrots/nitro-renderer';
 import { Dispatch, FC, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { CreateLinkEvent, IGroupData, LocalizeText, SendMessageComposer } from '../../../../api';
-import { Base, Button, Column, Flex, Text } from '../../../../common';
+import { Base, Button, Column, CustomSelect, Flex, Text } from '../../../../common';
 import { useNotification } from '../../../../hooks';
 
 interface GroupTabIdentityViewProps
@@ -38,11 +38,11 @@ export const GroupTabIdentityView: FC<GroupTabIdentityViewProps> = props =>
     {
         if(!groupData || !groupName || !groupName.length) return false;
 
-        if((groupName === groupData.groupName) && (groupDescription === groupData.groupDescription)) return true;
-
         if(groupData.groupId <= 0)
         {
             if(groupHomeroomId <= 0) return false;
+
+            if((groupName === groupData.groupName) && (groupDescription === groupData.groupDescription) && (groupHomeroomId === groupData.groupHomeroomId)) return true;
 
             setGroupData(prevValue =>
             {
@@ -58,7 +58,7 @@ export const GroupTabIdentityView: FC<GroupTabIdentityViewProps> = props =>
             return true;
         }
 
-        SendMessageComposer(new GroupSaveInformationComposer(groupData.groupId, groupName, (groupDescription || '')));
+        if((groupName !== groupData.groupName) || (groupDescription !== groupData.groupDescription)) SendMessageComposer(new GroupSaveInformationComposer(groupData.groupId, groupName, (groupDescription || '')));
 
         return true;
     }, [ groupData, groupName, groupDescription, groupHomeroomId, setGroupData ]);
@@ -80,25 +80,22 @@ export const GroupTabIdentityView: FC<GroupTabIdentityViewProps> = props =>
     if(!groupData) return null;
 
     return (
-        <Column justifyContent="between" overflow="auto">
-            <Column gap={ 1 }>
+        <Column justifyContent="between" className="fill-remaining-height">
+            <Column gap={ 2 } className="fill-remaining-height">
                 <Flex alignItems="center" gap={ 1 }>
                     <Text center className="col-3">{ LocalizeText('group.edit.name') }</Text>
-                    <input type="text" className="form-control form-control-sm" value={ groupName } maxLength={ 29 } onChange={ event => setGroupName(event.target.value) } />
+                    <input type="text" className="form-control form-control-sm" value={ groupName } maxLength={ 32 } onChange={ event => setGroupName(event.target.value) } />
                 </Flex>
-                <Flex alignItems="center" gap={ 1 }>
+                <Flex gap={ 1 } className="fill-remaining-height">
                     <Text center className="col-3">{ LocalizeText('group.edit.desc') }</Text>
-                    <textarea className="form-control form-control-sm" value={ groupDescription } maxLength={ 254 } onChange={ event => setGroupDescription(event.target.value) } />
+                    <textarea className="form-control form-control-sm" value={ groupDescription } maxLength={ 255 } onChange={ event => setGroupDescription(event.target.value) } />
                 </Flex>
                 { isCreator &&
                     <>
                         <Flex alignItems="center" gap={ 1 }>
                             <Text center className="col-3">{ LocalizeText('group.edit.base') }</Text>
                             <Column fullWidth gap={ 1 }>
-                                <select className="form-select form-select-sm" value={ groupHomeroomId } onChange={ event => setGroupHomeroomId(parseInt(event.target.value)) }>
-                                    <option value={ -1 } disabled>{ LocalizeText('group.edit.base.select.room') }</option>
-                                    { availableRooms && availableRooms.map((room, index) => <option key={ index } value={ room.id }>{ room.name }</option>) }
-                                </select>
+                                <CustomSelect value={ groupHomeroomId } onChange={ value => setGroupHomeroomId(parseInt(value)) } items={ (availableRooms || []).map(room => ({ value: room.id, text: room.name })) } noInvalid />
                             </Column>
                         </Flex>
                         <Flex gap={ 1 }>

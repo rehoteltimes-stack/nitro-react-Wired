@@ -1,0 +1,58 @@
+.nitropedia {
+  width: 440px;
+  height: 480px;
+
+  .nitropedia-content {
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 4px;
+    color: var(--holo-text-primary);
+    font-size: 12px;
+    line-height: 1.5;
+
+    .padding-top,
+    .padding-bottom {
+      display: none;
+    }
+
+    p {
+      margin: 0 0 8px;
+      font-size: 12px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      clear: none;
+      margin: 14px 0 6px;
+      padding-bottom: 3px;
+      border-bottom: 1px solid color-mix(in srgb, var(--holo-text-primary) 15%, transparent);
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    h1 { font-size: 18px; }
+
+    img[align="right"] {
+      float: right;
+      max-width: 45%;
+      height: auto;
+      margin: 0 0 8px 12px;
+      image-rendering: pixelated;
+    }
+
+    img[align="left"] {
+      float: left;
+      max-width: 45%;
+      height: auto;
+      margin: 0 12px 8px 0;
+      image-rendering: pixelated;
+    }
+
+    b,
+    strong {
+      color: inherit;
+      font-weight: 700;
+    }
+  }
+}

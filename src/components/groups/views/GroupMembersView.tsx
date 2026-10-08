@@ -2,7 +2,7 @@ import { GroupAdminGiveComposer, GroupAdminTakeComposer, GroupConfirmMemberRemov
 import { FC, useCallback, useEffect, useState } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { AddEventLinkTracker, GetSessionDataManager, GetUserProfile, LocalizeText, RemoveLinkEventTracker, SendMessageComposer } from '../../../api';
-import { Base, Button, Column, Flex, Grid, LayoutAvatarImageView, LayoutBadgeImageView, NitroCardContentView, NitroCardHeaderView, NitroCardView, Text } from '../../../common';
+import { Base, Button, Column, CustomSelect, Flex, Grid, LayoutAvatarImageView, LayoutBadgeImageView, NitroCardContentView, NitroCardHeaderView, NitroCardView, Text } from '../../../common';
 import { useMessageEvent, useNotification } from '../../../hooks';
 
 export const GroupMembersView: FC<{}> = props =>
@@ -155,11 +155,8 @@ export const GroupMembersView: FC<{}> = props =>
                     </Flex>
                     <Column fullWidth gap={ 1 }>
                         <input type="text" className="form-control form-control-sm w-100" placeholder={ LocalizeText('group.members.searchinfo') } value={ searchQuery } onChange={ event => setSearchQuery(event.target.value) } />
-                        <select className="form-select form-select-sm w-100" value={ levelId } onChange={ event => setLevelId(parseInt(event.target.value)) }>
-                            <option value="0">{ LocalizeText('group.members.search.all') }</option>
-                            <option value="1">{ LocalizeText('group.members.search.admins') }</option>
-                            <option value="2">{ LocalizeText('group.members.search.pending') }</option>
-                        </select>
+                        <CustomSelect fullWidth value={ levelId } onChange={ value => setLevelId(parseInt(value)) } noInvalid
+                            items={ [ { value: 0, text: LocalizeText('group.members.search.all') }, { value: 1, text: LocalizeText('group.members.search.admins') }, { value: 2, text: LocalizeText('group.members.search.pending') } ] } />
                     </Column>
                 </Flex>
                 <Grid columnCount={ 2 } overflow="auto" className="nitro-group-members-list-grid">

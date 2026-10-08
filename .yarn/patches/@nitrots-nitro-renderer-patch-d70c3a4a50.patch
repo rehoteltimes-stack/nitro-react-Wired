@@ -1,0 +1,230 @@
+diff --git a/core/communication/SocketConnection.ts b/core/communication/SocketConnection.ts
+index 4d493f708777eb3590ee18d476ad0f030fcd0125..0ac9e81d1b2265e8ccea7d9c5d424d4699a38d33 100644
+--- a/core/communication/SocketConnection.ts
++++ b/core/communication/SocketConnection.ts
+@@ -19,6 +19,28 @@ export class SocketConnection extends EventDispatcher implements IConnection
+ 
+     private _isAuthenticated: boolean;
+ 
++    // hCMS: reconnect like MetroHotel's renderer fork (their SocketConnection `Is`): an unintended close re-opens the
++    // socket with backoff (1s doubling + up to 1s jitter, max 30s, 15 attempts, then a page reload); a heartbeat and a
++    // visibility check force a reconnect when nothing arrived for 90s (the emulator pings every 30s). The communication
++    // demo re-handshakes and logs in with "sso.ticket" on every open (the client keeps a reconnect ticket there).
++    public static MAX_RECONNECT_ATTEMPTS = 15;
++    public static BASE_RECONNECT_DELAY_MS = 1000;
++    public static MAX_RECONNECT_DELAY_MS = 30000;
++    public static RECONNECT_STABLE_RESET_MS = 30000;
++    public static HEARTBEAT_INTERVAL_MS = 30000;
++    public static RECEIVE_TIMEOUT_MS = 90000;
++
++    private _socketUrl: string = '';
++    private _wasEverReady: boolean = false;
++    private _intentionalClose: boolean = false;
++    private _reconnectAttempt: number = 0;
++    private _isReconnecting: boolean = false;
++    private _reconnectTimer: ReturnType<typeof setTimeout> = null;
++    private _reconnectStableTimer: ReturnType<typeof setTimeout> = null;
++    private _lastReceivedTime: number = 0;
++    private _heartbeatTimer: ReturnType<typeof setInterval> = null;
++    private _onVisibilityChange: () => void = null;
++
+     constructor(communicationManager: ICommunicationManager, stateListener: IConnectionStateListener)
+     {
+         super();
+@@ -49,6 +71,7 @@ export class SocketConnection extends EventDispatcher implements IConnection
+             this._stateListener.connectionInit(socketUrl);
+         }
+ 
++        this._socketUrl = socketUrl;
+         this.createSocket(socketUrl);
+     }
+ 
+@@ -56,6 +79,8 @@ export class SocketConnection extends EventDispatcher implements IConnection
+     {
+         super.onDispose();
+ 
++        this._intentionalClose = true;
++        this.clearReconnect();
+         this.destroySocket();
+ 
+         this._communicationManager = null;
+@@ -70,6 +95,7 @@ export class SocketConnection extends EventDispatcher implements IConnection
+         if(this._isReady) return;
+ 
+         this._isReady = true;
++        this._wasEverReady = true;
+ 
+         if(this._pendingServerMessages && this._pendingServerMessages.length) this.processWrappers(...this._pendingServerMessages);
+ 
+@@ -86,16 +112,39 @@ export class SocketConnection extends EventDispatcher implements IConnection
+         this.destroySocket();
+ 
+         this._dataBuffer = new ArrayBuffer(0);
++        this._lastReceivedTime = Date.now();
++        this._onVisibilityChange = () =>
++        {
++            if((document.visibilityState === 'visible') && ((Date.now() - this._lastReceivedTime) >= SocketConnection.RECEIVE_TIMEOUT_MS))
++            {
++                NitroLogger.log('Tab became visible after long inactivity, reconnecting...');
++                this.forceReconnect();
++            }
++        };
++        document.addEventListener('visibilitychange', this._onVisibilityChange);
+         this._socket = new WebSocket(socketUrl);
+ 
+         this._socket.addEventListener(WebSocketEventEnum.CONNECTION_OPENED, this.onOpen);
+         this._socket.addEventListener(WebSocketEventEnum.CONNECTION_CLOSED, this.onClose);
+         this._socket.addEventListener(WebSocketEventEnum.CONNECTION_ERROR, this.onError);
+         this._socket.addEventListener(WebSocketEventEnum.CONNECTION_MESSAGE, this.onMessage);
++        this.startHeartbeat();
+     }
+ 
+     private destroySocket(): void
+     {
++        this.stopHeartbeat();
++
++        if(this._reconnectStableTimer !== null) clearTimeout(this._reconnectStableTimer);
++
++        this._reconnectStableTimer = null;
++
++        if(this._onVisibilityChange)
++        {
++            document.removeEventListener('visibilitychange', this._onVisibilityChange);
++            this._onVisibilityChange = null;
++        }
++
+         if(!this._socket) return;
+ 
+         this._socket.removeEventListener(WebSocketEventEnum.CONNECTION_OPENED, this.onOpen);
+@@ -103,19 +152,112 @@ export class SocketConnection extends EventDispatcher implements IConnection
+         this._socket.removeEventListener(WebSocketEventEnum.CONNECTION_ERROR, this.onError);
+         this._socket.removeEventListener(WebSocketEventEnum.CONNECTION_MESSAGE, this.onMessage);
+ 
+-        if(this._socket.readyState === WebSocket.OPEN) this._socket.close();
++        if((this._socket.readyState === WebSocket.OPEN) || (this._socket.readyState === WebSocket.CONNECTING)) this._socket.close();
+ 
+         this._socket = null;
+     }
+ 
++    // drop the current socket without it counting as a lost connection, then open a new one
++    private forceReconnect(): void
++    {
++        this._intentionalClose = true;
++        this.destroySocket();
++        this._intentionalClose = false;
++        this.createSocket(this._socketUrl);
++    }
++
++    private clearReconnect(): void
++    {
++        if(this._reconnectTimer !== null) clearTimeout(this._reconnectTimer);
++        if(this._reconnectStableTimer !== null) clearTimeout(this._reconnectStableTimer);
++
++        this._reconnectTimer = null;
++        this._reconnectStableTimer = null;
++        this._reconnectAttempt = 0;
++        this._isReconnecting = false;
++    }
++
++    private attemptReconnect(): void
++    {
++        if(this._reconnectAttempt >= SocketConnection.MAX_RECONNECT_ATTEMPTS)
++        {
++            this._isReconnecting = false;
++            this._reconnectAttempt = 0;
++            window.location.reload();
++
++            return;
++        }
++
++        this._reconnectAttempt++;
++
++        const delay = Math.min((SocketConnection.BASE_RECONNECT_DELAY_MS * Math.pow(2, this._reconnectAttempt - 1)) + (Math.random() * 1000), SocketConnection.MAX_RECONNECT_DELAY_MS);
++
++        this._reconnectTimer = setTimeout(() =>
++        {
++            this._reconnectTimer = null;
++            this.createSocket(this._socketUrl);
++        }, delay);
++    }
++
++    private startHeartbeat(): void
++    {
++        this.stopHeartbeat();
++
++        this._heartbeatTimer = setInterval(() =>
++        {
++            const silence = (Date.now() - this._lastReceivedTime);
++
++            if(silence >= SocketConnection.RECEIVE_TIMEOUT_MS)
++            {
++                NitroLogger.log('Heartbeat timeout - no data received for', silence, 'ms, reconnecting...');
++                this.forceReconnect();
++            }
++        }, SocketConnection.HEARTBEAT_INTERVAL_MS);
++    }
++
++    private stopHeartbeat(): void
++    {
++        if(this._heartbeatTimer !== null) clearInterval(this._heartbeatTimer);
++
++        this._heartbeatTimer = null;
++    }
++
++    public get isReconnecting(): boolean
++    {
++        return this._isReconnecting;
++    }
++
+     private onOpen(event: Event): void
+     {
++        this._isReconnecting = false;
++
++        const socket = this._socket;
++
++        // the attempt counter only resets once the new socket stayed open for a while
++        this._reconnectStableTimer = setTimeout(() =>
++        {
++            this._reconnectStableTimer = null;
++
++            if((this._socket === socket) && socket && (socket.readyState === WebSocket.OPEN)) this._reconnectAttempt = 0;
++        }, SocketConnection.RECONNECT_STABLE_RESET_MS);
++
++        this._isAuthenticated = false;
++        this._isReady = this._wasEverReady;
++        this._pendingClientMessages = [];
++        this._pendingServerMessages = [];
++        this._lastReceivedTime = Date.now();
++
+         this.dispatchConnectionEvent(SocketConnectionEvent.CONNECTION_OPENED, event);
+     }
+ 
+     private onClose(event: CloseEvent): void
+     {
+         this.dispatchConnectionEvent(SocketConnectionEvent.CONNECTION_CLOSED, event);
++
++        if(this._intentionalClose || this.disposed) return;
++
++        this._isReconnecting = true;
++        this.attemptReconnect();
+     }
+ 
+     private onError(event: Event): void
+@@ -133,6 +275,8 @@ export class SocketConnection extends EventDispatcher implements IConnection
+ 
+         reader.readAsArrayBuffer(event.data);
+ 
++        this._lastReceivedTime = Date.now();
++
+         reader.onloadend = () =>
+         {
+             this._dataBuffer = this.concatArrayBuffers(this._dataBuffer, (reader.result as ArrayBuffer));
+@@ -199,7 +343,7 @@ export class SocketConnection extends EventDispatcher implements IConnection
+ 
+     private write(buffer: ArrayBuffer): void
+     {
+-        if(this._socket.readyState !== WebSocket.OPEN) return;
++        if(!this._socket || (this._socket.readyState !== WebSocket.OPEN)) return;
+ 
+         this._socket.send(buffer);
+     }

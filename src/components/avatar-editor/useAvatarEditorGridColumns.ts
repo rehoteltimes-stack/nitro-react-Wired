@@ -18,7 +18,7 @@ const ITEM_FOOTPRINT = 47.5;
 // the reference's real 5-column result exactly.
 const SCROLLBAR_GUTTER_COMPENSATION = 14;
 
-export function useAvatarEditorGridColumns(elementRef: RefObject<HTMLElement>): number
+export function useAvatarEditorGridColumns(elementRef: RefObject<HTMLElement>, dependencies: unknown[] = []): number
 {
     const [ columnCount, setColumnCount ] = useState(1);
 
@@ -37,7 +37,7 @@ export function useAvatarEditorGridColumns(elementRef: RefObject<HTMLElement>): 
         resizeObserver.observe(element);
 
         return () => resizeObserver.disconnect();
-    }, [ elementRef ]);
+    }, [ elementRef, ...dependencies ]);
 
     return columnCount;
 }

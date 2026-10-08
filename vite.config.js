@@ -67,9 +67,40 @@ const cloveAssetBridge = () => ({
     }
 });
 
-export default defineConfig(({ command }) => ({
+const SANDBOX_CLIENT = 'C:/inetpub/wwwroot/hcms-sandbox/public/cdn/client';
+
+const sandboxConfigs = mode => ({
+    name: 'hcms-sandbox-configs',
+    apply: 'serve',
+    configureServer(server)
+    {
+        if(mode !== 'sandbox') return;
+
+        for(const name of [ 'renderer-config.json', 'ui-config.json' ])
+        {
+            server.middlewares.use(`/${ name }`, (request, response) =>
+            {
+                response.setHeader('Content-Type', 'application/json');
+                response.setHeader('Cache-Control', 'no-store');
+                createReadStream(`${ SANDBOX_CLIENT }/${ name }`).pipe(response);
+            });
+        }
+
+        server.config.logger.info(`[sandbox] configs from ${ SANDBOX_CLIENT }`);
+    },
+    transformIndexHtml(html)
+    {
+        if(mode !== 'sandbox') return html;
+
+        return html.replace('<head>', '<head><meta name="referrer" content="no-referrer">');
+    }
+});
+
+export default defineConfig(({ command, mode }) => ({
     base: command === 'serve' ? '/' : './',
-    plugins: [ react(), cloveAssetBridge() ],
+    plugins: [ react(), cloveAssetBridge(), sandboxConfigs(mode) ],
+    server: { watch: { ignored: [ '**/dist/**' ] } },
+    esbuild: command === 'build' ? { drop: [ 'debugger' ], pure: [ 'console.log', 'console.debug', 'console.info', 'console.trace' ], legalComments: 'none' } : {},
     resolve: {
         alias: {
             '@': resolve(__dirname, 'src'),
@@ -79,9 +110,12 @@ export default defineConfig(({ command }) => ({
     },
     build: {
         assetsInlineLimit: 102400,
+        manifest: true,
+        sourcemap: false,
         rollupOptions: {
             output: {
-                assetFileNames: 'src/assets/[name].[ext]',
+                assetFileNames: asset => (asset.name && asset.name.endsWith('.css') ? 'src/assets/[name]-[hash].[ext]' : 'src/assets/[name].[ext]'),
+                chunkFileNames: chunk => ([ 'vendor', 'nitro-renderer' ].includes(chunk.name) ? 'assets/[name]-[hash].js' : 'assets/c-[hash].js'),
                 manualChunks: id =>
                 {
                     if(id.includes('node_modules'))

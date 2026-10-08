@@ -22,7 +22,7 @@ export const GroupCreatorView: FC<GroupCreatorViewProps> = props =>
     const [ closeAction, setCloseAction ] = useState<{ action: () => boolean }>(null);
     const [ groupData, setGroupData ] = useState<IGroupData>(null);
     const [ availableRooms, setAvailableRooms ] = useState<{ id: number, name: string }[]>(null);
-    const [ purchaseCost, setPurchaseCost ] = useState<number>(0);
+    const [ stepInvalid, setStepInvalid ] = useState(false);
 
     const onCloseClose = () =>
     {
@@ -53,10 +53,7 @@ export const GroupCreatorView: FC<GroupCreatorViewProps> = props =>
 
     const previousStep = () =>
     {
-        if(closeAction && closeAction.action)
-        {
-            if(!closeAction.action()) return;
-        }
+        if(closeAction && closeAction.action && !closeAction.action()) return;
 
         if(currentTab === 1)
         {
@@ -65,15 +62,12 @@ export const GroupCreatorView: FC<GroupCreatorViewProps> = props =>
             return;
         }
 
-        setCurrentTab(value => value - 1);
+        setCurrentTab(value => (value - 1));
     }
 
     const nextStep = () =>
     {
-        if(closeAction && closeAction.action)
-        {
-            if(!closeAction.action()) return;
-        }
+        if(closeAction && closeAction.action && !closeAction.action()) return;
 
         if(currentTab === 4)
         {
@@ -82,19 +76,17 @@ export const GroupCreatorView: FC<GroupCreatorViewProps> = props =>
             return;
         }
 
-        setCurrentTab(value => (value === 4 ? value : value + 1));
+        setCurrentTab(value => ((value === 4) ? value : (value + 1)));
     }
 
     useMessageEvent<GroupBuyDataEvent>(GroupBuyDataEvent, event =>
     {
         const parser = event.getParser();
-
         const rooms: { id: number, name: string }[] = [];
 
         parser.availableRooms.forEach((name, id) => rooms.push({ id, name }));
 
         setAvailableRooms(rooms);
-        setPurchaseCost(parser.groupCost);
     });
 
     useEffect(() =>
@@ -111,27 +103,35 @@ export const GroupCreatorView: FC<GroupCreatorViewProps> = props =>
             groupColors: null,
             groupBadgeParts: null
         });
-        
+
         SendMessageComposer(new GroupBuyDataComposer());
     }, [ setGroupData ]);
+
+    useEffect(() =>
+    {
+        if((currentTab !== 1) || !closeAction || !closeAction.action)
+        {
+            setStepInvalid(false);
+
+            return;
+        }
+
+        setStepInvalid(closeAction.action() === false);
+    }, [ closeAction, currentTab ]);
 
     if(!groupData) return null;
 
     return (
-        <NitroCardView className="nitro-group-creator" theme="primary-slim">
+        <NitroCardView className="nitro-group-creator" theme="primary-slim" overflow="visible">
             <NitroCardHeaderView headerText={ LocalizeText('group.create.title') } onCloseClick={ onCloseClose } />
             <NitroCardContentView>
                 <Flex center className="creator-tabs">
                     { TABS.map((tab, index) =>
-                    {
-                        return (
-                            <Flex center key={ index } className={ `tab tab-${ ((tab === 1) ? 'blue-flat' : (tab === 4) ? 'yellow' : 'blue-arrow') } ${ (currentTab === tab) ? 'active' : '' }` }>
-                                <Text variant="white">{ LocalizeText(`group.create.steplabel.${ tab }`) }</Text>
-                            </Flex>
-                        );
-                    }) }
+                        <Flex center key={ index } className={ `tab tab-${ ((tab === 1) ? 'blue-flat' : (tab === 4) ? 'yellow' : 'blue-arrow') } ${ (currentTab === tab) ? 'active' : '' }` }>
+                            <Text variant="white">{ LocalizeText(`group.create.steplabel.${ tab }`) }</Text>
+                        </Flex>) }
                 </Flex>
-                <Column overflow="hidden">
+                <Column fullHeight overflow="hidden">
                     <Flex alignItems="center" gap={ 2 }>
                         <Base className={ `nitro-group-tab-image tab-${ currentTab }` } />
                         <Column grow gap={ 0 }>
@@ -139,7 +139,7 @@ export const GroupCreatorView: FC<GroupCreatorViewProps> = props =>
                             <Text>{ LocalizeText(`group.create.stepdesc.${ currentTab }`) }</Text>
                         </Column>
                     </Flex>
-                    <Column overflow="hidden">
+                    <Column fullHeight overflow="hidden">
                         { (currentTab === 1) &&
                             <GroupTabIdentityView groupData={ groupData } setGroupData={ setGroupData } setCloseAction={ setCloseAction } onClose={ null } isCreator={ true } availableRooms={ availableRooms } /> }
                         { (currentTab === 2) &&
@@ -147,14 +147,14 @@ export const GroupCreatorView: FC<GroupCreatorViewProps> = props =>
                         { (currentTab === 3) &&
                             <GroupTabColorsView groupData={ groupData } setGroupData={ setGroupData } setCloseAction={ setCloseAction } /> }
                         { (currentTab === 4) &&
-                            <GroupTabCreatorConfirmationView groupData={ groupData } setGroupData={ setGroupData } purchaseCost={ purchaseCost } /> }
+                            <GroupTabCreatorConfirmationView groupData={ groupData } setGroupData={ setGroupData } /> }
                     </Column>
-                    <Flex justifyContent="between">
-                        <Button variant="link" className="text-black" onClick={ previousStep }>
-                            { LocalizeText(currentTab === 1 ? 'generic.cancel' : 'group.create.previousstep') }
+                    <Flex justifyContent="between" fill gap={ 2 }>
+                        <Button variant="danger" onClick={ previousStep }>
+                            { LocalizeText((currentTab === 1) ? 'generic.cancel' : 'group.create.previousstep') }
                         </Button>
-                        <Button disabled={ ((currentTab === 4) && !HasHabboClub()) } variant={ ((currentTab === 4) ? HasHabboClub() ? 'success' : 'danger' : 'primary') } onClick={ nextStep }>
-                            { LocalizeText((currentTab === 4) ? HasHabboClub() ? 'group.create.confirm.buy' : 'group.create.confirm.viprequired' : 'group.create.nextstep') }
+                        <Button disabled={ ((currentTab === 4) && !HasHabboClub()) || stepInvalid } variant={ ((currentTab === 4) ? (HasHabboClub() ? 'success' : 'danger') : 'primary') } onClick={ nextStep }>
+                            { LocalizeText((currentTab === 4) ? (HasHabboClub() ? 'group.create.confirm.buy' : 'group.create.confirm.viprequired') : 'group.create.nextstep') }
                         </Button>
                     </Flex>
                 </Column>

@@ -1,0 +1,36 @@
+.layout-center-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 150px;
+  padding: 16px;
+
+  &.is-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    min-height: 0;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--holo-primary) 75%, transparent);
+  }
+
+  .layout-center-loader-spinner {
+    width: 62px;
+    height: 60px;
+    background: var(--center-loader-image) center / contain no-repeat;
+    animation: layout-center-loader-spin .6s linear infinite;
+  }
+
+  .layout-center-loader-text {
+    color: var(--holo-text-muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+}
+
+@keyframes layout-center-loader-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

@@ -63,7 +63,7 @@ export const ChatlogView: FC<ChatlogViewProps> = props =>
         <>
             <Column fit gap={ 0 } overflow="hidden">
                 <Column gap={ 2 }>
-                    <Grid gap={ 1 } className="text-black fw-bold border-bottom pb-1">
+                    <Grid gap={ 1 } className="fw-bold border-bottom pb-1">
                         <Base className="g-col-2">Time</Base>
                         <Base className="g-col-3">User</Base>
                         <Base className="g-col-7">Message</Base>

@@ -7,7 +7,7 @@ export class ActionSettings
 
     constructor()
     {
-        this._currentAction = FloorAction.SET;
+        this._currentAction = FloorAction.NONE;
         this._currentHeight = HEIGHT_SCHEME[1];
     }
 
@@ -33,7 +33,7 @@ export class ActionSettings
 
     public clear(): void
     {
-        this._currentAction = FloorAction.SET;
+        this._currentAction = FloorAction.NONE;
         this._currentHeight = HEIGHT_SCHEME[1];
     }
 }

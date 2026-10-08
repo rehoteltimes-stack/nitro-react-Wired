@@ -1,7 +1,7 @@
 import { CanCreateRoomEventEvent, CantConnectMessageParser, DoorbellMessageEvent, FlatAccessDeniedMessageEvent, FlatCreatedEvent, FollowFriendMessageComposer, GenericErrorEvent, GetGuestRoomMessageComposer, GetGuestRoomResultEvent, GetUserEventCatsMessageComposer, GetUserFlatCatsMessageComposer, HabboWebTools, LegacyExternalInterface, NavigatorCategoryDataParser, NavigatorEventCategoryDataParser, NavigatorHomeRoomEvent, NavigatorMetadataEvent, NavigatorOpenRoomCreatorEvent, NavigatorSearchEvent, NavigatorSearchResultSet, NavigatorTopLevelContext, RoomDataParser, RoomDoorbellAcceptedEvent, RoomEnterErrorEvent, RoomEntryInfoMessageEvent, RoomForwardEvent, RoomScoreEvent, RoomSettingsUpdatedEvent, SecurityLevel, UserEventCatsEvent, UserFlatCatsEvent, UserInfoEvent, UserPermissionsEvent } from '@nitrots/nitro-renderer';
 import { useRef, useState } from 'react';
 import { useBetween } from 'use-between';
-import { CreateLinkEvent, CreateRoomSession, DoorStateType, GetConfiguration, GetSessionDataManager, INavigatorData, INavigatorHistory, LocalizeText, NotificationAlertType, SendMessageComposer, TryVisitRoom, VisitDesktop } from '../../api';
+import { CreateLinkEvent, CreateRoomSession, DoorStateType, EndRoomDataRefresh, ExpectRoomDataRefresh, GetConfiguration, GetSessionDataManager, INavigatorData, INavigatorHistory, IsRoomDataRefresh, LocalizeText, NotificationAlertType, SendMessageComposer, TryVisitRoom, VisitDesktop } from '../../api';
 import { useMessageEvent } from '../events';
 import { useNotification } from '../notification';
 
@@ -35,6 +35,7 @@ const useNavigatorState = () =>
     {
         const parser = event.getParser();
 
+        ExpectRoomDataRefresh(parser.roomId);
         SendMessageComposer(new GetGuestRoomMessageComposer(parser.roomId, false, false));
     });
 
@@ -107,8 +108,11 @@ const useNavigatorState = () =>
     useMessageEvent<GetGuestRoomResultEvent>(GetGuestRoomResultEvent, event =>
     {
         const parser = event.getParser();
+        const refresh = IsRoomDataRefresh(parser.data.roomId);
 
-        if(parser.roomEnter)
+        if(refresh) setTimeout(EndRoomDataRefresh, 0);
+
+        if(parser.roomEnter && !refresh)
         {
             setDoorData({ roomInfo: null, state: DoorStateType.NONE });
 
@@ -157,7 +161,7 @@ const useNavigatorState = () =>
                 return newValue;
             });
         }
-        else if(parser.roomForward)
+        else if(parser.roomForward && !refresh)
         {
             if((parser.data.ownerName !== GetSessionDataManager().userName) && !parser.isGroupMember)
             {

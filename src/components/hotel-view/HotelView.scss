@@ -1,0 +1,52 @@
+.nitro-hotel-view {
+  color: #ffffff;
+
+  .background-top {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-repeat: no-repeat;
+    background-position: 50% 0;
+    background-size: 100% 100%;
+  }
+
+  .background {
+    background-size: auto;
+    background-position: 50% 100%;
+  }
+
+  .left {
+    background-position: 0 100%;
+  }
+
+  .promo-articles {
+    color: #ffffff;
+
+    hr {
+      opacity: 1;
+      background-color: rgba(255, 255, 255, .1);
+    }
+
+    .promo-article .promo-article-image {
+      background-position: center;
+      background-size: contain;
+      image-rendering: pixelated;
+    }
+
+    .btn.btn-gainsboro {
+      padding: 4px 8px;
+      border: 1px solid #d9d9d9 !important;
+      border-radius: 3.2px;
+      background: #d9d9d9 !important;
+      box-shadow: none !important;
+      color: #000000 !important;
+      font-size: 12.6px;
+      line-height: 18.9px;
+      text-shadow: none !important;
+      text-transform: none;
+
+      &:hover { background: #c8c8c8 !important; }
+    }
+  }
+}

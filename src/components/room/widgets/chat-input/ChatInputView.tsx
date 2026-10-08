@@ -3,15 +3,21 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChatMessageTypeEnum, GetClubMemberLevel, GetConfiguration, GetSessionDataManager, LocalizeText, RoomWidgetUpdateChatInputContentEvent } from '../../../../api';
 import { Flex, Text } from '../../../../common';
-import { useChatInputWidget, useRoom, useSessionInfo, useUiEvent } from '../../../../hooks';
+import { useChatInputWidget, useNotification, useRoom, useSessionInfo, useUiEvent } from '../../../../hooks';
+import { useShopBubbleAccess } from '../../../../api/shop/ShopBubbles';
+import { AreEmojiCodesEnabled, ReplaceEmojiCodes, SetEmojiCodesEnabled } from '../../../../api/chat/ChatEmojis';
+import { ChatInputEmojiPickerView } from './ChatInputEmojiPickerView';
 import { ChatInputStyleSelectorView } from './ChatInputStyleSelectorView';
+import { GetChatReplyTarget, SetChatReplyTarget, SubscribeChatReactions } from '../../../../api/chat/ChatReactions';
 
 export const ChatInputView: FC<{}> = props =>
 {
     const [ chatValue, setChatValue ] = useState<string>('');
     const { chatStyleId = 0, updateChatStyleId = null } = useSessionInfo();
+    const { canUse: canUseBubble } = useShopBubbleAccess();
     const { selectedUsername = '', floodBlocked = false, floodBlockedSeconds = 0, setIsTyping = null, setIsIdle = null, sendChat = null } = useChatInputWidget();
     const { roomSession = null } = useRoom();
+    const { showFeedback = null } = useNotification();
     const inputRef = useRef<HTMLInputElement>();
 
     const chatModeIdWhisper = useMemo(() => LocalizeText('widgets.chatinput.mode.whisper'), []);
@@ -52,6 +58,18 @@ export const ChatInputView: FC<{}> = props =>
     const sendChatValue = useCallback((value: string, shiftKey: boolean = false) =>
     {
         if(!value || (value === '')) return;
+
+        if(value.trim().toLowerCase() === ':noemoji')
+        {
+            const enabled = !AreEmojiCodesEnabled();
+
+            SetEmojiCodesEnabled(enabled);
+            setChatValue('');
+            setIsTyping(false);
+            showFeedback?.(enabled ? 'Emoji codes like :skull: turn into emoji again.' : 'Emoji codes like :skull: stay as text now. Type :noemoji again to switch back.', 'info');
+
+            return;
+        }
 
         let chatType = (shiftKey ? ChatMessageTypeEnum.CHAT_SHOUT : ChatMessageTypeEnum.CHAT_DEFAULT);
         let text = value;
@@ -102,7 +120,7 @@ export const ChatInputView: FC<{}> = props =>
         }
 
         setChatValue(append);
-    }, [ chatModeIdWhisper, chatModeIdShout, chatModeIdSpeak, maxChatLength, chatStyleId, setIsTyping, setIsIdle, sendChat ]);
+    }, [ chatModeIdWhisper, chatModeIdShout, chatModeIdSpeak, maxChatLength, chatStyleId, setIsTyping, setIsIdle, sendChat, showFeedback ]);
 
     const updateChatInput = useCallback((value: string) =>
     {
@@ -116,8 +134,15 @@ export const ChatInputView: FC<{}> = props =>
             setIsIdle(true);
         }
 
-        setChatValue(value);
+        setChatValue(AreEmojiCodesEnabled() ? ReplaceEmojiCodes(value) : value);
     }, [ setIsTyping, setIsIdle ]);
+
+    const pickEmoji = useCallback((emoji: string) =>
+    {
+        setChatValue(prevValue => (((prevValue.length + emoji.length) <= maxChatLength) ? (prevValue + emoji) : prevValue));
+        setIsTyping(true);
+        inputRef.current?.focus();
+    }, [ maxChatLength, setIsTyping ]);
 
     const onKeyDownEvent = useCallback((event: KeyboardEvent) =>
     {
@@ -235,17 +260,49 @@ export const ChatInputView: FC<{}> = props =>
         inputRef.current.parentElement.dataset.value = chatValue;
     }, [ chatValue ]);
 
+    // the chat line being replied to (set by a bubble's reply button)
+    const [ replyTarget, setReplyTarget ] = useState(GetChatReplyTarget());
+
+    useEffect(() => SubscribeChatReactions(() => setReplyTarget(GetChatReplyTarget())), []);
+
+    const cancelReply = () =>
+    {
+        if(!GetChatReplyTarget()) return;
+
+        SetChatReplyTarget(null);
+        showFeedback?.('Reply cancelled.', 'info');
+    }
+
+    // Esc drops the reply
+    useEffect(() =>
+    {
+        if(!replyTarget) return;
+
+        const onKey = (event: KeyboardEvent) => { if(event.key === 'Escape') cancelReply(); };
+
+        window.addEventListener('keydown', onKey);
+
+        return () => window.removeEventListener('keydown', onKey);
+    }, [ replyTarget ]);
+
     if(!roomSession || roomSession.isSpectator) return null;
 
     return (
         createPortal(
             <div className="nitro-chat-input-container">
-                <ChatInputStyleSelectorView chatStyleId={ chatStyleId } chatStyleIds={ chatStyleIds } selectChatStyleId={ updateChatStyleId } />
+                <ChatInputStyleSelectorView chatStyleId={ chatStyleId } chatStyleIds={ chatStyleIds.filter(canUseBubble) } selectChatStyleId={ updateChatStyleId } />
                 <Flex className="input-sizer align-items-center" gap={ 0 }>
+                    { /* replying to a line: a chip in the input itself (× or Esc = don't reply) */ }
+                    { replyTarget &&
+                        <span className="chat-input-reply-chip" title={ `Replying to ${ replyTarget.username }: ${ replyTarget.text }` }>
+                            ↩ <b>{ replyTarget.username }</b>
+                            <button type="button" title="Don't reply (Esc)" onClick={ cancelReply }>×</button>
+                        </span> }
                     { !floodBlocked &&
                         <input ref={ inputRef } type="text" className="chat-input" autoComplete="off" placeholder={ LocalizeText('widgets.chatinput.default') } value={ chatValue } maxLength={ maxChatLength } onChange={ event => updateChatInput(event.target.value) } onMouseDown={ event => setInputFocus() } /> }
                     { floodBlocked &&
                         <Text variant="danger">{ LocalizeText('chat.input.alert.flood', [ 'time' ], [ floodBlockedSeconds.toString() ]) } </Text> }
+                    { !floodBlocked && <ChatInputEmojiPickerView pickEmoji={ pickEmoji } /> }
                 </Flex>
             </div>, document.getElementById('toolbar-chat-input-container'))
     );

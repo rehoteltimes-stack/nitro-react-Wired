@@ -1,0 +1,16 @@
+// "Connection lost" (MetroHotel's connection-lost-card: 360px, dimmed client behind it)
+.reconnect-overlay {
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 500;
+    pointer-events: all;
+}
+
+.connection-lost-card {
+    width: 360px;
+    max-width: calc(100vw - 32px);
+}
+
+// the card opens as a draggable window (container z-index auto, each window ~400+): lift it above the dim overlay
+.draggable-window:has(.connection-lost-card) {
+    z-index: 600 !important;
+}

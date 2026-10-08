@@ -4,7 +4,9 @@ import { FaTimes } from 'react-icons/fa';
 import { AvatarInfoFurni, CreateLinkEvent, GetGroupInformation, GetNitroInstance, GetRoomEngine, GetWiredCreatorToolsSettings, LocalizeText, SendMessageComposer, WIRED_CREATOR_TOOLS_SETTINGS_EVENT } from '../../../../../api';
 import { Base, Button, Column, Flex, LayoutBadgeImageView, LayoutLimitedEditionCompactPlateView, LayoutRareLevelView, LayoutRarityLevelView, Text, UserProfileIconView } from '../../../../../common';
 import { useMessageEvent, useRareLevels, useRoom, useSoundEvent } from '../../../../../hooks';
+import { IsVideoTvType } from '../../../../../api/videotv/VideoTvProtocol';
 import { CatalogIconView } from '../../../../catalog/views/catalog-icon/CatalogIconView';
+import { VideoTvRemoteView } from '../../../../video-tv/VideoTvRemoteView';
 
 interface InfoStandWidgetFurniViewProps
 {
@@ -353,6 +355,8 @@ export const InfoStandWidgetFurniView: FC<InfoStandWidgetFurniViewProps> = props
 
     const isTempFurni = avatarInfo.id < 0;
     const canManipulate = !creatorSettings.playtestingMode;
+    // room-tools editing rights off: no move/rotate/pickup for anyone (owner/staff included), re-evaluated live while the stand is open
+    const canEdit = canManipulate && creatorSettings.editingRights;
 
     return (
         <Column gap={ 1 } alignItems="end">
@@ -435,6 +439,8 @@ export const InfoStandWidgetFurniView: FC<InfoStandWidgetFurniViewProps> = props
                                     </Text>
                                 </Flex> }
                         </Column> }
+                    { roomSession && IsVideoTvType(GetRoomEngine().getRoomObject(roomSession.roomId, avatarInfo.id, avatarInfo.isWallItem ? RoomObjectCategory.WALL : RoomObjectCategory.FLOOR)?.type) &&
+                        <VideoTvRemoteView itemId={ avatarInfo.id } /> }
                     <Column gap={ 1 }>
                         { isCrackable &&
                             <>
@@ -486,15 +492,15 @@ export const InfoStandWidgetFurniView: FC<InfoStandWidgetFurniViewProps> = props
                 </Column>
             </Column>
             <Flex gap={ 1 } justifyContent="end">
-                { canManipulate && canMove &&
+                { canEdit && canMove &&
                     <Button variant="dark" onClick={ event => processButtonAction('move') }>
                         { LocalizeText('infostand.button.move') }
                     </Button> }
-                { canManipulate && canRotate &&
+                { canEdit && canRotate &&
                     <Button variant="dark" onClick={ event => processButtonAction('rotate') }>
                         { LocalizeText('infostand.button.rotate') }
                     </Button> }
-                { canManipulate && (pickupMode !== PICKUP_MODE_NONE) &&
+                { canEdit && (pickupMode !== PICKUP_MODE_NONE) &&
                     <Button variant="dark" onClick={ event => processButtonAction('pickup') }>
                         { LocalizeText((pickupMode === PICKUP_MODE_EJECT) ? 'infostand.button.eject' : 'infostand.button.pickup') }
                     </Button> }
@@ -502,7 +508,7 @@ export const InfoStandWidgetFurniView: FC<InfoStandWidgetFurniViewProps> = props
                     <Button variant="dark" onClick={ event => processButtonAction('use') }>
                         { LocalizeText('infostand.button.use') }
                     </Button> }
-                { creatorSettings.showInspectButton &&
+                { creatorSettings.showInspectButton && creatorSettings.editingRights &&
                     <Button variant="dark" onClick={ event => processButtonAction('inspect') }>
                         Inspect
                     </Button> }

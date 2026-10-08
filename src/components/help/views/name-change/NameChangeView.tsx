@@ -56,7 +56,7 @@ export const NameChangeView:FC<{}> = props =>
     return (
         <NitroCardView className="nitro-change-username" theme="primary-slim">
             <NitroCardHeaderView headerText={ LocalizeText(titleKey) } onCloseClick={ () => onAction('close') } />
-            <NitroCardContentView className="text-black">
+            <NitroCardContentView>
                 { layout === INIT && <NameChangeInitView onAction={ onAction } /> }
                 { layout === INPUT && <NameChangeInputView onAction={ onAction } /> }
                 { layout === CONFIRMATION && <NameChangeConfirmationView username={ newUsername } onAction={ onAction } /> }

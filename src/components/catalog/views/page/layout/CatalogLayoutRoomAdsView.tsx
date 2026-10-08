@@ -1,7 +1,7 @@
 import { GetRoomAdPurchaseInfoComposer, GetUserEventCatsMessageComposer, PurchaseRoomAdMessageComposer, RoomAdPurchaseInfoEvent, RoomEntryData } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useState } from 'react';
 import { LocalizeText, SendMessageComposer } from '../../../../../api';
-import { Base, Button, Column, Text } from '../../../../../common';
+import { Base, Button, Column, CustomSelect, Text } from '../../../../../common';
 import { useCatalog, useMessageEvent, useNavigator, useRoomPromote } from '../../../../../hooks';
 import { CatalogLayoutProps } from './CatalogLayout.types';
 
@@ -78,9 +78,7 @@ export const CatalogLayoutRoomAdsView: FC<CatalogLayoutProps> = props =>
             <Base className="bg-muted rounded p-1">
                 <Column gap={ 2 }>
                     <Text bold>{ LocalizeText('navigator.category') }</Text>
-                    <select className="form-select form-select-sm" value={ categoryId } onChange={ event => setCategoryId(parseInt(event.target.value)) } disabled={ extended }>
-                        { categories && categories.map((cat, index) => <option key={ index } value={ cat.id }>{ LocalizeText(cat.name) }</option>) }
-                    </select>
+                    <CustomSelect value={ categoryId } onChange={ value => setCategoryId(parseInt(value)) } disabled={ extended } noInvalid items={ (categories || []).map(cat => ({ value: cat.id, text: LocalizeText(cat.name) })) } />
                 </Column>
                 <Column gap={ 1 }>
                     <Text bold>{ LocalizeText('roomad.catalog_name') }</Text>
@@ -92,10 +90,7 @@ export const CatalogLayoutRoomAdsView: FC<CatalogLayoutProps> = props =>
                 </Column>
                 <Column gap={ 1 }>
                     <Text bold>{ LocalizeText('roomad.catalog_roomname') }</Text>
-                    <select className="form-select form-select-sm" value={ roomId } onChange={ event => setRoomId(parseInt(event.target.value)) } disabled={ extended }>
-                        <option value={ -1 } disabled>{ LocalizeText('roomad.catalog_roomname') }</option>
-                        { availableRooms && availableRooms.map((room, index) => <option key={ index } value={ room.roomId }>{ room.roomName }</option>) }
-                    </select>
+                    <CustomSelect value={ roomId } onChange={ value => setRoomId(parseInt(value)) } disabled={ extended } placeholder={ LocalizeText('roomad.catalog_roomname') } items={ (availableRooms || []).map(room => ({ value: room.roomId, text: room.roomName })) } />
                 </Column>
                 <Column gap={ 1 }>
                     <Button variant={ (!eventName || !eventDesc || roomId === -1) ? 'danger' : 'success' } onClick={ purchaseAd } disabled={ (!eventName || !eventDesc || roomId === -1) }>{ extended ? LocalizeText('roomad.extend.event') : LocalizeText('buy') }</Button>

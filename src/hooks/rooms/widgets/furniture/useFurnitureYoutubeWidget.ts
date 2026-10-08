@@ -1,6 +1,7 @@
 import { ControlYoutubeDisplayPlaybackMessageComposer, GetYoutubeDisplayStatusMessageComposer, RoomEngineTriggerWidgetEvent, RoomId, SecurityLevel, SetYoutubeDisplayPlaylistMessageComposer, YoutubeControlVideoMessageEvent, YoutubeDisplayPlaylist, YoutubeDisplayPlaylistsEvent, YoutubeDisplayVideoMessageEvent } from '@nitrots/nitro-renderer';
 import { useState } from 'react';
 import { GetRoomEngine, GetSessionDataManager, IsOwnerOfFurniture, SendMessageComposer, YoutubeVideoPlaybackStateEnum } from '../../../../api';
+import { IsVideoTvType } from '../../../../api/videotv/VideoTvProtocol';
 import { useMessageEvent, useRoomEngineEvent } from '../../../events';
 import { useFurniRemovedEvent } from '../../engine';
 
@@ -62,7 +63,7 @@ const useFurnitureYoutubeWidgetState = () =>
 
         const roomObject = GetRoomEngine().getRoomObject(event.roomId, event.objectId, event.category);
     
-        if(!roomObject) return;
+        if(!roomObject || IsVideoTvType(roomObject.type)) return;
 
         setObjectId(event.objectId);
         setCategory(event.category);

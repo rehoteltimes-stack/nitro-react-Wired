@@ -43,7 +43,7 @@
   font-family: var(--holo-font);
   text-shadow: var(--holo-text-shadow);
   color: var(--holo-text-primary) !important;
-  font-weight: 700;
+  font-weight: 400; // reference: 700 - changed at the user's request (2026-09-28)
 }
 
 .nitro-purse-container .nitro-purse .nitro-purse-list .nitro-purse-button .nitro-currency-icon {

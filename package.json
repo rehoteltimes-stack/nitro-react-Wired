@@ -6,14 +6,15 @@
   "private": true,
   "scripts": {
     "start": "vite",
-    "build": "vite build",
+    "start:sandbox": "vite --mode sandbox --port 5190 --strictPort",
+    "build": "javascript-obfuscator guard/hcms-guard.js --output public/hcms-guard.js --compact true --control-flow-flattening true --dead-code-injection true --string-array true --string-array-encoding base64 --self-defending true --rename-globals false && vite build",
     "build:prod": "npx browserslist@latest --update-db && yarn build",
     "deploy": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy.ps1",
     "eslint": "eslint src --ext .ts,.tsx",
     "truffle:setup": "truffle-setup --out public/assets/truffle"
   },
   "dependencies": {
-    "@nitrots/nitro-renderer": "patch:@nitrots/nitro-renderer@npm%3A1.6.6#~/.yarn/patches/@nitrots-nitro-renderer-npm-1.6.6-c15ae4be91.patch",
+    "@nitrots/nitro-renderer": "patch:@nitrots/nitro-renderer@patch%3A@nitrots/nitro-renderer@patch%253A@nitrots/nitro-renderer@patch%25253A@nitrots/nitro-renderer@patch%2525253A@nitrots/nitro-renderer@patch%252525253A@nitrots/nitro-renderer@patch%25252525253A@nitrots/nitro-renderer@patch%2525252525253A@nitrots/nitro-renderer@patch%252525252525253A@nitrots/nitro-renderer@npm%25252525252525253A1.6.6%2525252525252523~/.yarn/patches/@nitrots-nitro-renderer-npm-1.6.6-c15ae4be91.patch%252525252525253A%252525252525253Aversion=1.6.6&hash=1b9db1%25252525252523~/.yarn/patches/@nitrots-nitro-renderer-patch-abf9a4d94e.patch%2525252525253A%2525252525253Aversion=1.6.6&hash=313e4c%252525252523~/.yarn/patches/@nitrots-nitro-renderer-patch-4834514322.patch%25252525253A%25252525253Aversion=1.6.6&hash=f3bc66%2525252523~/.yarn/patches/@nitrots-nitro-renderer-patch-d70c3a4a50.patch%252525253A%252525253Aversion=1.6.6&hash=2ea920%25252523~/.yarn/patches/@nitrots-nitro-renderer-patch-32aad3b938.patch%2525253A%2525253Aversion=1.6.6&hash=0ed224%252523~/.yarn/patches/@nitrots-nitro-renderer-patch-1a26008291.patch%25253A%25253Aversion=1.6.6&hash=83141c%2523~/.yarn/patches/@nitrots-nitro-renderer-patch-fd3c67aba2.patch%253A%253Aversion=1.6.6&hash=2a83bd%23~/.yarn/patches/@nitrots-nitro-renderer-patch-e9999608f5.patch%3A%3Aversion=1.6.6&hash=8c6ff5#~/.yarn/patches/@nitrots-nitro-renderer-patch-85c5e969b8.patch",
     "@tanstack/react-virtual": "^3.0.0-alpha.0",
     "react": "^18.2.0",
     "react-bootstrap": "^2.2.2",
@@ -38,6 +39,7 @@
     "eslint-plugin-jsx-a11y": "^6.6.0",
     "eslint-plugin-react": "^7.30.1",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "javascript-obfuscator": "4",
     "sass": "^1.56.2",
     "vite": "^4.4.5"
   }

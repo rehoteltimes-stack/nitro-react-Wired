@@ -1,7 +1,7 @@
 import { CallForHelpTopicData, DefaultSanctionMessageComposer, ModAlertMessageComposer, ModBanMessageComposer, ModKickMessageComposer, ModMessageMessageComposer, ModMuteMessageComposer, ModTradingLockMessageComposer } from '@nitrots/nitro-renderer';
 import { FC, useMemo, useState } from 'react';
 import { ISelectedUser, LocalizeText, ModActionDefinition, NotificationAlertType, SendMessageComposer } from '../../../../api';
-import { Button, Column, DraggableWindowPosition, Flex, NitroCardContentView, NitroCardHeaderView, NitroCardView, Text } from '../../../../common';
+import { Button, Column, CustomSelect, DraggableWindowPosition, Flex, NitroCardContentView, NitroCardHeaderView, NitroCardView, Text } from '../../../../common';
 import { useModTools, useNotification } from '../../../../hooks';
 
 interface ModToolsUserModActionViewProps
@@ -151,17 +151,11 @@ export const ModToolsUserModActionView: FC<ModToolsUserModActionViewProps> = pro
     if(!user) return null;
 
     return (
-        <NitroCardView className="nitro-mod-tools-user-action" theme="primary" windowPosition={ DraggableWindowPosition.TOP_LEFT }>
+        <NitroCardView className="nitro-mod-tools-user-action" theme="primary-slim" windowPosition={ DraggableWindowPosition.TOP_LEFT }>
             <NitroCardHeaderView headerText={ 'Mod Action: ' + (user ? user.username : '') } onCloseClick={ () => onCloseClick() } />
-            <NitroCardContentView className="text-black">
-                <select className="form-select form-select-sm" value={ selectedTopic } onChange={ event => setSelectedTopic(parseInt(event.target.value)) }>
-                    <option value={ -1 } disabled>CFH Topic</option>
-                    { topics.map((topic, index) => <option key={ index } value={ index }>{ LocalizeText('help.cfh.topic.' + topic.id) }</option>) }
-                </select>
-                <select className="form-select form-select-sm" value={ selectedAction } onChange={ event => setSelectedAction(parseInt(event.target.value)) }>
-                    <option value={ -1 } disabled>Sanction Type</option>
-                    { MOD_ACTION_DEFINITIONS.map((action, index) => <option key={ index } value={ index }>{ action.name }</option>) }
-                </select>
+            <NitroCardContentView>
+                <CustomSelect value={ selectedTopic } onChange={ value => setSelectedTopic(parseInt(value)) } placeholder="CFH Topic" items={ topics.map((topic, index) => ({ value: index, text: LocalizeText('help.cfh.topic.' + topic.id) })) } />
+                <CustomSelect value={ selectedAction } onChange={ value => setSelectedAction(parseInt(value)) } placeholder="Sanction Type" items={ MOD_ACTION_DEFINITIONS.map((action, index) => ({ value: index, text: action.name })) } />
                 <Column gap={ 1 }>
                     <Text small>Optional message type, overrides default</Text>
                     <textarea className="form-control" value={ message } onChange={ event => setMessage(event.target.value) }/>

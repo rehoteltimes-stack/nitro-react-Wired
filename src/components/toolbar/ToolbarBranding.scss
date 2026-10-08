@@ -1,0 +1,13 @@
+.nitro-toolbar-container .icon.icon-habbo {
+    background-image: url('https://cdn.habbo.nz/c_images/icons/logo_habbo_icon_toolbar.png?v=1');
+    background-image: image-set(url('https://cdn.habbo.nz/c_images/icons/logo_habbo_icon_toolbar.png?v=1') 1x, url('https://cdn.habbo.nz/c_images/icons/logo_habbo_icon_toolbar@2x.png?v=1') 2x);
+    background-size: 34px 41px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.nitro-toolbar-container .icon.icon-habbo.season-halloween {
+    background-image: url('https://cdn.habbo.nz/c_images/icons/logo_habbo_icon_toolbar_halloween.png?v=2');
+    background-image: image-set(url('https://cdn.habbo.nz/c_images/icons/logo_habbo_icon_toolbar_halloween.png?v=2') 1x, url('https://cdn.habbo.nz/c_images/icons/logo_habbo_icon_toolbar_halloween@2x.png?v=2') 2x);
+    background-size: 37px 45px;
+}

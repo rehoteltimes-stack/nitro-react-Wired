@@ -11,6 +11,7 @@ import { chooserSelectionVisualizer } from '../../api/room/widgets/chooserSelect
 import { ObjectLocationView } from '../room/widgets/object-location/ObjectLocationView';
 import { WiredAdjustButton, WiredSelect, WiredTextInput } from '../wired/views/WiredControls';
 import { WiredIcon, wiredIconUrl } from '../wired/views/WiredIcons';
+import { preloadNitroTruffle } from '../../truffle';
 import { HabboInspectionRow, HabboWiredCreatorToolsView, HabboWiredTab } from './HabboWiredCreatorToolsView';
 import { WIRED_CREATOR_TOOLS_DEFAULTS } from './WiredCreatorToolsContracts';
 import { WiredCreatorToolCreated, WiredCreatorToolsCancelPlacementComposer, WiredCreatorToolsCatalogComposer, WiredCreatorToolsCatalogEvent, WiredCreatorToolsChestLogDetailItem, WiredCreatorToolsChestLogEntry, WiredCreatorToolsChestLogsComposer, WiredCreatorToolsChestLogsEvent, WiredCreatorToolsCreateItemComposer, WiredCreatorToolsCreateItemEvent, WiredCreatorToolsInspectionValues, WiredCreatorToolsInspectionValuesComposer, WiredCreatorToolsInspectionValuesEvent, WiredCreatorToolsLogEntry, WiredCreatorToolsLogsComposer, WiredCreatorToolsLogsEvent, WiredCreatorToolsMessageConfiguration, WiredCreatorToolsOpenEvent, WiredCreatorToolsRoomAction, WiredCreatorToolsRoomActionComposer, WiredCreatorToolsRoomStats, WiredCreatorToolsRoomStatsComposer, WiredCreatorToolsRoomStatsEvent, WiredCreatorToolsSaveSettingsComposer, WiredCreatorToolsVariableActionComposer, WiredCreatorToolsVariableHighlight, WiredCreatorToolsVariableHighlightComposer, WiredCreatorToolsVariableHighlightEvent, WiredMouseHoldStateEvent, WiredMouseHoldStateUpdate, WiredMouseHoldSubscriptionComposer } from './WiredCreatorToolsMessages';
@@ -1150,6 +1151,21 @@ const clampIntegerPacketValue = (value: string) =>
 export const WiredCreatorToolsView: FC<{}> = () =>
 {
     const [ isVisible, setIsVisible ] = useState(false);
+    const [ truffleReady, setTruffleReady ] = useState(false);
+
+    useEffect(() =>
+    {
+        if(!isVisible || truffleReady) return;
+
+        let active = true;
+
+        preloadNitroTruffle().then(() => active && setTruffleReady(true)).catch(() => active && setTruffleReady(true));
+
+        return () =>
+        {
+            active = false;
+        };
+    }, [ isVisible, truffleReady ]);
     const [ isPlacementHidden, setIsPlacementHidden ] = useState(false);
     const [ hasOpened, setHasOpened ] = useState(false);
     const [ mountedTabs, setMountedTabs ] = useState<Record<WiredCreatorToolsTab, boolean>>(EMPTY_MOUNTED_TABS);
@@ -2176,7 +2192,7 @@ export const WiredCreatorToolsView: FC<{}> = () =>
 
     return (
         <HabboWiredCreatorToolsView
-            visible={ isVisible }
+            visible={ isVisible && truffleReady }
             placementHidden={ isPlacementHidden }
             activeTab={ activeTab as HabboWiredTab }
             onTabChange={ tab => switchTab(tab) }

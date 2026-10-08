@@ -2,6 +2,7 @@ import { BadgeReceivedEvent, BadgesEvent, RequestBadgesComposer, SetActivatedBad
 import { useEffect, useState } from 'react';
 import { useBetween } from 'use-between';
 import { GetConfiguration, SendMessageComposer, UnseenItemCategory } from '../../api';
+import { DeleteBadgeComposer, RegisterInventoryDeleteMessages } from '../../api/inventory/InventoryDeleteProtocol';
 import { useMessageEvent } from '../events';
 import { useSharedVisibility } from '../useSharedVisibility';
 import { useInventoryUnseenTracker } from './useInventoryUnseenTracker';
@@ -81,24 +82,14 @@ const useInventoryBadgesState = () =>
     useMessageEvent<BadgesEvent>(BadgesEvent, event =>
     {
         const parser = event.getParser();
-        const badgesToAdd: string[] = [];
+        const receivedCodes = parser.getAllBadgeCodes();
 
         setBadgeIds(prevValue =>
         {
             const newValue = new Map(prevValue);
 
-            parser.getAllBadgeCodes().forEach(code =>
-            {
-                const exists = badgeCodes.indexOf(code) >= 0;
-                const badgeId = parser.getBadgeId(code);
+            for(const code of receivedCodes) newValue.set(code, parser.getBadgeId(code));
 
-                newValue.set(code, badgeId);
-
-                if(exists) return;
-
-                badgesToAdd.push(code);
-            });
-            
             return newValue;
         });
 
@@ -110,7 +101,14 @@ const useInventoryBadgesState = () =>
         for(let i = 0; (i < maxBadgeCount) && (i < activeCodes.length); i++) newActiveBadgeSlots[i] = (activeCodes[i] ?? '');
 
         setActiveBadgeSlots(newActiveBadgeSlots);
-        setBadgeCodes(prev => [ ...prev, ...badgesToAdd ]);
+        setBadgeCodes(prevValue =>
+        {
+            const newValue = [ ...prevValue ];
+
+            for(const code of receivedCodes) if(newValue.indexOf(code) === -1) newValue.push(code);
+
+            return newValue;
+        });
     });
 
     useMessageEvent<BadgeReceivedEvent>(BadgeReceivedEvent, event =>
@@ -120,6 +118,8 @@ const useInventoryBadgesState = () =>
 
         setBadgeCodes(prevValue =>
         {
+            if(prevValue.indexOf(parser.badgeCode) >= 0) return prevValue;
+
             const newValue = [ ...prevValue ];
 
             if(unseen) newValue.unshift(parser.badgeCode)
@@ -173,7 +173,17 @@ const useInventoryBadgesState = () =>
         setNeedsUpdate(false);
     }, [ isVisible, needsUpdate ]);
 
-    return { badgeCodes, activeBadgeSlots, selectedBadgeCode, setSelectedBadgeCode, isWearingBadge, canWearBadges, toggleBadge, toggleBadgeAtSlot, getBadgeId, activate, deactivate };
+    const removeBadge = (badgeCode: string) =>
+    {
+        if(!badgeCode) return;
+
+        RegisterInventoryDeleteMessages();
+        SendMessageComposer(new DeleteBadgeComposer(badgeCode));
+        setBadgeCodes(prevValue => prevValue.filter(code => (code !== badgeCode)));
+        setActiveBadgeSlots(prevValue => prevValue.map(code => ((code === badgeCode) ? '' : code)));
+    }
+
+    return { badgeCodes, activeBadgeSlots, selectedBadgeCode, setSelectedBadgeCode, isWearingBadge, canWearBadges, toggleBadge, toggleBadgeAtSlot, getBadgeId, activate, deactivate, removeBadge };
 }
 
 export const useInventoryBadges = () => useBetween(useInventoryBadgesState);

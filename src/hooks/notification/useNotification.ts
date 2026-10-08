@@ -1,7 +1,7 @@
-import { AchievementNotificationMessageEvent, ActivityPointNotificationMessageEvent, ClubGiftNotificationEvent, ClubGiftSelectedEvent, ConnectionErrorEvent, HabboBroadcastMessageEvent, HotelClosedAndOpensEvent, HotelClosesAndWillOpenAtEvent, HotelWillCloseInMinutesEvent, InfoFeedEnableMessageEvent, MaintenanceStatusMessageEvent, ModeratorCautionEvent, ModeratorMessageEvent, MOTDNotificationEvent, NotificationDialogMessageEvent, PetLevelNotificationEvent, PetReceivedMessageEvent, RespectReceivedEvent, RoomEnterEffect, RoomEnterEvent, SimpleAlertMessageEvent, UserBannedMessageEvent, Vector3d } from '@nitrots/nitro-renderer';
+import { AchievementNotificationMessageEvent, ActivityPointNotificationMessageEvent, ClubGiftNotificationEvent, ClubGiftSelectedEvent, ConnectionErrorEvent, HabboBroadcastMessageEvent, HotelClosedAndOpensEvent, HotelClosesAndWillOpenAtEvent, HotelWillCloseInMinutesEvent, InfoFeedEnableMessageEvent, MaintenanceStatusMessageEvent, ModeratorCautionEvent, ModeratorMessageEvent, MOTDNotificationEvent, NotificationDialogMessageEvent, PetLevelNotificationEvent, PetReceivedMessageEvent, RespectReceivedEvent,  SimpleAlertMessageEvent, UserBannedMessageEvent, Vector3d } from '@nitrots/nitro-renderer';
 import { useCallback, useState } from 'react';
 import { useBetween } from 'use-between';
-import { GetConfiguration, GetNitroInstance, GetRoomEngine, GetSessionDataManager, LocalizeBadgeName, LocalizeText, NotificationAlertItem, NotificationAlertType, NotificationBubbleItem, NotificationBubbleType, NotificationConfirmItem, PlaySound, ProductImageUtility, TradingNotificationType } from '../../api';
+import { FeedbackIconUrl, FeedbackKind, GetConfiguration, GetNitroInstance, GuessFeedbackKind, GetRoomEngine, GetSessionDataManager, LocalizeBadgeName, LocalizeText, NotificationAlertItem, NotificationAlertType, NotificationBubbleItem, NotificationBubbleType, NotificationConfirmItem, PlaySound, ProductImageUtility, TradingNotificationType } from '../../api';
 import { useMessageEvent } from '../events';
 import { usePurse } from '../purse/usePurse';
 
@@ -14,7 +14,6 @@ const getTimeZeroPadded = (time: number) =>
     return text.substr((text.length - 2), text.length);
 }
 
-let modDisclaimerTimeout: ReturnType<typeof setTimeout> = null;
 
 const useNotificationState = () =>
 {
@@ -22,7 +21,6 @@ const useNotificationState = () =>
     const [ bubbleAlerts, setBubbleAlerts ] = useState<NotificationBubbleItem[]>([]);
     const [ confirms, setConfirms ] = useState<NotificationConfirmItem[]>([]);
     const [ bubblesDisabled, setBubblesDisabled ] = useState(false);
-    const [ modDisclaimerShown, setModDisclaimerShown ] = useState(false);
     const { currencyMeta = new Map() } = usePurse();
 
     const getMainNotificationConfig = () => GetConfiguration<{ [key: string]: { delivery?: string, display?: string; title?: string; image?: string }}>('notification', {});
@@ -53,6 +51,8 @@ const useNotificationState = () =>
 
         if(!imageUrl) imageUrl = GetConfiguration<string>('image.library.notifications.url', '').replace('%image%', type.replace(/\./g, '_'));
 
+        imageUrl = imageUrl.replace(/\$\{([^}]+)\}/g, (match, key: string) => GetConfiguration<string>(key, match));
+
         return LocalizeText(imageUrl);
     }
 
@@ -75,8 +75,25 @@ const useNotificationState = () =>
 
         const notificationItem = new NotificationBubbleItem(message, type, imageUrl, internalLink);
 
-        setBubbleAlerts(prevValue => [ notificationItem, ...prevValue ]);
+        // no spam when clicking fast: the same bubble (text + icon) already showing is replaced (new one on top, timer
+        // restarts), and at most MAX_BUBBLES show at once (the oldest go first). Wired chest bubbles have their own key.
+        setBubbleAlerts(prevValue =>
+        {
+            const same = (item: NotificationBubbleItem) => ((item.message === message) && (item.notificationType === type) && (item.iconUrl === imageUrl));
+            const others = prevValue.filter(item => !same(item));
+
+            // the replaced bubble's count carries over: "x2", "x3"...
+            notificationItem.count = prevValue.filter(same).reduce((total, item) => total + item.count, 0) + 1;
+
+            return [ notificationItem, ...others ].slice(0, MAX_BUBBLES);
+        });
     }, [ bubblesDisabled ]);
+
+    /** A feedback bubble with the kind icon (success / error / not_found / ...), the client twin of the plugin's CommandFeedback. */
+    const showFeedback = useCallback((message: string, kind: FeedbackKind = null, internalLink: string = null) =>
+    {
+        showSingleBubble(message, NotificationBubbleType.INFO, FeedbackIconUrl(kind || GuessFeedbackKind(message)), internalLink);
+    }, [ showSingleBubble ]);
 
     const showChestBubble = useCallback((data: any) =>
     {
@@ -433,37 +450,12 @@ const useNotificationState = () =>
         simpleAlert(LocalizeText(parser.alertMessage), NotificationAlertType.DEFAULT, null, null, LocalizeText(parser.titleMessage ? parser.titleMessage : 'notifications.broadcast.title'));
     });
 
-    const onRoomEnterEvent = useCallback(() =>
-    {
-        if(modDisclaimerShown) return;
+    // the stock "Discussions in Habbo rooms may be monitored" bubble on the first room entry is removed (user, 2026-09-30)
 
-        if(RoomEnterEffect.isRunning())
-        {
-            if(modDisclaimerTimeout) return;
 
-            modDisclaimerTimeout = setTimeout(() =>
-            {
-                onRoomEnterEvent();
-            }, (RoomEnterEffect.totalRunningTime + 5000));
-        }
-        else
-        {
-            if(modDisclaimerTimeout)
-            {
-                clearTimeout(modDisclaimerTimeout);
-
-                modDisclaimerTimeout = null;
-            }
-
-            showSingleBubble(LocalizeText('mod.chatdisclaimer'), NotificationBubbleType.INFO);
-
-            setModDisclaimerShown(true);
-        }
-    }, [ modDisclaimerShown, showSingleBubble ]);
-
-    useMessageEvent<RoomEnterEvent>(RoomEnterEvent, onRoomEnterEvent);
-
-    return { alerts, bubbleAlerts, confirms, simpleAlert, showNitroAlert, showTradeAlert, showConfirm, showSingleBubble, showChestBubble, closeAlert, closeBubbleAlert, closeConfirm };
+    return { alerts, bubbleAlerts, confirms, simpleAlert, showNitroAlert, showTradeAlert, showConfirm, showSingleBubble, showFeedback, showChestBubble, closeAlert, closeBubbleAlert, closeConfirm };
 }
+
+const MAX_BUBBLES = 5;
 
 export const useNotification = () => useBetween(useNotificationState);

@@ -1,7 +1,7 @@
 import { MouseEventType } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useRef, useState } from 'react';
 import { GetUserProfile, LocalizeText, MessengerFriend, OpenMessengerChat } from '../../../../api';
-import { Base, Flex, LayoutAvatarImageView, LayoutBadgeImageView, Text } from '../../../../common';
+import { Base, Flex, LayoutAvatarImageView, LayoutBadgeImageView, Text, UsernameView } from '../../../../common';
 import { useFriends } from '../../../../hooks';
 
 export const FriendBarItemView: FC<{ friend: MessengerFriend }> = props =>
@@ -42,7 +42,7 @@ export const FriendBarItemView: FC<{ friend: MessengerFriend }> = props =>
                 { (friend.id <= 0) && <LayoutBadgeImageView isGroup={ true } badgeCode={ friend.figure } /> }
             </div>
             <Flex className="friend-item-name" alignItems="center">
-                <Text truncate textTransform="none">{ friend.name }</Text>
+                <Text truncate textTransform="none"><UsernameView userId={ friend.id } name={ friend.name } /></Text>
             </Flex>
             { isVisible &&
                 <div className="d-flex justify-content-between icon-friendbar-container">

@@ -13,7 +13,7 @@
 // Vite resolves the @ alias inside import.meta.glob, bundles every
 // icon and hands back its final URL. Keyed by file basename so a
 // lookup works no matter how Vite formats the glob keys.
-const ICON_MODULES = import.meta.glob('@/assets/images/wired/*.{png,gif}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const ICON_MODULES = import.meta.glob('../../../assets/images/wired/*.{png,gif}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 const ICON_URLS: Record<string, string> = {};
 

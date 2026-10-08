@@ -2,7 +2,8 @@ import { FollowFriendMessageComposer, ILinkEventTracker } from '@nitrots/nitro-r
 import { FC, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import { AddEventLinkTracker, GetSessionDataManager, GetUserProfile, LocalizeText, RemoveLinkEventTracker, ReportType, SendMessageComposer } from '../../../../api';
-import { Base, Button, ButtonGroup, Column, Flex, Grid, LayoutAvatarImageView, LayoutBadgeImageView, LayoutGridItem, LayoutItemCountView, NitroCardContentView, NitroCardHeaderView, NitroCardView, ScrollContainer, Text } from '../../../../common';
+import { AreEmojiCodesEnabled, ReplaceEmojiCodes } from '../../../../api/chat/ChatEmojis';
+import { Base, Button, ButtonGroup, Column, Flex, Grid, LayoutAvatarImageView, LayoutBadgeImageView, LayoutGridItem, LayoutItemCountView, NitroCardContentView, NitroCardHeaderView, NitroCardView, ScrollContainer, Text, UsernameView } from '../../../../common';
 import { useHelp, useMessenger } from '../../../../hooks';
 import { FriendsMessengerThreadView } from './messenger-thread/FriendsMessengerThreadView';
 
@@ -103,7 +104,7 @@ export const FriendsMessengerView: FC<{}> = props =>
         }
     }, [ isVisible, activeThread, lastThreadId, visibleThreads, setActiveThreadId ]);
 
-    if(!isVisible) return null;
+    if(!isVisible || !visibleThreads || (visibleThreads.length <= 0)) return null;
 
     return (
         <NitroCardView className="nitro-friends-messenger" uniqueKey="nitro-friends-messenger" theme="primary-slim" resize="both">
@@ -127,7 +128,7 @@ export const FriendsMessengerView: FC<{}> = props =>
                                                     { (thread.participant.id <= 0) &&
                                                     <LayoutBadgeImageView isGroup={ true } badgeCode={ thread.participant.figure } /> }
                                                 </Flex>
-                                                <Text truncate grow>{ thread.participant.name }</Text>
+                                                <Text truncate grow bold><UsernameView userId={ thread.participant.id } name={ thread.participant.name } /></Text>
                                             </Flex>
                                         </LayoutGridItem>
                                     );
@@ -165,7 +166,7 @@ export const FriendsMessengerView: FC<{}> = props =>
                                     </Column>
                                 </Column>
                                 <Flex shrink gap={ 1 }>
-                                    <input type="text" className="form-control form-control-sm" maxLength={ 255 } placeholder={ LocalizeText('messenger.window.input.default', [ 'FRIEND_NAME' ], [ activeThread.participant.name ]) } value={ messageText } onChange={ event => setMessageText(event.target.value) } onKeyDown={ onKeyDown } />
+                                    <input type="text" className="form-control form-control-sm" maxLength={ 255 } placeholder={ LocalizeText('messenger.window.input.default', [ 'FRIEND_NAME' ], [ activeThread.participant.name ]) } value={ messageText } onChange={ event => setMessageText(AreEmojiCodesEnabled() ? ReplaceEmojiCodes(event.target.value) : event.target.value) } onKeyDown={ onKeyDown } />
                                     <Button variant="success" onClick={ send }>
                                         { LocalizeText('widgets.chatinput.say') }
                                     </Button>

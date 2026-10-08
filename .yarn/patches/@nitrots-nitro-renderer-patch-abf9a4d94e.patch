@@ -1,0 +1,174 @@
+diff --git a/api/nitro/room/object/RoomObjectVariable.ts b/api/nitro/room/object/RoomObjectVariable.ts
+index 6ec4131c457d855757d2ca6f311eaf957ecb714e..015fee85330ed3266eafbff8e08f158e27fcbcaf 100644
+--- a/api/nitro/room/object/RoomObjectVariable.ts
++++ b/api/nitro/room/object/RoomObjectVariable.ts
+@@ -13,6 +13,7 @@ export class RoomObjectVariable
+     public static FIGURE_SLEEP: string = 'figure_sleep';
+     public static FIGURE_BLINK: string = 'figure_blink';
+     public static FIGURE_EFFECT: string = 'figure_effect';
++    public static FIGURE_AURA: string = 'figure_aura';
+     public static FIGURE_CARRY_OBJECT: string = 'figure_carry_object';
+     public static FIGURE_USE_OBJECT: string = 'figure_use_object';
+     public static FIGURE_GESTURE: string = 'figure_gesture';
+diff --git a/nitro/room/RoomEngine.ts b/nitro/room/RoomEngine.ts
+index 3f4b9d05deddf5849e2c85c77f60facfcb6bc444..a68fd1fd653cbdd18a75eb8b36130c34d37c95d9 100644
+--- a/nitro/room/RoomEngine.ts
++++ b/nitro/room/RoomEngine.ts
+@@ -2095,6 +2095,14 @@ export class RoomEngine extends NitroManager implements IRoomEngine, IRoomCreato
+ 
+         if(!object) return false;
+ 
++        // aura: a plain model value the avatar visualization reads (see AvatarAuraRegistry)
++        if(action === RoomObjectVariable.FIGURE_AURA)
++        {
++            object.model.setValue(RoomObjectVariable.FIGURE_AURA, (value || 0));
++
++            return true;
++        }
++
+         let message: ObjectStateUpdateMessage = null;
+ 
+         switch(action)
+diff --git a/nitro/room/object/visualization/avatar/AvatarAuraRegistry.ts b/nitro/room/object/visualization/avatar/AvatarAuraRegistry.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..2ab54acdcfc416db0a2dc28afca11b80c871f642
+--- /dev/null
++++ b/nitro/room/object/visualization/avatar/AvatarAuraRegistry.ts
+@@ -0,0 +1,58 @@
++import { Filter } from '@pixi/core';
++
++/**
++ * Aura hook: an avatar whose room object has RoomObjectVariable.FIGURE_AURA > 0 asks the registered provider for the
++ * filters to put on its avatar sprite. The renderer itself draws nothing; an add-on (e.g. a shop module) registers a
++ * provider with its own effects. No provider, or a provider that returns null, means no aura.
++ */
++export interface IAvatarAuraProvider
++{
++    /** Filters for this aura at this moment (time in ms), or null when the id is unknown. */
++    getFilters(auraId: number, time: number, scale: number): Filter[];
++
++    /** True when the aura moves on its own, so the avatar keeps being redrawn while it stands still. */
++    isAnimated(auraId: number): boolean;
++}
++
++export class AvatarAuraRegistry
++{
++    private static _provider: IAvatarAuraProvider = null;
++
++    public static get provider(): IAvatarAuraProvider
++    {
++        return AvatarAuraRegistry._provider;
++    }
++
++    public static set provider(provider: IAvatarAuraProvider)
++    {
++        AvatarAuraRegistry._provider = provider;
++    }
++
++    public static getFilters(auraId: number, time: number, scale: number): Filter[]
++    {
++        if(!auraId || !AvatarAuraRegistry._provider) return null;
++
++        try
++        {
++            return AvatarAuraRegistry._provider.getFilters(auraId, time, scale) || null;
++        }
++        catch (error)
++        {
++            return null;
++        }
++    }
++
++    public static isAnimated(auraId: number): boolean
++    {
++        if(!auraId || !AvatarAuraRegistry._provider) return false;
++
++        try
++        {
++            return AvatarAuraRegistry._provider.isAnimated(auraId);
++        }
++        catch (error)
++        {
++            return false;
++        }
++    }
++}
+diff --git a/nitro/room/object/visualization/avatar/AvatarVisualization.ts b/nitro/room/object/visualization/avatar/AvatarVisualization.ts
+index 83f1712c701ce6e796693cccd922b40db6be23cd..debd9064d514a118d0d441016b68392fe8af7bca 100644
+--- a/nitro/room/object/visualization/avatar/AvatarVisualization.ts
++++ b/nitro/room/object/visualization/avatar/AvatarVisualization.ts
+@@ -3,6 +3,7 @@ import { Resource, Texture } from '@pixi/core';
+ import { AdvancedMap, AlphaTolerance, AvatarAction, AvatarGuideStatus, AvatarSetType, IAdvancedMap, IAvatarEffectListener, IAvatarImage, IAvatarImageListener, IGraphicAsset, IObjectVisualizationData, IRoomGeometry, IRoomObject, IRoomObjectModel, RoomObjectSpriteType, RoomObjectVariable } from '../../../../../api';
+ import { RoomObjectSpriteVisualization } from '../../../../../room';
+ import { ExpressionAdditionFactory, FloatingIdleZAddition, GameClickTargetAddition, GuideStatusBubbleAddition, IAvatarAddition, MutedBubbleAddition, NumberBubbleAddition, TypingBubbleAddition } from './additions';
++import { AvatarAuraRegistry } from './AvatarAuraRegistry';
+ import { AvatarVisualizationData } from './AvatarVisualizationData';
+ 
+ export class AvatarVisualization extends RoomObjectSpriteVisualization implements IAvatarImageListener, IAvatarEffectListener
+@@ -60,6 +61,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
+     private _highlight: boolean;
+     private _dance: number;
+     private _effect: number;
++    private _aura: number;
+     private _carryObject: number;
+     private _useObject: number;
+     private _ownUser: boolean;
+@@ -111,6 +113,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
+         this._highlight = false;
+         this._dance = 0;
+         this._effect = 0;
++        this._aura = 0;
+         this._carryObject = 0;
+         this._useObject = 0;
+         this._ownUser = false;
+@@ -244,6 +247,16 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
+             }
+         }
+ 
++        // an animated aura moves on its own: refresh its filters and redraw even while the avatar stands still
++        if(this._aura && AvatarAuraRegistry.isAnimated(this._aura))
++        {
++            const auraSprite = this.getSprite(AvatarVisualization.SPRITE_INDEX_AVATAR);
++
++            if(auraSprite && auraSprite.texture) auraSprite.filters = (AvatarAuraRegistry.getFilters(this._aura, time, scale) || []);
++
++            this.updateSpriteCounter++;
++        }
++
+         const update1 = (objectUpdate || updateModel || didScaleUpdate);
+         const update2 = ((this._isAnimating || (this._forcedAnimFrames > 0)) && update);
+ 
+@@ -294,7 +307,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
+                     }
+                     else
+                     {
+-                        sprite.filters = [];
++                        sprite.filters = (AvatarAuraRegistry.getFilters(this._aura, time, scale) || []);
+                     }
+                 }
+ 
+@@ -651,6 +664,15 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
+             needsUpdate = true;
+         }
+ 
++        const aura = (model.getValue<number>(RoomObjectVariable.FIGURE_AURA) || 0);
++
++        if(aura !== this._aura)
++        {
++            this._aura = aura;
++
++            needsUpdate = true;
++        }
++
+         const carryObject = (model.getValue<number>(RoomObjectVariable.FIGURE_CARRY_OBJECT) || 0);
+ 
+         if(carryObject !== this._carryObject)
+diff --git a/nitro/room/object/visualization/avatar/index.ts b/nitro/room/object/visualization/avatar/index.ts
+index aadc036f16fe81e07cc90d86f7235148e9e9efce..76f2f21778a82b22ff44cbad13f409e4224ec0a6 100644
+--- a/nitro/room/object/visualization/avatar/index.ts
++++ b/nitro/room/object/visualization/avatar/index.ts
+@@ -1,3 +1,4 @@
+ export * from './additions';
++export * from './AvatarAuraRegistry';
+ export * from './AvatarVisualization';
+ export * from './AvatarVisualizationData';

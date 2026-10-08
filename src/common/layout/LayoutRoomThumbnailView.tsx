@@ -1,4 +1,4 @@
-import { FC, useMemo } from 'react';
+import { FC, useMemo, useState } from 'react';
 import { GetConfiguration } from '../../api';
 import { Base, BaseProps } from '../Base';
 
@@ -28,9 +28,11 @@ export const LayoutRoomThumbnailView: FC<LayoutRoomThumbnailViewProps> = props =
         return (GetConfiguration<string>('thumbnails.url').replace('%thumbnail%', roomId.toString()));
     }, [ customUrl, roomId ]);
 
+    const [ failedUrl, setFailedUrl ] = useState<string>(null);
+
     return (
         <Base shrink={ shrink } overflow={ overflow } classNames={ getClassNames } { ...rest }>
-            { getImageUrl && <img alt="" src={ getImageUrl } /> }
+            { getImageUrl && (failedUrl !== getImageUrl) && <img alt="" src={ getImageUrl } onError={ () => setFailedUrl(getImageUrl) } /> }
             { children }
         </Base>
     );

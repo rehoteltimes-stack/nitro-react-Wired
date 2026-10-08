@@ -27,6 +27,11 @@ const OutgoingHeaders = {
 };
 
 let registered = false;
+let coverDeletePending = false;
+
+export const SetCoverDeletePending = (pending: boolean) => (coverDeletePending = pending);
+
+export const IsCoverDeletePending = () => coverDeletePending;
 
 export const RegisterProfileCoverMessages = () =>
 {

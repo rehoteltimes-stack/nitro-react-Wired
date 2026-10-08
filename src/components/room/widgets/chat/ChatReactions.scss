@@ -1,0 +1,223 @@
+// Chat reactions, replies and "sent N seconds ago" (own feature, from MetroHotel's client CSS: .reactions-box,
+// .reaction-button, .reactbtn sprite, .reaction-count, .chat-reply-reference, .chat-input-reply-preview, .message-time).
+// Hover a bubble for the reply button + reactions; a bubble with reactions keeps showing them.
+.bubble-container {
+  transition: top .2s ease 0s, transform .15s ease;
+
+  .chat-bubble { position: relative; }
+
+  .reactions-box {
+    position: absolute;
+    height: 14px;
+    right: -10px;
+    margin-top: -7px;
+    background-color: #00000057;
+    border-radius: 3px;
+    box-shadow: 0 2px 10px #0000001a;
+    display: flex;
+    z-index: 10;
+    font-size: 10px;
+    color: #fff;
+    overflow: hidden;
+    max-width: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: max-width .3s ease, opacity .3s ease;
+  }
+
+  .reactions-box:not(:empty) { max-width: 200px; }
+
+  &:hover .reactions-box, .reactions-box:has(.reaction-button.active) { opacity: 1; pointer-events: auto; }
+  .reactions-box:has(.reaction-button.active) .reaction-button:not(.active) { display: none; }
+  &:hover .reactions-box .reaction-button:not(.active) { display: inline-flex; }
+
+  .reaction-button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-weight: 700;
+    font-size: 10px;
+    cursor: pointer;
+    margin: 0 1px;
+    padding: 2px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s ease;
+
+    &.is-mine { background: #ffffff33; }
+  }
+
+  .reaction-button .reactbtn {
+    width: 11px;
+    height: 12px;
+    background-repeat: no-repeat;
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAZCAYAAACy0zfoAAAAAXNSR0IArs4c6QAABPpJREFUWEeNV01sG0UU/iZcY0Mapy2oih3AzoGgJo5oU25NIUVC5EI5FlFOVRvuLRI3VHOnijgR1Bwpl3Dhp01urUsbJ6iNRGOptgNSQuOAlA3HduC9mTc7s7sRndN6d2beN9/73vvGCm4oAFp+yYMC/Pfu2U00C4K18krF28VRgvk0I96JNglG6gUUdP3aJ5g4+yXFzAqg69dmUB0p8UaNtbbbcOLsVWit0aN4Wbx3GjtDiq4fRu9QEXutDnJntmQfigpoBZVxZl2fn8EJCuQHMEvNORXAAF8TgB3+JOAU7+qBCwnRAirJFIHMn9lyceV0QZoI3MCBHF55t0YxlJ9u+kaDgG1s7mDwxX7HYJo5Q72nEb3LbA1Cjf+CVq2C0lQf2j/9jaHL69DLxxC1NhigDUxpnOFzSkA59vZOhIkPryZkYqASSGFO0hswl5IE54hZ6zafR+nSbyCG9fJxqPE7LIf2F8MolHdtig3/9mAK9fmLNqB53XjQZnC00KaKQRnmhrCx2cXgS/28A2lvX81ZSXA6S0W0fzZMGaB5A+iDLbSuVFCc6sM/VoOcs9vPkCoDzp4lobmQuadQqsdpzjs9pzRnCyCpN9naL5CgHjhVVIXaMuexkWauhN83d5yeun9FzJzXVuI2ZLbTrLG3+1ypUDpl6HvH+T2lscMabBq8/yfyp7Y9ZDU0Wls4kMOrXDzpCk10Ax19d5gRUOtYWVnB6OgoVldXMTY2xmmmQSmGVZKW/nBn/iLGuD0oNNZaPDGzPcQRuZhs0dj+5Ccs1ag06apQEdEHtcbgtpt5vHx53VUr9y+/+kjcsq0D18Oce03bVF8ALiWkTO/g9FIR0CCNRa0Ob0zFQYUiGfDKVem4J8XCl45o2TWqCAmJ21im02Ugth1CQHqgDDAvfNbx/KacZXFeX4417cFIr8nEGLhvYo3B6IMLPa/dQe59z/NkagZzKZ80c7IOJpZhvxl5WOzBfP9H4Hk023zU2GttiDH7MnAdn3STHJ6ZBzEeXzjHUw/NzrG3Qyv9+MJH/O7g7BzFVCFSBR19a24I5HM0xPMIYmnqBXtz+NPsZvuWsJVeY9Y7gNZiCdjA+AgTtd1YYzD8rjrCMbcbD/idKwh7Yut5eXxcXcZi4ZT5roHJnRv4ujHueZ5LlVtTuvTQ+SSqdX4WsXu3DO0DETACzPy+j4Oz3wTguDH2lgYx2b3JgBYHTrFciKDJ7g3Gv1h4y6Z3k3/7rFH509xHtQq3An6+UkHptMcewCyZYXa3GQiKn9NtFcUJkkA+ENEQvSMNLO0DjlK335AelueOr3B3+gSKR4btXUOkGKu788dDHFu4FYOj5NGJSVfM3H83joWobOIpYLq36ZiTexe9kLsYT/M8UoCKV3prmIi702+ieKSScjoC9sbCbXMFtsNUny2I93LGbJdO5xy4kz9EzNz3UdlVrP2oo+uH+NH55NFRrP6a8El7cfTYtQCJQTMMsFuWDgctFnerNoxz1Xtcx0vvpMHNNcZjazEn0o9qZQxYG7LC553pakSn7q4n7Ci+52tJcTKVvkSEOQ528kfjd5RWuVdN50xaLZvJpprySdEgA/s09kkXNG7goQuFjimqimns/fwmL7j/3Hn0l3ex08zj9Sdf8YS9zybjf2IZDrGvT/pUPMNz0p6zlnin4pt++Bc0BOdqwNsoZDh7fhg3g7l/AT9u0Dov06y5AAAAAElFTkSuQmCC);
+
+    &.like { background-position: 0 0; }
+    &.smile { width: 13px; height: 13px; background-position: -13px -12px; }
+    &.heart { height: 10px; background-position: -26px -13px; }
+    &.angry { width: 13px; height: 13px; background-position: -26px 0; }
+  }
+
+  .reaction-count { font-size: 10px; color: #fff; font-weight: 700; min-width: 12px; text-align: center; }
+
+  .chat-reply-reference {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 260px;
+    margin: 0 0 3px;
+    padding: 3px 6px;
+    overflow: hidden;
+    color: #3f3f3f;
+    font-size: 10px;
+    line-height: 13px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    background: #ffffffb8;
+    border-left: 3px solid #62b94f;
+    border-radius: 3px;
+
+    span { overflow: hidden; text-overflow: ellipsis; }
+  }
+
+  .chat-reply-reference__icon { font-weight: 700; color: #62b94f; }
+
+  .chat-bubble .chat-content .chat-reply-reference {
+    span, b { color: #3f3f3f; }
+    span.chat-reply-reference__icon { color: #62b94f; }
+  }
+
+  // .chat-bubble .chat-content .message-time: beats HabboCity's ".chat-bubble .chat-content * { color: black }"
+  .chat-bubble .chat-content .message-time {
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translate(-5px, -50%);
+    white-space: nowrap;
+    background: rgba(16, 16, 16, 0.95);
+    border: 1px solid #222222;
+    color: #FFFFFF;
+    border-radius: 5px;
+    margin-left: 8px;
+    font-size: 10px;
+    z-index: 99999;
+    height: 17px;
+    padding: 0 5px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  }
+}
+
+// the line being replied to, above the chat input
+.chat-input-reply-preview {
+  position: absolute;
+  left: 54px;
+  bottom: calc(100% + 5px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: min(420px, 100vw - 120px);
+  padding: 5px 7px;
+  color: #fff;
+  font-size: 11px;
+  background: #101010;
+  border: 2px solid rgb(26, 26, 26);
+  border-radius: 5px;
+  z-index: 10;
+  box-shadow: 0 2px 4px #0006, 0 5px 5px -1px #0000004d, inset 0 -3px #0003;
+
+  span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  button { padding: 0 3px; color: #fff; font-size: 18px; line-height: 1; background: transparent; border: 0; }
+}
+
+// staff feed line actions (StaffFeedActionsView): the reactions box look, with icons, on a hovered bubble-34 feed line
+.bubble-container .staff-feed-actions {
+  .reaction-button { font-size: 9px; padding: 2px 3px; }
+  .reaction-button:disabled { opacity: .4; cursor: default; }
+  .reaction-button svg { display: block; }
+}
+
+// the line being replied to, as a chip at the start of the chat input (ChatInputView)
+.chat-input-reply-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  max-width: 140px;
+  margin-right: 4px;
+  padding: 1px 2px 1px 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  color: #fff;
+  font-size: 11px;
+  background: #1e9e4a;
+  border-radius: 10px;
+
+  b { overflow: hidden; text-overflow: ellipsis; }
+
+  button {
+    padding: 0 4px;
+    color: #fff;
+    font-size: 13px;
+    line-height: 1;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+  }
+}
+
+// the count of a repeated line: the reactions box look (dark pill, white bold 10px), on the bubble's top right corner;
+// the reactions box (also top right) moves left of it
+.bubble-container .chat-bubble:has(> .chat-repeat-count) .reactions-box { right: 16px; }
+
+.bubble-container .chat-bubble .chat-repeat-count {
+  position: absolute;
+  top: -7px;
+  right: -8px;
+  height: 14px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background-color: #00000057;
+  border-radius: 3px;
+  box-shadow: 0 2px 10px #0000001a;
+  z-index: 10;
+  pointer-events: none;
+}
+
+// the same feedback / notification bubble again: the repeat badge of chat lines, inside the bubble's top right corner
+// (sticking out, the next bubble stacked above covered it)
+.nitro-notification-bubble:has(> .bubble-repeat-count) { position: relative; }
+
+.nitro-notification-bubble .bubble-repeat-count {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  height: 14px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background-color: #00000057;
+  border-radius: 3px;
+  box-shadow: 0 2px 10px #0000001a;
+  pointer-events: none;
+}
+
+.nitro-notification-bubble .bubble-image-container img[src*="/images/wallet/"] {
+  height: 30px;
+  width: auto;
+  image-rendering: pixelated;
+}
+
+.bubble-container:hover:has(.reactions-box) ~ .bubble-container { transform: translateY(14px); }

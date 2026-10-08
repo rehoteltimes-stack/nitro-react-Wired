@@ -211,6 +211,11 @@
   border-radius: 0 0 var(--holo-border-radius) var(--holo-border-radius);
 }
 
+.nitro-card.theme-primary:not(.nitro-infostand) > .content-area,
+.nitro-card.theme-primary-slim:not(.nitro-infostand) > .content-area {
+  height: calc(100% - 40px);
+}
+
 :not(.nitro-infostand) .content-area .content-area-inner {
   margin: var(--holo-paddings);
   height: calc(100% - var(--holo-paddings) * 2);

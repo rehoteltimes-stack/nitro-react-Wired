@@ -1,6 +1,6 @@
 import { FC, MouseEvent, useState } from 'react';
 import { LocalizeText, MessengerFriend, OpenMessengerChat } from '../../../../../api';
-import { Base, Flex, LayoutAvatarImageView, UserProfileIconView } from '../../../../../common';
+import { Base, Flex, LayoutAvatarImageView, UsernameView, UserProfileIconView } from '../../../../../common';
 import { useFriends } from '../../../../../hooks';
 
 export const FriendsListGroupItemView: FC<{ friend: MessengerFriend, selected: boolean, selectFriend: (userId: number) => void }> = props =>
@@ -64,7 +64,7 @@ export const FriendsListGroupItemView: FC<{ friend: MessengerFriend, selected: b
                 <Base className="avatar-image-container">
                     <LayoutAvatarImageView figure={ friend.figure } direction={ 2 } />
                 </Base>
-                <div className="friend-name">{ friend.name }</div>
+                <div className="friend-name"><UsernameView userId={ friend.id } name={ friend.name } /></div>
             </Flex>
             <Flex alignItems="center" gap={ 1 }>
                 <Base onClick={ event => event.stopPropagation() }>

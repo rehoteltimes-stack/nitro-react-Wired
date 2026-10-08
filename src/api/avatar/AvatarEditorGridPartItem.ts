@@ -1,5 +1,6 @@
 import { AvatarFigurePartType, IAvatarImageListener, IAvatarRenderManager, IFigurePart, IFigurePartSet, IGraphicAsset, IPartColor, NitroAlphaFilter, NitroContainer, NitroSprite, TextureUtils } from '@nitrots/nitro-renderer';
 import { GetAvatarRenderManager } from '../nitro';
+import { QueueAvatarEditorTask } from './AvatarEditorTaskQueue';
 import { FigureData } from './FigureData';
 
 export class AvatarEditorGridPartItem implements IAvatarImageListener
@@ -107,7 +108,7 @@ export class AvatarEditorGridPartItem implements IAvatarImageListener
 
     public update(): void
     {
-        this.updateThumbVisualization();
+        QueueAvatarEditorTask(this, () => (!this._disposed && this.updateThumbVisualization()));
     }
 
     private analyzeFigure(): boolean
@@ -279,8 +280,9 @@ export class AvatarEditorGridPartItem implements IAvatarImageListener
     public set thumbContainer(container: NitroContainer)
     {
         this._thumbContainer = container;
+        this._isInitalized = true;
 
-        this.update();
+        if(!this._disposed) this.updateThumbVisualization();
     }
 
     public get imageUrl(): string

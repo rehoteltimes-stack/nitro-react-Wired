@@ -23,7 +23,9 @@ export class FigureData
     public static TROUSERS: string = 'lg';
     public static SHOES: string = 'sh';
     public static TROUSER_ACCESSORIES: string = 'wa';
-    public static SET_TYPES = [ FigureData.FACE, FigureData.HAIR, FigureData.HAT, FigureData.HEAD_ACCESSORIES, FigureData.EYE_ACCESSORIES, FigureData.FACE_ACCESSORIES, FigureData.JACKET, FigureData.SHIRT, FigureData.CHEST_ACCESSORIES, FigureData.CHEST_PRINTS, FigureData.TROUSERS, FigureData.SHOES, FigureData.TROUSERS ];
+    public static PET: string = 'pt';
+    public static MISC: string = 'mc';
+    public static SET_TYPES = [ FigureData.FACE, FigureData.HAIR, FigureData.HAT, FigureData.HEAD_ACCESSORIES, FigureData.EYE_ACCESSORIES, FigureData.FACE_ACCESSORIES, FigureData.JACKET, FigureData.SHIRT, FigureData.CHEST_ACCESSORIES, FigureData.CHEST_PRINTS, FigureData.TROUSERS, FigureData.SHOES, FigureData.TROUSERS, FigureData.PET, FigureData.MISC ];
 
     private _data: Map<string, number>;
     private _colors: Map<string, number[]>;
@@ -157,6 +159,8 @@ export class FigureData
             case FigureData.TROUSERS:
             case FigureData.SHOES:
             case FigureData.TROUSER_ACCESSORIES:
+            case FigureData.PET:
+            case FigureData.MISC:
                 if(partId >= 0)
                 {
                     this._data.set(setType, partId);
@@ -188,6 +192,8 @@ export class FigureData
             case FigureData.TROUSERS:
             case FigureData.SHOES:
             case FigureData.TROUSER_ACCESSORIES:
+            case FigureData.PET:
+            case FigureData.MISC:
                 this._colors.set(setType, colorIds);
                 break;
         }

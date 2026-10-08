@@ -1,0 +1,466 @@
+// The daily loop (own feature): colours only from the theme tokens (assets/styles/holo/_tokens.scss).
+
+.nitro-engagement-daily {
+  --engagement-surface: color-mix(in srgb, var(--holo-text-primary) 5%, transparent);
+  --engagement-surface-strong: color-mix(in srgb, var(--holo-text-primary) 9%, transparent);
+  --engagement-line: color-mix(in srgb, var(--holo-text-primary) 12%, transparent);
+
+  .engagement-muted { color: var(--holo-text-muted); }
+  .engagement-ok { color: #52bc48; }
+
+  .engagement-days > * { flex: 1; min-width: 0; }
+
+  .engagement-day {
+    padding: 6px 2px;
+    border: 1px solid var(--engagement-line);
+    border-radius: 8px;
+    background: var(--engagement-surface);
+    color: var(--holo-text-primary);
+    transition: background-color .15s ease;
+
+    &.is-today {
+      border-color: #eeb80e;
+      background: color-mix(in srgb, #eeb80e 12%, transparent);
+      box-shadow: 0 0 0 1px #eeb80e inset;
+    }
+
+    &.is-done { opacity: .45; }
+    &.is-big { background: var(--engagement-surface-strong); }
+  }
+
+  .engagement-bar {
+    height: 5px;
+    border-radius: 3px;
+    background: var(--engagement-line);
+    overflow: hidden;
+
+    > div { height: 100%; border-radius: 3px; background: #52bc48; }
+  }
+
+  .engagement-box {
+    padding: 8px 10px;
+    border: 1px solid var(--engagement-line);
+    border-radius: 8px;
+    background: var(--engagement-surface);
+    color: var(--holo-text-primary);
+
+    &.is-done { opacity: .6; }
+  }
+
+  .engagement-scroll {
+    max-height: min(60vh, 520px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+}
+
+// the result of the player's own click, in the window and the chest card
+.engagement-result {
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, .25);
+  color: var(--holo-text-primary);
+  line-height: 1.2;
+
+  .engagement-result-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    object-fit: none;
+    image-rendering: pixelated;
+  }
+}
+
+.engagement-chest {
+  pointer-events: all;
+}
+
+.engagement-icon-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.engagement-icon {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    image-rendering: pixelated;
+}
+
+.engagement-bar.is-pass > div { background: #9180ff; }
+.engagement-xp { color: #b4a8ff; font-weight: 700; white-space: nowrap; }
+.engagement-quest-reward { flex-shrink: 0; }
+
+.engagement-today {
+  --today-surface: rgba(0, 0, 0, .2);
+  --today-surface-hover: rgba(255, 255, 255, .07);
+  --today-line: rgba(255, 255, 255, .08);
+  --today-ready: #52bc48;
+  --today-done: var(--holo-text-muted);
+
+  width: 100%;
+  min-width: 0;
+
+  .engagement-today-title { font-size: 14px; letter-spacing: .5px; }
+  .engagement-today-muted { color: var(--holo-text-muted); line-height: 1.25; }
+  .engagement-today-ready { color: var(--today-ready); font-weight: 700; }
+  .engagement-today-text { min-width: 0; }
+
+  .engagement-today-row {
+    padding: 6px 7px;
+    border: 1px solid var(--today-line);
+    border-radius: 8px;
+    background: var(--today-surface);
+  }
+
+  .engagement-today-head.is-link {
+    cursor: pointer;
+    margin: -6px -7px 0;
+    padding: 6px 7px 0;
+    border-radius: 8px 8px 0 0;
+
+    &:hover { background: var(--today-surface-hover); }
+  }
+
+  .engagement-today-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+
+    &.is-small { width: 26px; height: 26px; }
+  }
+
+  .engagement-today-xp-icon {
+    display: inline-block;
+    width: 22px;
+    height: 26px;
+    background: image-set(url('https://cdn.habbo.nz/c_images/icons/logo_habbo_icon_26.png?v=1') 1x, url('https://cdn.habbo.nz/c_images/icons/logo_habbo_icon_26@2x.png?v=1') 2x) center / 22px 26px no-repeat;
+    image-rendering: auto;
+  }
+
+  .engagement-today-icon.is-small .engagement-today-xp-icon {
+    width: 17px;
+    height: 20px;
+    background-image: image-set(url('https://cdn.habbo.nz/c_images/icons/logo_habbo_icon_20.png?v=1') 1x, url('https://cdn.habbo.nz/c_images/icons/logo_habbo_icon_20@2x.png?v=1') 2x);
+    background-size: 17px 20px;
+  }
+
+  .engagement-today-pill {
+    flex-shrink: 0;
+    padding: 0 6px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .1);
+    color: var(--holo-text-primary);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 16px;
+    white-space: nowrap;
+
+    &.is-ready { background: var(--today-ready); color: #fff; }
+    &.is-done { color: var(--today-done); }
+  }
+
+  .engagement-today-bar {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, .1);
+    overflow: hidden;
+
+    > div { height: 100%; transition: width .4s; }
+
+    &.is-chest > div { background: #eeb80e; }
+    &.is-pass > div { background: #9180ff; }
+    &.is-emeralds > div { background: #50c878; }
+    &.is-diamonds > div { background: #00bfff; }
+  }
+
+  .engagement-today-amount { min-width: 40px; text-align: right; }
+
+  .engagement-today-quest { padding-left: 2px; color: var(--holo-text-primary); }
+
+  .engagement-today-quest-dot {
+    width: 5px;
+    height: 5px;
+    margin: 0 3px;
+    border-radius: 50%;
+    background: var(--holo-text-muted);
+    flex-shrink: 0;
+  }
+
+  .engagement-today-quest-reward { font-size: 11px; flex-shrink: 0; }
+
+  .engagement-today-earned {
+    padding: 4px 7px;
+    border-radius: 8px;
+    background: var(--today-surface);
+  }
+}
+
+.engagement-today.is-collapsed {
+  padding: 7px 9px !important;
+
+  .engagement-today-title { font-size: 13px; }
+
+  .engagement-today-tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+
+  .engagement-today-tile.is-wide {
+    grid-column: 1 / -1;
+  }
+
+  .engagement-today-tile {
+    min-width: 0;
+    padding: 4px 5px;
+    border: 1px solid var(--today-line);
+    border-radius: 8px;
+    background: var(--today-surface);
+    line-height: 1.15;
+
+    &:hover { background: var(--today-surface-hover); }
+
+    &.is-ready {
+      border-color: var(--today-ready);
+
+      .engagement-today-tile-value { color: var(--today-ready); }
+    }
+
+    &.is-done .engagement-today-tile-value { color: var(--today-done); }
+  }
+
+  .engagement-today-tile-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--holo-text-muted);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+  }
+
+  .engagement-today-tile-value {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.nitro-engagement-daily .rewards-quests-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+
+  .rewards-quest-card {
+    position: relative;
+    padding: 6px 8px;
+    overflow: hidden;
+    border: 1px solid var(--engagement-line);
+    border-radius: 12px;
+    background: var(--engagement-surface);
+    color: var(--holo-text-primary);
+
+    &.is-locked { opacity: .55; }
+  }
+
+  .rewards-quest-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .rewards-quest-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--engagement-surface-strong);
+
+    img {
+      max-width: 24px;
+      max-height: 24px;
+      image-rendering: pixelated;
+    }
+
+    &.is-badge {
+      width: 44px;
+      height: 44px;
+
+      img {
+        max-width: 40px;
+        max-height: 40px;
+      }
+    }
+  }
+
+  .rewards-quest-text {
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .rewards-quest-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  .rewards-quest-badges-time,
+  .rewards-quest-badges-winwins,
+  .rewards-quest-progress-label {
+    display: flex;
+    align-items: center;
+    padding: 2px 8px;
+    border: 1px solid var(--engagement-line);
+    border-radius: 999px;
+    background: var(--engagement-surface-strong);
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .rewards-quest-badges-time::before,
+  .rewards-quest-badges-winwins::before {
+    content: "";
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    image-rendering: pixelated;
+  }
+
+  .rewards-quest-badges-time::before { background-image: var(--quest-time-icon); }
+  .rewards-quest-badges-winwins::before { background-image: var(--quest-xp-icon); }
+
+  .rewards-quest-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    padding-left: 42px;
+  }
+
+  .rewards-quest-progress {
+    position: relative;
+    flex: 1;
+    height: 8px;
+    overflow: hidden;
+    border: 1px solid var(--engagement-line);
+    border-radius: 999px;
+    background: var(--engagement-surface);
+  }
+
+  .rewards-quest-progress-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: calc((var(--value) / var(--max)) * 100%);
+    background: #8fe388;
+    transition: width .25s ease;
+  }
+
+  .rewards-quest-swap { padding: 2px 8px; font-size: 12px; }
+
+  .rewards-quest-progress-label .icon { margin-right: 4px; }
+
+}
+
+.engagement-today {
+  .engagement-today-vip {
+    padding: 0 6px;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #ffd65a, #e8a92c);
+    color: #4a2d00;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+
+    &.is-join {
+      background: rgba(255, 255, 255, .12);
+      color: #ffd65a;
+      cursor: pointer;
+
+      &:hover { background: rgba(255, 255, 255, .2); }
+    }
+  }
+
+  .engagement-today-info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .15);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    font-style: italic;
+    cursor: pointer;
+
+    &:hover { background: rgba(255, 255, 255, .28); }
+  }
+
+  .engagement-today-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .15);
+    color: #fff;
+    font-size: 10px;
+    cursor: pointer;
+
+    &:hover { background: rgba(255, 255, 255, .28); }
+  }
+  .engagement-today-ready-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--today-ready);
+    box-shadow: 0 0 6px var(--today-ready);
+  }
+}
+
+.engagement-hub-window {
+  .engagement-hub-details {
+    --today-surface: color-mix(in srgb, var(--holo-text-primary) 5%, transparent);
+    --today-surface-hover: color-mix(in srgb, var(--holo-text-primary) 9%, transparent);
+    --today-line: color-mix(in srgb, var(--holo-text-primary) 12%, transparent);
+
+    width: 100%;
+    color: var(--holo-text-primary);
+
+    .text-white { color: var(--holo-text-primary) !important; }
+
+    .engagement-today-pill { background: color-mix(in srgb, var(--holo-text-primary) 10%, transparent); }
+    .engagement-today-pill.is-ready { background: var(--today-ready); color: #fff; }
+
+    .engagement-today-bar { background: color-mix(in srgb, var(--holo-text-primary) 10%, transparent); }
+  }
+}
+
+.engagement-today-tile.is-disabled,
+.engagement-today-row.is-disabled {
+  opacity: .4;
+  filter: grayscale(1);
+  cursor: default;
+}

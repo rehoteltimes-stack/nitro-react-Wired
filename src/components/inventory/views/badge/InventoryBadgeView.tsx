@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { FaTrash } from 'react-icons/fa';
 import { LocalizeBadgeDescription, LocalizeBadgeName, LocalizeText, UnseenItemCategory } from '../../../../api';
 import { AutoGrid, Button, Column, Flex, Grid, LayoutBadgeImageView, LayoutBadgeRackView, Text } from '../../../../common';
-import { useInventoryBadges, useInventoryUnseenTracker } from '../../../../hooks';
+import { useInventoryBadges, useInventoryUnseenTracker, useNotification } from '../../../../hooks';
 import { InventoryBadgeItemView } from './InventoryBadgeItemView';
 import { InventoryBadgeSearchView } from './InventoryBadgeSearchView';
 
@@ -19,7 +19,17 @@ export const InventoryBadgeView: FC<InventoryBadgeViewProps> = props =>
     const { searchSlot = null } = props;
     const [ isVisible, setIsVisible ] = useState(false);
     const [ filteredBadgeCodes, setFilteredBadgeCodes ] = useState<string[]>([]);
-    const { badgeCodes = [], activeBadgeSlots = [], selectedBadgeCode = null, isWearingBadge = null, canWearBadges = null, toggleBadgeAtSlot = null, getBadgeId = null, activate = null, deactivate = null } = useInventoryBadges();
+    const { badgeCodes = [], activeBadgeSlots = [], selectedBadgeCode = null, isWearingBadge = null, canWearBadges = null, toggleBadgeAtSlot = null, getBadgeId = null, activate = null, deactivate = null, removeBadge = null } = useInventoryBadges();
+    const { showConfirm = null } = useNotification();
+
+    const deleteSelected = () =>
+    {
+        if(!selectedBadgeCode) return;
+
+        const badgeCode = selectedBadgeCode;
+
+        showConfirm(`Do you really want to delete the badge "${ LocalizeBadgeName(badgeCode) }" from your inventory? There is no refund.`, () => removeBadge(badgeCode), null, null, null, LocalizeText('generic.alert.title'));
+    }
     const { isUnseen = null, removeUnseen = null } = useInventoryUnseenTracker();
 
     // Real, previously-missing feature: this project had no search bar at all for Badges - confirmed live on the
@@ -56,11 +66,7 @@ export const InventoryBadgeView: FC<InventoryBadgeViewProps> = props =>
     // NOT nested inside the right preview column - it's a separate, full-width footer row below the whole Grid,
     // confirmed live via bounding-rect capture (button width 455px, near the card's own full 528px width, not
     // the ~200px the right column alone would give it) - same real structural pattern already fixed for
-    // Furniture's own footer, and already correct from the start in Banners'. Trash icon's real function IS now
-    // understood (found in the minified jy hook: removeBadge() splices the badge out of badgeCodes entirely and
-    // sends a discard composer) but still left unwired - no equivalent composer exists anywhere in this
-    // project's own vendored @nitrots/nitro-renderer package (checked every outgoing inventory/badges composer),
-    // so wiring a fake local-only "delete" would just desync from the server on next reload.
+    // Furniture's own footer, and already correct from the start in Banners'.
 
     // Real reference mechanism (confirmed via the minified jy/ED sources, not guessed): badges live in FIXED,
     // individually-addressable slots (activeBadgeSlots), not a compacting append/remove list - dragging a badge
@@ -152,7 +158,7 @@ export const InventoryBadgeView: FC<InventoryBadgeViewProps> = props =>
                     <Button fullWidth grow variant={ (isWearingBadge(selectedBadgeCode) ? 'danger' : 'success') } disabled={ !isWearingBadge(selectedBadgeCode) && !canWearBadges() } onClick={ onWearRemoveClick }>
                         { LocalizeText(isWearingBadge(selectedBadgeCode) ? 'inventory.badges.clearbadge' : 'inventory.badges.wearbadge') }
                     </Button>
-                    <Button variant="danger">
+                    <Button variant="danger" onClick={ deleteSelected }>
                         <FaTrash className="fa-icon" />
                     </Button>
                 </Flex> }

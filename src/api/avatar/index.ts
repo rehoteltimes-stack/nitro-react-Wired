@@ -1,6 +1,7 @@
 export * from './AvatarEditorAction';
 export * from './AvatarEditorGridColorItem';
 export * from './AvatarEditorGridPartItem';
+export * from './AvatarEditorTaskQueue';
 export * from './AvatarEditorUtilities';
 export * from './BodyModel';
 export * from './CategoryBaseModel';

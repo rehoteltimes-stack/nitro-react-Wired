@@ -1,3 +1,4 @@
+import { IRoomPermissions } from './RoomSettingsProtocol';
 import { IRoomChatSettings } from './IRoomChatSettings';
 import { IRoomModerationSettings } from './IRoomModerationSettings';
 
@@ -20,4 +21,5 @@ export interface IRoomData
     floorThickness: number;
     chatSettings: IRoomChatSettings;
     moderationSettings: IRoomModerationSettings;
+    permissions?: IRoomPermissions;
 }

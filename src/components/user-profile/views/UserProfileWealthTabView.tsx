@@ -274,10 +274,17 @@ export const UserProfileWealthTabView: FC<UserProfileWealthTabViewProps> = props
                          curve overshooting between two data points (a real risk with real, jagged
                          wealth data, unlike a smooth synthetic test curve) rendered outside the chart
                          box instead of being cleanly cut off at its edges. */ }
+                    { /* Second real bug, found later via a live side-by-side circle-vs-clip-edge check: the
+                         rect's right edge was PLOT_RIGHT (750, the same x the rightmost data point sits at),
+                         slicing that point's own marker/hit circle exactly in half. The reference's real clip
+                         rect is 740 wide (edge at 800 = CHART_WIDTH), 50px past its own rightmost point for
+                         exactly this reason - confirmed live, rightmostCx 750 vs clipRightEdge 800 on their
+                         side, 750 vs 750 on ours. PLOT_RIGHT itself is untouched (data positioning already
+                         matched the reference exactly) - only the clip rect's own right edge changes. */ }
                     <svg width="100%" viewBox={ `0 0 ${ CHART_WIDTH } ${ CHART_HEIGHT }` }>
                         <defs>
                             <clipPath id="profile-wealth-plot-clip">
-                                <rect x={ PLOT_LEFT } y={ CLIP_TOP } width={ PLOT_RIGHT - PLOT_LEFT } height={ PLOT_BOTTOM - CLIP_TOP } />
+                                <rect x={ PLOT_LEFT } y={ CLIP_TOP } width={ CHART_WIDTH - PLOT_LEFT } height={ PLOT_BOTTOM - CLIP_TOP } />
                             </clipPath>
                         </defs>
                         { paths.map(path =>

@@ -19,6 +19,7 @@ const useRareLevelsState = () =>
     const [ levels, setLevels ] = useState<Map<number, string>>(new Map());
     const [ rooms, setRooms ] = useState<Map<number, RareRoom>>(new Map());
 
+
     useMessageEvent<RareLevelsDataEvent>(RareLevelsDataEvent, event => setLevels(event.getParser().levels));
 
     useMessageEvent<RareRoomDataEvent>(RareRoomDataEvent, event =>

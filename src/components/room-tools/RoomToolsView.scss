@@ -108,3 +108,15 @@
         min-width: 78px;
     }
 }
+
+.nitro-room-tools .room-tools-bubbles {
+  width: 17px;
+  height: 21px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.nitro-room-tools .room-tools-bubbles.is-off {
+  opacity: .4;
+}

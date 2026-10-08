@@ -1,0 +1,127 @@
+diff --git a/nitro/avatar/AvatarImage.ts b/nitro/avatar/AvatarImage.ts
+index 30f15f49a4ac8e0520fb46dcc6d53c4434d928ab..1449691d074e1767f1f231421589f21433330990 100644
+--- a/nitro/avatar/AvatarImage.ts
++++ b/nitro/avatar/AvatarImage.ts
+@@ -854,7 +854,7 @@ export class AvatarImage implements IAvatarImage, IAvatarEffectListener
+ 
+         this._currentActionsString = '';
+         this._sortedActions = this._structure.sortActions(this._actions);
+-        this._animationFrameCount = this._structure.maxFrames(this._sortedActions);
++        this._animationFrameCount = this._structure.maxFrames(this._sortedActions, this._figure);
+ 
+         if(!this._sortedActions)
+         {
+diff --git a/nitro/avatar/AvatarRenderManager.ts b/nitro/avatar/AvatarRenderManager.ts
+index 91cdeff4170cc81f4c254b6e52164827a8f81dd3..4b9421fa882e93a0a536f2bd8cab091877a56202 100644
+--- a/nitro/avatar/AvatarRenderManager.ts
++++ b/nitro/avatar/AvatarRenderManager.ts
+@@ -8,7 +8,7 @@ import { AvatarFigureContainer } from './AvatarFigureContainer';
+ import { AvatarImage } from './AvatarImage';
+ import { AvatarStructure } from './AvatarStructure';
+ import { HabboAvatarAnimations } from './data/HabboAvatarAnimations';
+-import { AddExtraGeometryParts, AddExtraPartSets } from './data/HabboAvatarExtraParts';
++import { AddExtraAnimations, AddExtraGeometryParts, AddExtraPartSets } from './data/HabboAvatarExtraParts';
+ import { HabboAvatarGeometry } from './data/HabboAvatarGeometry';
+ import { HabboAvatarPartSets } from './data/HabboAvatarPartSets';
+ import { EffectAssetDownloadManager } from './EffectAssetDownloadManager';
+@@ -173,7 +173,7 @@ export class AvatarRenderManager extends NitroManager implements IAvatarRenderMa
+     {
+         if(!this._structure) return;
+ 
+-        this._structure.initAnimation(HabboAvatarAnimations.animations);
++        this._structure.initAnimation(AddExtraAnimations(HabboAvatarAnimations.animations));
+ 
+         this._animationsReady = true;
+ 
+diff --git a/nitro/avatar/AvatarStructure.ts b/nitro/avatar/AvatarStructure.ts
+index 4d8d0ebe7f2a2462ec7f38779be11e21afa6f211..a2cba91c0cb59b05966476af851dc7439eedaacc 100644
+--- a/nitro/avatar/AvatarStructure.ts
++++ b/nitro/avatar/AvatarStructure.ts
+@@ -3,6 +3,7 @@ import { AvatarDirectionAngle, IActionDefinition, IActiveActionData, IAssetAnima
+ import { EventDispatcher } from '../../core';
+ import { ActionDefinition, AvatarActionManager } from './actions';
+ import { Animation, AnimationManager, AvatarAnimationLayerData } from './animation';
++import { HasExtraParts, IsExtraIdleAnimation } from './data/HabboAvatarExtraParts';
+ import { AvatarImagePartContainer } from './AvatarImagePartContainer';
+ import { AvatarRenderManager } from './AvatarRenderManager';
+ import { AvatarModelGeometry } from './geometry';
+@@ -180,12 +181,15 @@ export class AvatarStructure extends EventDispatcher
+         return this._actionManager.sortActions(k);
+     }
+ 
+-    public maxFrames(k: IActiveActionData[]): number
++    public maxFrames(k: IActiveActionData[], figure: IAvatarFigureContainer = null): number
+     {
+         let _local_2 = 0;
++        const hasExtraParts = (!figure || HasExtraParts(figure.getPartTypeIds()));
+ 
+         for(const _local_3 of k)
+         {
++            if(!hasExtraParts && IsExtraIdleAnimation(_local_3.definition.id)) continue;
++
+             _local_2 = Math.max(_local_2, this._animationData.getFrameCount(_local_3.definition));
+         }
+         return _local_2;
+diff --git a/nitro/avatar/data/HabboAvatarExtraParts.ts b/nitro/avatar/data/HabboAvatarExtraParts.ts
+index 67beed0f6e1f18c51954215ff51dffcb6fe1c935..3d78c76ff9ed64570afb571a3e17d2f9c037fc22 100644
+--- a/nitro/avatar/data/HabboAvatarExtraParts.ts
++++ b/nitro/avatar/data/HabboAvatarExtraParts.ts
+@@ -60,3 +60,58 @@ export const AddExtraPartSets = (partSets: any) =>
+ 
+     return partSets;
+ };
++
++const EXTRA_TYPES = [ 'pt', 'ptl', 'ptr', 'mc', 'mcl', 'mcr' ];
++
++const MIRROR_SOURCES: { [type: string]: string } = {
++    'pt': 'bd',
++    'mc': 'bd',
++    'ptl': 'lh',
++    'mcl': 'lh',
++    'ptr': 'rh',
++    'mcr': 'rh'
++};
++
++const IDLE_ANIMATIONS: { [id: string]: string } = {
++    'Default': 'std',
++    'Sit': 'sit',
++    'Lay': 'lay'
++};
++
++const IDLE_FRAMES = 8;
++
++export const IsExtraIdleAnimation = (id: string) => (IDLE_ANIMATIONS[id] !== undefined);
++
++export const HasExtraParts = (partTypeIds: Iterable<string>) => Array.from(partTypeIds).some(type => ((type === 'pt') || (type === 'mc')));
++
++export const AddExtraAnimations = (animations: any[]) =>
++{
++    for(const animation of animations)
++    {
++        if(!animation.parts) continue;
++
++        for(const type of EXTRA_TYPES)
++        {
++            if(animation.parts.some(part => (part.setType === type))) continue;
++
++            const source = animation.parts.find(part => (part.setType === MIRROR_SOURCES[type]));
++
++            if(!source || !source.frames) continue;
++
++            animation.parts.push({ 'setType': type, 'frames': source.frames.map(frame => ({ ...frame })) });
++        }
++    }
++
++    for(const id in IDLE_ANIMATIONS)
++    {
++        if(animations.some(animation => (animation.id === id))) continue;
++
++        const frames = [];
++
++        for(let i = 0; i < IDLE_FRAMES; i++) frames.push({ 'number': i, 'assetPartDefinition': IDLE_ANIMATIONS[id] });
++
++        animations.push({ 'id': id, 'parts': EXTRA_TYPES.map(type => ({ 'setType': type, 'frames': frames.map(frame => ({ ...frame })) })) });
++    }
++
++    return animations;
++};

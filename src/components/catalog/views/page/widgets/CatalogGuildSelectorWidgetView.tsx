@@ -1,7 +1,7 @@
 import { CatalogGroupsComposer, StringDataType } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useMemo, useState } from 'react';
 import { LocalizeText, SendMessageComposer } from '../../../../../api';
-import { Base, Button, Flex } from '../../../../../common';
+import { Base, Button, CustomSelect, Flex } from '../../../../../common';
 import { useCatalog } from '../../../../../hooks';
 
 export const CatalogGuildSelectorWidgetView: FC<{}> = props =>
@@ -67,9 +67,7 @@ export const CatalogGuildSelectorWidgetView: FC<{}> = props =>
                     <Base fullHeight style={ { width: '20px', backgroundColor: '#' + selectedGroup.colorA } } />
                     <Base fullHeight style={ { width: '20px', backgroundColor: '#' + selectedGroup.colorB } } />
                 </Flex> }
-            <select className="form-select form-select-sm" value={ selectedGroupIndex } onChange={ event => setSelectedGroupIndex(parseInt(event.target.value)) }>
-                { groups.map((group, index) => <option key={ index } value={ index }>{ group.groupName }</option>) }
-            </select>
+            <CustomSelect value={ selectedGroupIndex } onChange={ value => setSelectedGroupIndex(parseInt(value)) } noInvalid items={ groups.map((group, index) => ({ value: index, text: group.groupName })) } />
         </Flex>
     );
 }

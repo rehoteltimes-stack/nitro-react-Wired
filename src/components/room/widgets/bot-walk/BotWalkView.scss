@@ -1,0 +1,34 @@
+.nitro-bot-walk {
+  .bot-walk-pad {
+    display: grid;
+    grid-template-columns: repeat(2, 38px);
+    gap: 4px;
+    justify-content: center;
+  }
+
+  .bot-walk-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--holo-text-primary) 20%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--holo-text-primary) 6%, transparent);
+    color: var(--holo-text-primary);
+    cursor: pointer;
+
+    &:hover { background: color-mix(in srgb, var(--holo-text-primary) 14%, transparent); }
+
+    &:active { transform: translateY(1px); }
+
+    svg {
+      display: block;
+
+      path { stroke: currentColor; }
+    }
+  }
+
+  .bot-walk-info { color: var(--holo-text-muted); }
+}

@@ -1,0 +1,25 @@
+.nitro-automat {
+  .automat-warning { color: #d97706; }
+  .automat-message { color: #1e9e4a; }
+
+  .automat-offer {
+    padding: 6px 8px;
+    border: 1px solid color-mix(in srgb, var(--holo-text-primary) 12%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--holo-text-primary) 4%, transparent);
+    color: var(--holo-text-primary);
+  }
+
+  .automat-offer-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+
+  .automat-offer-text { flex: 1; min-width: 0; }
+  .automat-have { color: var(--holo-text-muted); }
+  .automat-have.ready { color: #1e9e4a; font-weight: 700; }
+}

@@ -1,10 +1,14 @@
 import { FriendlyTime, HabboClubLevelEnum } from '@nitrots/nitro-renderer';
 import { FC, useMemo } from 'react';
 import { CreateLinkEvent, GetConfiguration, LocalizeText } from '../../api';
-import { Column, Flex, LayoutCurrencyIcon, Text } from '../../common';
 import { usePurse } from '../../hooks';
 import { CurrencyView } from './views/CurrencyView';
 
+// HabboPie's purse, 1:1 (their component `aB0` in cdn.habbopie.biz/nitro/dist/assets/index-cc627c03.js, read in their
+// running client at play.habbo.nz/pie.html, 2026-10-01). Same elements, same classes ("Habbopie" renamed "Habbo"),
+// same order and the same links; CSS verbatim in PurseView.scss. Only the texts are English (theirs are Turkish:
+// Yardım / Ayarlar), the credits row is not shown because this hotel has no credits (system.currency.types decides the
+// rows), and their Income / Expenses and Hide wallet buttons are left out: the purse always shows (user, 2026-10-01).
 export const PurseView: FC<{}> = props =>
 {
     const { purse = null, hcDisabled = false, currencyMeta = new Map() } = usePurse();
@@ -12,7 +16,7 @@ export const PurseView: FC<{}> = props =>
     const displayedCurrencies = useMemo(() => GetConfiguration<number[]>('system.currency.types', []), []);
     const currencyDisplayNumberShort = useMemo(() => GetConfiguration<boolean>('currency.display.number.short', false), []);
 
-    const getClubText = (() =>
+    const clubText = useMemo(() =>
     {
         if(!purse) return null;
 
@@ -21,41 +25,45 @@ export const PurseView: FC<{}> = props =>
 
         if(purse.clubLevel === HabboClubLevelEnum.NO_CLUB) return LocalizeText('purse.clubdays.zero.amount.text');
 
-        else if((minutesUntilExpiration > -1) && (minutesUntilExpiration < (60 * 24))) return FriendlyTime.shortFormat(minutesUntilExpiration * 60);
+        if((minutesUntilExpiration > -1) && (minutesUntilExpiration < (60 * 24))) return FriendlyTime.shortFormat(minutesUntilExpiration * 60);
 
-        else return FriendlyTime.shortFormat(totalDays * 86400);
-    })();
-
-    const activityPointTypes = useMemo(() =>
-    {
-        if(!purse || !purse.activityPoints) return [];
-
-        return Array.from(purse.activityPoints.keys()).filter(type => (displayedCurrencies.indexOf(type) >= 0));
-    }, [ purse, displayedCurrencies ]);
+        return FriendlyTime.shortFormat(totalDays * 86400);
+    }, [ purse ]);
 
     if(!purse) return null;
 
     return (
-        <Column alignItems="end" className="nitro-purse-container" gap={ 1 }>
-            <Flex className="nitro-purse" gap={ 2 }>
-                <Column className="nitro-purse-list" justifyContent="center" gap={ 0 }>
-                    <CurrencyView type={ -1 } amount={ purse.credits } short={ currencyDisplayNumberShort } color={ currencyMeta.get(-1)?.color } />
-                    { activityPointTypes.map(type => <CurrencyView key={ type } type={ type } amount={ purse.activityPoints.get(type) } short={ currencyDisplayNumberShort } color={ currencyMeta.get(type)?.color } />) }
-                </Column>
+        <div className="Habbo-right-side-purse d-none d-sm-block mt-2">
+            <div className="d-flex flex-column animasyonlagizlenecekdiv">
+                { displayedCurrencies.map(type =>
+                {
+                    const meta = currencyMeta.get(type);
+
+                    return <CurrencyView key={ type } type={ type } amount={ purse.activityPoints?.get(type) ?? 0 } short={ currencyDisplayNumberShort } name={ meta?.pluralName || meta?.name || '' } color={ meta?.color } />;
+                }) }
                 { !hcDisabled &&
-                    <Column center pointer size={ 4 } gap={ 1 } className="nitro-purse-subscription rounded" onClick={ event => CreateLinkEvent('habboUI/open/hccenter') }>
-                        <LayoutCurrencyIcon type="hc" />
-                        <Text variant="white">{ getClubText }</Text>
-                    </Column> }
-                <Column justifyContent="center" gap={ 2 } className="nitro-purse-buttons">
-                    <Flex center pointer className="nitro-purse-button" onClick={ event => CreateLinkEvent('help/show') }>
-                        <i className="icon icon-help" />
-                    </Flex>
-                    <Flex center pointer className="nitro-purse-button" onClick={ event => CreateLinkEvent('user-settings/toggle') }>
-                        <i className="icon icon-cog-purse" />
-                    </Flex>
-                </Column>
-            </Flex>
-        </Column>
+                    <div className="Habbo-right-side-purse-item icon-club" onClick={ event => CreateLinkEvent('habboUI/open/hccenter') }>
+                        <div className="Habbo-right-side-purse-item-left-side">
+                            <p className="Habbo-right-side-purse-item-text-type">Club</p>
+                        </div>
+                        <div className="Habbo-right-side-purse-item-right-side">
+                            <p className="Habbo-right-side-purse-item-text">{ clubText }</p>
+                        </div>
+                        <div className="Habbo-right-side-purse-item-type-container">
+                            <i className="Habbo-right-side-purse-item-type-container-icon" />
+                        </div>
+                    </div> }
+                <div className="Habbo-right-side-purse-buttons" style={ { pointerEvents: 'all' } }>
+                    <div className="Habbo-right-side-purse-buttons-item position-relative" onClick={ event => CreateLinkEvent('help/show') }>
+                        Help
+                        <div className="HabboHelp" />
+                    </div>
+                    <div className="Habbo-right-side-purse-buttons-item position-relative" onClick={ event => CreateLinkEvent('user-settings/toggle') }>
+                        Settings
+                        <div className="HabboSettings" />
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }

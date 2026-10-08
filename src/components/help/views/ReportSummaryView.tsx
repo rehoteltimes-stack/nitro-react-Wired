@@ -45,11 +45,11 @@ export const ReportSummaryView: FC<{}> = props =>
 
     return (
         <>
-            <Column gap={ 1 }>
+            <Column shrink gap={ 1 }>
                 <Text fontSize={ 4 }>{ LocalizeText('help.cfh.button.send') }</Text>
                 <Text>{ LocalizeText('help.main.summary') }</Text>
             </Column>
-            <Button variant="success" onClick={ submitReport }>
+            <Button shrink variant="success" onClick={ submitReport }>
                 { LocalizeText('guide.help.request.emergency.submit.button') }
             </Button>
         </>

@@ -1,12 +1,14 @@
 import { RoomBannedUsersComposer, RoomDataParser, RoomSettingsDataEvent, SaveRoomSettingsComposer } from '@nitrots/nitro-renderer';
 import { FC, useState } from 'react';
-import { IRoomData, LocalizeText, SendMessageComposer } from '../../../../api';
+import { DEFAULT_ROOM_PERMISSIONS, IRoomData, IRoomPermissions, LocalizeText, RegisterRoomSettingsMessages, RoomSettingsPermissionsEvent, RoomSettingsPermissionsRequestComposer, RoomSettingsPermissionsSaveComposer, SendMessageComposer } from '../../../../api';
 import { NitroCardContentView, NitroCardHeaderView, NitroCardTabsItemView, NitroCardTabsView, NitroCardView } from '../../../../common';
 import { useMessageEvent } from '../../../../hooks';
 import { NavigatorRoomSettingsAccessTabView } from './NavigatorRoomSettingsAccessTabView';
 import { NavigatorRoomSettingsBasicTabView } from './NavigatorRoomSettingsBasicTabView';
 import { NavigatorRoomSettingsModTabView } from './NavigatorRoomSettingsModTabView';
+import { NavigatorRoomSettingsPermissionsTabView } from './NavigatorRoomSettingsPermissionsTabView';
 import { NavigatorRoomSettingsRightsTabView } from './NavigatorRoomSettingsRightsTabView';
+import { NavigatorRoomSettingsSkinTabView } from './NavigatorRoomSettingsSkinTabView';
 import { NavigatorRoomSettingsVipChatTabView } from './NavigatorRoomSettingsVipChatTabView';
 
 const TABS: string[] = [
@@ -14,13 +16,34 @@ const TABS: string[] = [
     'navigator.roomsettings.tab.2',
     'navigator.roomsettings.tab.3',
     'navigator.roomsettings.tab.4',
-    'navigator.roomsettings.tab.5'
+    'navigator.roomsettings.tab.5',
+    'Settings',
+    'Appearance'
 ];
+
+const PERMISSION_FIELDS: Record<string, keyof IRoomPermissions> = {
+    can_enable: 'canEnable', can_handitem: 'canHanditem', can_fastwalk: 'canFastwalk', can_moonwalk: 'canMoonwalk', pushmode: 'pushmode', can_transform: 'canTransform',
+    can_sit: 'canSit', can_lay: 'canLay', can_giveitem: 'canGiveitem', can_danse: 'canDanse', can_sign: 'canSign', can_greet: 'canGreet', can_laugh: 'canLaugh',
+    can_kiss: 'canKiss', can_afk: 'canAfk', can_jump: 'canJump', can_thumb_up: 'canThumbUp', can_change_look: 'canChangeLook', show_bubble: 'showBubble',
+    diagonal_mode: 'diagonalMode', set_speed: 'setSpeed'
+};
 
 export const NavigatorRoomSettingsView: FC<{}> = props =>
 {
     const [ roomData, setRoomData ] = useState<IRoomData>(null);
     const [ currentTab, setCurrentTab ] = useState(TABS[0]);
+
+    // Registered in the body, before useMessageEvent subscribes, so the reply's header is already known.
+    RegisterRoomSettingsMessages();
+
+    useMessageEvent<RoomSettingsPermissionsEvent>(RoomSettingsPermissionsEvent, event =>
+    {
+        const parser = event.getParser();
+
+        if(!parser) return;
+
+        setRoomData(prevValue => (prevValue && (prevValue.roomId === parser.roomId)) ? { ...prevValue, permissions: parser.permissions } : prevValue);
+    });
 
     useMessageEvent<RoomSettingsDataEvent>(RoomSettingsDataEvent, event =>
     {
@@ -57,10 +80,12 @@ export const NavigatorRoomSettingsView: FC<{}> = props =>
                 allowMute: data.roomModerationSettings.allowMute,
                 allowKick: data.roomModerationSettings.allowKick,
                 allowBan: data.roomModerationSettings.allowBan
-            }
+            },
+            permissions: { ...DEFAULT_ROOM_PERMISSIONS }
         });
 
         SendMessageComposer(new RoomBannedUsersComposer(data.roomId));
+        SendMessageComposer(new RoomSettingsPermissionsRequestComposer(data.roomId));
     });
 
     const onClose = () =>
@@ -71,6 +96,22 @@ export const NavigatorRoomSettingsView: FC<{}> = props =>
 
     const handleChange = (field: string, value: string | number | boolean | string[]) =>
     {
+        const permissionKey = PERMISSION_FIELDS[field];
+
+        if(permissionKey)
+        {
+            setRoomData(prevValue =>
+            {
+                const permissions = { ...prevValue.permissions, [permissionKey]: (typeof value === 'boolean') ? value : Number(value) } as IRoomPermissions;
+
+                SendMessageComposer(new RoomSettingsPermissionsSaveComposer(prevValue.roomId, permissions));
+
+                return { ...prevValue, permissions };
+            });
+
+            return;
+        }
+
         setRoomData(prevValue =>
         {
             const newValue = { ...prevValue };
@@ -181,15 +222,16 @@ export const NavigatorRoomSettingsView: FC<{}> = props =>
     if(!roomData) return null;
 
     return (
-        <NitroCardView uniqueKey="nitro-room-settings" className="nitro-room-settings">
+        <NitroCardView uniqueKey="nitro-room-settings" className="nitro-room-settings" overflow="hidden">
             <NitroCardHeaderView headerText={ LocalizeText('navigator.roomsettings') } onCloseClick={ onClose } />
-            <NitroCardTabsView>
-                { TABS.map(tab =>
-                {
-                    return <NitroCardTabsItemView key={ tab } isActive={ (currentTab === tab) } onClick={ event => setCurrentTab(tab) }>{ LocalizeText(tab) }</NitroCardTabsItemView>
-                }) }
-            </NitroCardTabsView>
             <NitroCardContentView>
+                { /* HabboCity: the tab row is the first child INSIDE .content-area-inner, not a sibling of the content area. */ }
+                <NitroCardTabsView>
+                    { TABS.map(tab =>
+                    {
+                        return <NitroCardTabsItemView key={ tab } isActive={ (currentTab === tab) } onClick={ event => setCurrentTab(tab) }>{ LocalizeText(tab) }</NitroCardTabsItemView>
+                    }) }
+                </NitroCardTabsView>
                 { (currentTab === TABS[0]) &&
                     <NavigatorRoomSettingsBasicTabView roomData={ roomData } handleChange={ handleChange } onClose={ onClose } /> }
                 { (currentTab === TABS[1]) &&
@@ -200,6 +242,10 @@ export const NavigatorRoomSettingsView: FC<{}> = props =>
                     <NavigatorRoomSettingsVipChatTabView roomData={ roomData } handleChange={ handleChange } /> }
                 { (currentTab === TABS[4]) &&
                     <NavigatorRoomSettingsModTabView roomData={ roomData } handleChange={ handleChange } /> }
+                { (currentTab === TABS[5]) &&
+                    <NavigatorRoomSettingsPermissionsTabView roomData={ roomData } handleChange={ handleChange } /> }
+                { (currentTab === TABS[6]) &&
+                    <NavigatorRoomSettingsSkinTabView roomData={ roomData } handleChange={ handleChange } /> }
             </NitroCardContentView>
         </NitroCardView>
     );

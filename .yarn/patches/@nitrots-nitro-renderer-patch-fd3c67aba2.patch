@@ -1,0 +1,28 @@
+diff --git a/nitro/communication/messages/parser/user/data/UserCurrentBadgesParser.ts b/nitro/communication/messages/parser/user/data/UserCurrentBadgesParser.ts
+index efa5ff5e9bc69818172813c35b2fe7f5d0b2f494..7dad28715a54b27c06c520d4ded0ebf1c731131b 100644
+--- a/nitro/communication/messages/parser/user/data/UserCurrentBadgesParser.ts
++++ b/nitro/communication/messages/parser/user/data/UserCurrentBadgesParser.ts
+@@ -26,7 +26,8 @@ export class UserCurrentBadgesParser implements IMessageParser
+             const slotId = wrapper.readInt();
+             const badgeCode = wrapper.readString();
+ 
+-            this._badges.push(badgeCode);
++            if(slotId > 0) this._badges[slotId - 1] = badgeCode;
++            else this._badges.push(badgeCode);
+ 
+             totalBadges--;
+         }
+diff --git a/nitro/communication/messages/parser/inventory/badges/BadgesParser.ts b/nitro/communication/messages/parser/inventory/badges/BadgesParser.ts
+index 9b3f093..9431575 100644
+--- a/nitro/communication/messages/parser/inventory/badges/BadgesParser.ts
++++ b/nitro/communication/messages/parser/inventory/badges/BadgesParser.ts
+@@ -44,7 +44,8 @@ export class BadgesParser implements IMessageParser
+             const badgeSlot = wrapper.readInt();
+             const badgeCode = wrapper.readString();
+ 
+-            this._activeBadgeCodes.push(badgeCode);
++            if(badgeSlot > 0) this._activeBadgeCodes[badgeSlot - 1] = badgeCode;
++            else this._activeBadgeCodes.push(badgeCode);
+ 
+             count--;
+         }

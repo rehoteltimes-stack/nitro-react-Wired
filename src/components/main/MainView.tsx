@@ -1,17 +1,22 @@
+import { HotelAlertCardView } from '../hotel-alert/HotelAlertCardView';
+import { EngagementView } from '../engagement/EngagementView';
 import { DesktopViewEvent, HabboWebTools, ILinkEventTracker, RoomSessionEvent } from '@nitrots/nitro-renderer';
 import { FC, useEffect, useRef, useState } from 'react';
 import { AddEventLinkTracker, CreateLinkEvent, GetCommunication, GetRoomSession, GetRoomSessionManager, RemoveLinkEventTracker } from '../../api';
-import { Base, TransitionAnimation, TransitionAnimationTypes } from '../../common';
+import { Base, LeftPanelStackView, TransitionAnimation, TransitionAnimationTypes } from '../../common';
 import { useMessageEvent, useRoomSessionManagerEvent } from '../../hooks';
 import { AchievementsView } from '../achievements/AchievementsView';
 import { AvatarEditorView } from '../avatar-editor/AvatarEditorView';
-import { BuilderToolbarView } from '../builder-toolbar/BuilderToolbarView';
 import { CameraWidgetView } from '../camera/CameraWidgetView';
 import { CampaignView } from '../campaign/CampaignView';
 import { CatalogView } from '../catalog/CatalogView';
 import { ChatHistoryView } from '../chat-history/ChatHistoryView';
-import { ClothesShopView } from '../clothes-shop/ClothesShopView';
+import { HelpMenuView } from '../help/HelpMenuView';
 import { FloorplanEditorView } from '../floorplan-editor/FloorplanEditorView';
+import { ReconnectView } from '../reconnect/ReconnectView';
+import { StaffPinView } from '../staffpin/StaffPinView';
+import { PageMenuView } from '../page-menu/PageMenuView';
+import { ProtectedViews } from '../protected/ProtectedViews';
 import { FriendsView } from '../friends/FriendsView';
 import { GameCenterView } from '../game-center/GameCenterView';
 import { GroupsView } from '../groups/GroupsView';
@@ -25,15 +30,13 @@ import { NavigatorView } from '../navigator/NavigatorView';
 import { NitropediaView } from '../nitropedia/NitropediaView';
 import { RightSideView } from '../right-side/RightSideView';
 import { RoomView } from '../room/RoomView';
-import { AreaHideView } from '../room-tools/AreaHideView';
 import { ToolbarView } from '../toolbar/ToolbarView';
+import { UserProfileView } from '../user-profile/UserProfileView';
+import { UserSettingsView } from '../user-settings/UserSettingsView';
 import { WiredCreatorToolsView } from '../wired-creator-tools-habbo/WiredCreatorToolsView';
 import { ChestView } from '../wired-chests/ChestView';
 import { ContractView } from '../wired-chests/ContractView';
 import { RewardPopupView } from '../wired-chests/RewardPopupView';
-import { UserProfileModerationView } from '../user-profile/UserProfileModerationView';
-import { UserProfileView } from '../user-profile/UserProfileView';
-import { UserSettingsView } from '../user-settings/UserSettingsView';
 import { WiredView } from '../wired/WiredView';
 
 export const MainView: FC<{}> = props =>
@@ -51,7 +54,16 @@ export const MainView: FC<{}> = props =>
 
         pendingRoomId.current = null;
 
-        if(roomId && /^\d+$/.test(roomId)) CreateLinkEvent(`navigator/goto/${ roomId }`);
+        if(!roomId || !/^\d+$/.test(roomId)) return;
+
+        // If the account's own home room already auto-entered us into this exact room (no
+        // DesktopViewEvent ever fires in that case, since the landing view is skipped entirely),
+        // the 4s fallback below would otherwise re-navigate into the same room a second time.
+        const session = GetRoomSession();
+
+        if(session && (session.roomId === parseInt(roomId, 10))) return;
+
+        CreateLinkEvent(`navigator/goto/${ roomId }`);
     }
 
     useMessageEvent<DesktopViewEvent>(DesktopViewEvent, () =>
@@ -121,8 +133,8 @@ export const MainView: FC<{}> = props =>
             <ToolbarView isInRoom={ !landingViewVisible } />
             <ModToolsView />
             <RoomView isInRoom={ !landingViewVisible } />
-            <AreaHideView />
             <ChatHistoryView />
+            <HelpMenuView />
             <WiredView />
             <ChestView />
             <ContractView />
@@ -137,7 +149,6 @@ export const MainView: FC<{}> = props =>
             <RightSideView />
             <UserSettingsView />
             <UserProfileView />
-            <UserProfileModerationView />
             <GroupsView />
             <CameraWidgetView />
             <HelpView />
@@ -147,8 +158,13 @@ export const MainView: FC<{}> = props =>
             <CampaignView />
             <GameCenterView />
             <FloorplanEditorView />
-            <BuilderToolbarView />
-            <ClothesShopView />
+            <ReconnectView />
+            <StaffPinView />
+            <PageMenuView />
+            <EngagementView />
+            <HotelAlertCardView />
+            <LeftPanelStackView />
+            <ProtectedViews />
         </Base>
     );
 }

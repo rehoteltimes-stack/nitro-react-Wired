@@ -1,0 +1,25 @@
+.badge-information .badge-rarity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.badge-information .badge-rarity-tier {
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: #ffffff !important;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+
+  &.is-common { background: #8c8c8c; }
+  &.is-uncommon { background: #3ea79b; }
+  &.is-rare { background: #4f9d47; }
+  &.is-epic { background: #4a8cc8; }
+  &.is-mythical { background: #a24fc2; }
+}
+
+.badge-information .badge-rarity-owned {
+  font-size: 11px;
+}

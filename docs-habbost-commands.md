@@ -1,0 +1,122 @@
+# habbo.st chat commands
+
+Captured live from the "Deine Befehle" window on habbo.st (2026-09-25, German, one account - the list is server-sent and may depend on rank).
+
+## Allgemeine Befehle
+
+- `:sms <user> <nachricht>` - Sendet eine SMS an den Spieler.
+- `:slime <user>` - Wirft einen Spieler mit Schleim ab.
+- `:hit <user>` - Schlägt einen Spieler.
+- `:about` - Zeigt die aktuelle Statistiken an.
+- `:stats <user>` - Zeigt dir deine Statistiken oder die von anderen Usern an.
+- `:wil <user>` - Einen anderen Spieler begrüßen.
+- `:help` - Fordert Hilfe bei den Botschaftern an.
+- `:werber <user>` - Meldet einen Spieler als Werber.
+- `:chooser` - Zeigt alle User im Raum an.
+- `:furni` - Zeigt alle Möbel im Raum an.
+- `:findfurni` - Doppelklicke ein Möbelstück, um Informationen anzuzeigen.
+- `:lay` - Lässt den Spieler sich hinlegen.
+- `:sit` - Lässt den Spieler sich hinsetzen.
+- `:stand` - Lässt den Spieler sich hinstellen.
+- `:faceless` - Entfernt das Gesicht eines Spielers.
+- `:moonwalk` - Lässt den Spieler rückwärts laufen.
+- `:clock` - Schaut auf die Uhr.
+- `:fastwalk` - Lässt den Spieler schneller laufen
+- `:builder` - Teleportiert den Spieler im eigenen Raum.
+- `:pickall` - Nimmt alle Möbel in deinem Raum auf.
+- `:pickitem` - Entfernt nur eine Art von Möbeln in deinem Raum.
+- `:floor` - Öffnet den Bodenplan-Editor.
+- `:afk <nachricht>` - Aktiviert den AFK Status.
+- `:back oder :wd` - Deaktiviert den AFK Status.
+- `:kuss <user>` - Küsst einen anderen Spieler. (Müsst befreundet sein)
+- `:airkissfriends` - Gibt allen deinen Freunden einen Luftkuss.
+- `:hug <user>` - Umarmt einen anderen Spieler.
+- `:like <user>` - Stimmt einem anderen Spieler zu.
+- `:love <user>` - Liebt einen anderen Spieler.
+- `:ice <user>` - Friert einen anderen Spieler ein.
+- `:unload` - Lädt den Raum neu.
+- `:slimefriends` - Schleime alle deine Freunde voll.
+- `:vote <nachricht>` - Startet eine Umfrage in deinem Raum.
+- `:kick <user>` - Kickt einen anderen Spieler aus deinem Raum.
+- `:control  <user>` - Steuert einen anderen Spieler in deinem Raum.
+- `:call <user>` - Ruft einen anderen Spieler an.
+- `:call accept` - Akzeptiert einen eingehenden Anruf.
+- `:call end` - Beendet einen laufenden Anruf.
+- `:cc <nachricht>` - Kommuniziere mit deinem Anrufpartner.
+- `:sh <zahl>` - Verändert die Stapelhöhe beim Bauen.
+- `:empty items/pets/bots` - Leert dein eigenes Inventar.
+- `:convertcredits` - Wandelt Taler aus dem Inventar um.
+- `:convertdiamonds` - Wandelt Diamanten aus dem Inventar um.
+- `:lotto <zahl>` - Spielt beim Lotto mit; kostet dich aber Taler!
+- `:enable <id>` - Aktiviert einen Effekt (siehe help.habbo.st alle Effekte)
+- `handitem <id>` - Aktiviert ein Handitem (siehe help.habbo.st alle Handitems)
+- `:pet help` - Listet alle Tiere auf, in die man sich verwandeln kann.
+- `:pet <tier>` - Wandelt dich in ein Tier.
+- `:eventkasse` - Zeig den Inhalt in der Eventkasse an.
+- `:spenden Taler/Diamanten/Flammen/Duckets <anzahl>` - Spendet in die Eventkasse.
+- `@<user>` - Markiert einen Spieler.
+- `:disablegifts` - De/Aktiviert das Empfangen von Geschenken.
+- `:disablewhispers` - De/Aktiviert Flüsternachrichten.
+- `:disablefriends` - De/Aktiviert Freundschaftsanfragen.
+- `:disablemimic` - De/Aktiviert das Kleiderkopieren von deinem Avatar.
+- `:disablecalls` - De/Aktiviert eigehende Anrufe
+- `:disablediagonal` - De/Aktiviert das diagonale Laufen im Raum
+- `:raum lobe` - De/Aktiviert Lobbenachrichtungen im eigenen Raum.
+- `:raum fastwalk` - De/Aktiviert :fastwalk im eigenen Raum.
+- `:raum pet` - De/Aktivert Haustiere im eigenen Raum.
+- `:raum enable` - De/Aktivert Effekte im eigenen Raum.
+- `:raum push` - De/Aktiviert :push im eigenen Raum.
+- `:raum pull` - De/Aktiviert :pull im eigenen Raum.
+- `:raum spush` - De/Aktiviert :spush im eigenen Raum.
+- `:raum spull` - De/Aktiviert :spull im eigenen Raum.
+- `:kickpet` - Kickt alle Tiere aus dem eigenen Raum.
+- `:kickbots` - Kickt alle Bots aus dem eigenen Raum.
+- `:birthday <datum>` - Legt eigenes Geburtsdatum fest.
+- `:report <user>` - Spieler wird gemeldet.
+- `:sellroom x Taleranzahl` - Raum wird an Spieler für Summe an Talern verkauft.
+- `:buyroom` - Raumverkauf wird bestätigt.
+- `:trash` - Öffnet ein Tauschfenster in dem du ausgewählte Möbel entfernen kannst.
+- `:autofloor` - Löscht alle freien Flächen automatisch
+- `:info` - Zeigt aktuelle Statistik an
+- `:unload` - Kickt alle User
+- `:reload` - Lädt den Raum neu
+- `:regenmaps` - Bodenlayout wird regeneriert
+- `:zoom <zahl>` - Zoomt näher heran
+- `:zoom -<zahl>` - Zoomt auf dem Kopf heran
+- `:ping <User>` - Frage nach Ansprechbarkeit (müsst befreundet sein)
+- `:addtag <Text>` - Tag im Profil erstellen. Kosten: 3600 Taler
+- `:deltag <Text>` - Tag löschen
+- `:builder` - Teleportiert dich in deinem Raum
+- `:ss <Zahl>` - Möbelzustand ändern
+- `:override` - Lässt dich über Möbel laufen
+- `:snow <User>` - Wirft einen Schneeball
+- `:mutepets` - Schaltet alle Tiere stumm
+- `:ejectall` - Entfernt alle Möbel aus dem Raum
+- `:bonk <User>` - Schlägt einen User
+- `:tutorial` - Startet das Tutorial; für Anfänger sehr gut (IN ARBEIT)
+- `:emoji liste` - Zeigt alle Chat-Mojis an, die verfügbar sind
+- `:emoji on/off` - De/aktiviere Chat-Emojis
+- `:markdown on/off` - De/aktiviere Markdown
+- `:disco` - Mach deinen Raum zur Disco; ab
+Gold Mitgliedschaft + Raum Tooner
+- `:kiss <user>` - Küsse einen anderen Habbo
+- `:airkiss <user>` - Gebe einem anderen Habbo einen Luftkuss
+- `:furnicount` - Zeigt dir Anzahl an Möbeln im Raum an
+- `:disablestickers` - Deaktiviere das Versenden von Stickern/GIFs in deinem Raum
+
+## RPG Befehle
+
+- `:flammenklauen <user>` - Raubt einen Spieler aus.
+- `:diaklauen <user>` - Raubt einen Spieler aus.
+- `:talerklauen <user>` - Raubt einen Spieler aus.
+- `:police <nachricht>` - Ruft die Habbo Polizei.
+- `:punch <user>` - Schlägt einem Spieler ins Gesicht.
+- `:ausrauben` - Lässt dich die Habbo Zentralbank ausrauben.
+- `:schildtrank` - Steigert deine Gesundheit (200HP).
+- `:medkit` - Heilt deine Gesundheit (100HP).
+- `:deagle <user>` - Schießt einen anderen Spieler an und macht ihn kurzzeitig bewegungsunfähig.
+- `:scar <user>` - Schießt einen anderen Spieler an.
+- `:kaution` - Kauft dich aus dem RPG-Knast frei.
+- `:checkhp <user>` - Prüft deine HP oder die eines anderen Spielers.
+- `:kd` - Checkt deine KD.
+- `:robstats / :robstats (username)` - Öffnet eine Liste deiner Raub Statistiken oder die eines anderen Habbos.

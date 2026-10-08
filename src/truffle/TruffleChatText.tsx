@@ -15,6 +15,8 @@ interface TruffleChatTextProps
     messageColor?: number;
     showCaret?: boolean;
     caretColor?: number;
+    underlineUsername?: boolean;
+    onUsernameClick?: () => void;
 }
 
 interface RenderedSegment
@@ -137,7 +139,7 @@ const getVisibleVerticalBounds = (buffer: TruffleBuffer) =>
 
 export const TruffleChatText: FC<TruffleChatTextProps> = props =>
 {
-    const { username = '', text = '', nameStyle, messageStyle, maxWidth, nameColor, messageColor, showCaret = false, caretColor = 0xAAAAAA } = props;
+    const { username = '', text = '', nameStyle, messageStyle, maxWidth, nameColor, messageColor, showCaret = false, caretColor = 0xAAAAAA, underlineUsername = false, onUsernameClick = null } = props;
     const canvasRef = useRef<HTMLCanvasElement>();
     const rendered = useMemo(() =>
     {
@@ -199,7 +201,9 @@ export const TruffleChatText: FC<TruffleChatTextProps> = props =>
             height: Math.max(1, Math.ceil(canvasHeight), showCaret ? (caretY + caretHeight) : 1),
             caretX,
             caretY,
-            caretHeight
+            caretHeight,
+            nameWidth,
+            nameHeight: nameText ? lines[0].height : 0
         };
     }, [ maxWidth, messageColor, messageStyle, nameColor, nameStyle, showCaret, text, username ]);
 
@@ -214,6 +218,12 @@ export const TruffleChatText: FC<TruffleChatTextProps> = props =>
         {
             context.clearRect(0, 0, rendered.width, rendered.height);
             rendered.lines.forEach(line => line.segments.forEach(segment => drawBuffer(context, segment.buffer, segment.x, line.y)));
+
+            if(underlineUsername && rendered.nameWidth)
+            {
+                context.fillStyle = `#${ (nameColor ?? 0x000000).toString(16).padStart(6, '0') }`;
+                context.fillRect(0, rendered.nameHeight - 1, rendered.nameWidth, 1);
+            }
 
             if(showCaret && caretVisible)
             {
@@ -233,9 +243,17 @@ export const TruffleChatText: FC<TruffleChatTextProps> = props =>
         }, 500);
 
         return () => window.clearInterval(interval);
-    }, [ caretColor, rendered, showCaret ]);
+    }, [ caretColor, rendered, showCaret, underlineUsername, nameColor ]);
 
     if(!rendered) return null;
 
-    return <canvas ref={ canvasRef } width={ rendered.width } height={ rendered.height } className="truffle-chat-text" role="img" aria-label={ `${ username ? `${ username }: ` : '' }${ text }` } />;
+    return (
+        <div className="truffle-chat-text-container" style={ { position: 'relative', width: rendered.width, height: rendered.height } }>
+            <canvas ref={ canvasRef } width={ rendered.width } height={ rendered.height } className="truffle-chat-text" role="img" aria-label={ `${ username ? `${ username }: ` : '' }${ text }` } />
+            { onUsernameClick && !!rendered.nameWidth &&
+                <div
+                    onClick={ event => { event.stopPropagation(); onUsernameClick(); } }
+                    style={ { position: 'absolute', left: 0, top: 0, width: rendered.nameWidth, height: rendered.nameHeight, cursor: 'pointer' } } /> }
+        </div>
+    );
 }
