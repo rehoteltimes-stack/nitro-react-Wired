@@ -10136,3 +10136,18 @@ Sandbox login allow-list: `HCMS_LOGIN_USERS=12` (Test, rank 1) on user request.
   `UserProfilePicturesTabView` now uses absolute URLs as-is. Also only published photos (camera_web) were listed;
   plugin `ProfilePicturesRepository` now unions the player's own photo furni (`external_image%`, extra_data `w`/`t`),
   distinct by URL, newest first. Live plugin restart (backup `hcms-emulator-plugin.jar.bak-20261008-photos`).
+
+## Clothing gender fix (2026-10-09, live data)
+- Official figuredata fetched with a headless Chrome (habbo.com/gamedata/figuredata/1, 3,312 sets). Our FigureData has
+  9,648 sets (7,520 not official). Rule: official gender wins when id AND parts match (only M/F, never widen to U);
+  otherwise the library names of the set's parts (`_M_` / `_F_`) decide when they agree. 115 sets changed
+  (U→M 73, U→F 37, F→M 3, M→F 2); 2,215 sets have no gender hint and stay U. List
+  `cdn/habbocity/gamedata/gender-fix-20261009.json`, backup `FigureData.json.bak-pregender-20261009`,
+  `?v=20261009a` in all three renderer-configs.
+
+## Website avatars show companions + misc (2026-10-09, live)
+- hcms-imager had its own avatar code without renderer patch 8. Ported: `data/HabboAvatarExtraParts.ts` (geometry
+  items, part sets, walk/wave frames mirrored from bd/lh/rh; no idle loops so other avatars' GIF frame counts stay the
+  same), `AvatarFigurePartType.PET/MISC` in FIGURE_SETS, wired in `AvatarRenderManager`. Built, task restarted, 29
+  cached figures with pt/mc moved to `db-backups/imager-cache-pt-20261009`. Verified: pt-5961 (teddy) and mc-6621
+  (trash can) render on img.habbo.nz.
